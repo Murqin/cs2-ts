@@ -1,0 +1,42 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.user
+*.suo
+
+# NuGet
+*.nupkg
+*.snupkg
+.packages/
+packages/
+
+# Test and coverage
+[Tt]est[Rr]esult*/
+*.coverage
+*.trx
+
+# Node / TypeScript tooling for the script API and plugins
+node_modules/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Editors
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local server paths and secrets — never commit a server layout or API keys
+*.local.json
+.env
+.env.*
+!.env.example
