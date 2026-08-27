@@ -22,6 +22,8 @@ public sealed class ScriptPlugin : IDisposable
     private readonly V8ScriptEngine _engine;
     private readonly ScriptWatchdog? _watchdog;
     private readonly Dictionary<string, List<Registration>> _handlers = [];
+    private readonly HashSet<string> _commands = new(StringComparer.Ordinal);
+    private Action<string>? _commandRegistered;
     private readonly CancellationTokenSource _lifetime = new();
 
     // Captured at construction. CancellationTokenSource.Token throws once the source is
@@ -55,6 +57,18 @@ public sealed class ScriptPlugin : IDisposable
     /// </summary>
     public CancellationToken Lifetime => _token;
 
+    /// <summary>Command names this plugin answers to, without the console prefix.</summary>
+    public IReadOnlyCollection<string> Commands
+    {
+        get
+        {
+            lock (_handlers)
+            {
+                return _commands.ToArray();
+            }
+        }
+    }
+
     /// <summary>Event names this plugin has registered a handler for.</summary>
     public IReadOnlyCollection<string> Events
     {
@@ -83,7 +97,8 @@ public sealed class ScriptPlugin : IDisposable
         Action<ScriptError> report,
         BoundaryPolicy? policy,
         ScriptWatchdog? watchdog,
-        Action<ScriptPlugin, V8ScriptEngine>? configure)
+        Action<ScriptPlugin, V8ScriptEngine>? configure,
+        Action<string>? commandRegistered = null)
     {
         // HideHostExceptions keeps the .NET exception object off the Error a script
         // catches; without it e.hostException is a way out of the sandbox. Reflection is
@@ -98,7 +113,10 @@ public sealed class ScriptPlugin : IDisposable
             name,
             V8ScriptEngineFlags.HideHostExceptions | V8ScriptEngineFlags.EnableArrayConversion);
         var boundary = new ScriptBoundary(name, report, policy);
-        var plugin = new ScriptPlugin(name, fileName, engine, boundary, watchdog);
+        var plugin = new ScriptPlugin(name, fileName, engine, boundary, watchdog)
+        {
+            _commandRegistered = commandRegistered,
+        };
 
         try
         {
@@ -107,6 +125,7 @@ public sealed class ScriptPlugin : IDisposable
             // class is not visible from it. A delegate sidesteps that and keeps the
             // bridge to exactly one callable.
             engine.Script.__cs2ts_register = new Action<string, ScriptObject>(plugin.Add);
+            engine.Script.__cs2ts_command = new Action<string, ScriptObject>(plugin.AddCommand);
             engine.Execute(new DocumentInfo("cs2ts:prelude.js"), Prelude);
             configure?.Invoke(plugin, engine);
 
@@ -136,7 +155,25 @@ public sealed class ScriptPlugin : IDisposable
             }
             __cs2ts_register(eventName, handler);
         };
+
+        globalThis.command = function command(name, handler) {
+            if (typeof name !== "string" || name.length === 0) {
+                throw new TypeError("command(): the name must be a non-empty string");
+            }
+            if (typeof handler !== "function") {
+                throw new TypeError("command(): the handler must be a function");
+            }
+            __cs2ts_command(name, handler);
+        };
         """;
+
+    /// <summary>
+    /// The key a command's handlers are stored under. Commands share the handler table
+    /// with events, so unloading, reload, flood protection and the watchdog cover them
+    /// without a second mechanism that would drift from the first. The prefix contains
+    /// a character a script cannot put in an event name, so the two cannot collide.
+    /// </summary>
+    internal static string HandlerKey(string command) => $"command:{command}";
 
     /// <summary>
     /// Evaluates the plugin body. A throw here reaches the caller rather than the
@@ -214,6 +251,28 @@ public sealed class ScriptPlugin : IDisposable
         });
     }
 
+    /// <summary>
+    /// Registers a chat and console command. The name is normalized first, so a bad one
+    /// throws while the plugin is still loading — which stops the plugin rather than
+    /// leaving a command that quietly never fires.
+    /// </summary>
+    private void AddCommand(string name, ScriptObject handler)
+    {
+        var normalized = CommandName.Normalize(name);
+
+        lock (_handlers)
+        {
+            _commands.Add(normalized);
+        }
+
+        Add(HandlerKey(normalized), handler);
+
+        // After the handler is in place: the host reacts by registering the command
+        // with the server, and a command that exists before its handler does is a
+        // command that can be run before it works.
+        _commandRegistered?.Invoke(normalized);
+    }
+
     private void Add(string eventName, ScriptObject handler)
     {
         lock (_handlers)
@@ -250,6 +309,7 @@ public sealed class ScriptPlugin : IDisposable
         lock (_handlers)
         {
             _handlers.Clear();
+            _commands.Clear();
         }
 
         _engine.Dispose();

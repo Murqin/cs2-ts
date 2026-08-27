@@ -48,6 +48,7 @@ public sealed class Cs2TsPlugin : BasePlugin
         }
 
         _host = new ScriptHost(Report);
+        _host.CommandRegistered = RegisterScriptCommand;
         _players = new PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>(
             "player", ResolvePlayer, new CssPlayerOperations());
         _host.Configure = InstallApi;
@@ -182,6 +183,47 @@ public sealed class Cs2TsPlugin : BasePlugin
         }
 
         _host.Dispatch(eventName, _players.For(userId));
+    }
+
+    /// <summary>
+    /// Puts a script's command on the server.
+    ///
+    /// The name gets CounterStrikeSharp's console prefix, which is also what makes the
+    /// chat trigger work: typing !heal makes the client run css_heal, so a command
+    /// registered under the prefix answers from chat and from the console both, and one
+    /// registered without it answers from neither.
+    ///
+    /// Called once per name for the life of the process, from the script load that
+    /// first mentioned it — on the game thread, which is where AddCommand belongs.
+    /// </summary>
+    private void RegisterScriptCommand(string name)
+    {
+        AddCommand(CommandName.ToConsoleCommand(name), $"CS2-TS script command '{name}'.", (controller, command) =>
+        {
+            if (_host is null)
+            {
+                return;
+            }
+
+            // Argument 0 is the command itself; a script asked for what came after it.
+            var args = new string[Math.Max(0, command.ArgCount - 1)];
+            for (var i = 0; i < args.Length; i++)
+            {
+                args[i] = command.GetArg(i + 1);
+            }
+
+            // Null from the server console and from RCON. The script sees null rather
+            // than a stand-in, because a command that pretends someone ran it would
+            // teleport nobody and report success.
+            object? player = controller?.UserId is { } userId && _players is not null
+                ? _players.For(userId)
+                : null;
+
+            if (_host.DispatchCommand(name, player, args) == 0)
+            {
+                command.ReplyToCommand($"No script is handling '{name}' right now.");
+            }
+        });
     }
 
     private void RegisterCommands()

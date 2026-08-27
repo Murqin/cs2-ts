@@ -86,6 +86,32 @@ test("steamId is a string, because a 64-bit id is not a JavaScript number", () =
     assert.match(check('on("player_connect", (p: Player) => { p.steamId.toFixed(0); });\n'), /TS2339|TS2551/);
 });
 
+test("a command handler has to deal with the console case", () => {
+    // player is null when the command came from the console or RCON. The type is what
+    // stops that being found by an operator instead of by the compiler.
+    assert.equal(
+        check('command("!heal", (p: Player | null): void => { if (p !== null) { p.health = 100; } });\n'),
+        "");
+    assert.match(
+        check('command("!heal", (p: Player | null): void => { p.health = 100; });\n'),
+        /TS18047|TS2531/);
+});
+
+test("a command handler with the wrong shape is rejected", () => {
+    assert.match(check('command("!heal", (p: Player) => {});\n'), /TS2345|TS2769/);
+    assert.match(check('command("!heal", (p: Player | null, args: number[]) => {});\n'), /TS2345|TS2769/);
+    assert.match(check('command(42, () => {});\n'), /TS2345|TS2769/);
+});
+
+test("command arguments arrive as strings", () => {
+    assert.equal(
+        check('command("!give", (_p: Player | null, args: string[]): void => { console.log(args[0]?.trim()); });\n'),
+        "");
+    assert.match(
+        check('command("!give", (_p: Player | null, args: string[]): void => { console.log(args[0].toFixed(0)); });\n'),
+        /TS2339|TS2551/);
+});
+
 // ---- the JavaScript half ----
 
 /** Returns the tsc diagnostics for a single .js file using the shipped jsconfig. */

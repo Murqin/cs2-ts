@@ -34,6 +34,7 @@ public sealed class ScriptHost : IDisposable
     private readonly ScriptHostOptions _options;
     private readonly Lock _gate = new();
     private readonly Dictionary<string, ScriptPlugin> _plugins = [];
+    private readonly HashSet<string> _knownCommands = new(StringComparer.Ordinal);
     private bool _disposed;
 
     /// <param name="report">Where every script error goes. Must not throw.</param>
@@ -86,6 +87,32 @@ public sealed class ScriptHost : IDisposable
     /// </summary>
     public Action<ScriptPlugin, V8ScriptEngine>? Configure { get; set; }
 
+    /// <summary>
+    /// Called the first time any plugin registers a given command name, so that the
+    /// binding can tell the server about it. Called once per name for the life of the
+    /// host, not once per registration: a reload re-registers the same names, and a
+    /// server command registered twice is answered twice.
+    ///
+    /// It is never called again for a name, even after every plugin that used it has
+    /// gone. Unregistering would be tidier and is not worth the failure mode — a
+    /// command the server has forgotten while a script still expects it is silent, and
+    /// silence is the thing this project spends its effort avoiding. A command with no
+    /// handlers left simply reports that nothing answers it.
+    /// </summary>
+    public Action<string>? CommandRegistered { get; set; }
+
+    /// <summary>Command names any loaded plugin answers to, without the console prefix.</summary>
+    public IReadOnlyCollection<string> KnownCommands
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _knownCommands.ToArray();
+            }
+        }
+    }
+
     /// <summary>The plugin loaded under a name, or <c>null</c>.</summary>
     public ScriptPlugin? Find(string name)
     {
@@ -129,7 +156,8 @@ public sealed class ScriptHost : IDisposable
                 _report,
                 _options.Policy,
                 _watchdog,
-                Configure);
+                Configure,
+                OnCommandRegistered);
         }
         catch (Exception exception)
         {
@@ -198,6 +226,39 @@ public sealed class ScriptHost : IDisposable
         }
 
         return ran;
+    }
+
+    /// <summary>
+    /// Runs a command, and returns how many handlers took it. Zero means no loaded
+    /// script answers that name — worth telling whoever typed it, because the
+    /// alternative is a command that appears to work and does nothing.
+    /// </summary>
+    /// <param name="name">The command, without the console prefix.</param>
+    /// <param name="player">Who ran it, or <c>null</c> from the server console.</param>
+    /// <param name="args">Everything after the command itself.</param>
+    public int DispatchCommand(string name, object? player, string[] args)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentNullException.ThrowIfNull(args);
+
+        return Dispatch(ScriptPlugin.HandlerKey(name), player, args);
+    }
+
+    /// <summary>
+    /// Notes a command name and passes it on the first time it is seen. Runs while a
+    /// plugin is loading, on the game thread.
+    /// </summary>
+    private void OnCommandRegistered(string name)
+    {
+        lock (_gate)
+        {
+            if (!_knownCommands.Add(name))
+            {
+                return;
+            }
+        }
+
+        CommandRegistered?.Invoke(name);
     }
 
     /// <summary>Runs whatever background work has come back. Call once per tick.</summary>
