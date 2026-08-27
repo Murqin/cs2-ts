@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- CounterStrikeSharp 1.0.373 targets net10.0 and ships its own .NET 10 runtime. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Cs2Ts.Runtime</AssemblyName>
+    <RootNamespace>Cs2Ts.Runtime</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ClearScript.V8" Version="7.5.1" />
+    <PackageReference Include="Microsoft.ClearScript.V8.Native.linux-x64" Version="7.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Built by tools/stripper (npm run build). Embedded rather than shipped alongside
+         the assembly because the host loads plugins from memory: Assembly.Location is
+         blank at runtime, so a sibling file has no reliable path to be found at. -->
+    <EmbeddedResource Include="Resources/stripper.js.gz" LogicalName="Cs2Ts.Runtime.stripper.js.gz" />
+  </ItemGroup>
+
+  <Target Name="CheckStripperBundle" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('$(MSBuildProjectDirectory)/Resources/stripper.js.gz')"
+           Text="The stripper bundle is missing. Run 'npm ci &amp;&amp; npm run build' in tools/stripper." />
+  </Target>
+
+</Project>

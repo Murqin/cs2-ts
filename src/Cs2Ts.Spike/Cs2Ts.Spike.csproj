@@ -14,6 +14,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- V8Bootstrap lives here: it is a precondition for the process surviving, not a
+         spike detail, so both the spike and the runtime take it from one place. -->
+    <ProjectReference Include="../Cs2Ts.Runtime/Cs2Ts.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Provided by the host at runtime; do not ship a second copy into the plugin folder. -->
     <PackageReference Include="CounterStrikeSharp.API" Version="1.0.373" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.ClearScript.V8" Version="7.5.1" />
