@@ -189,8 +189,12 @@ events into dispatches, and drains queued work once a tick.
 
 ## Writing a script
 
-`templates/tsconfig.json` (or `templates/jsconfig.json`) and `templates/cs2ts.d.ts`
-are what an author compiles against. `examples/scripts/welcome.ts` and
+Drop a `.ts` or `.js` file in the plugin's `scripts/` directory. The plugin puts
+`cs2ts.d.ts` and `tsconfig.json` there for you on first run, so opening that folder in an
+editor gives typed globals, and `fetch`, `process` and `enum` are refused there rather
+than on a live server. The declarations are kept current on every start because they
+describe the plugin's own API; the tsconfig is written once and never touched again,
+because it is yours. `examples/scripts/welcome.ts` and
 `examples/scripts/rounds.js` are working scripts, and both are exercised by both
 test suites so they cannot drift away from the runtime.
 

@@ -19,6 +19,13 @@
         "allowImportingTsExtensions": true,
         "noEmit": true,
 
+        // JavaScript is first class here and .ts and .js sit in the same directory, so
+        // one config has to describe both — a jsconfig cannot coexist with a tsconfig
+        // over the same folder. checkJs is what gives a JavaScript author the same
+        // compile-time refusal of fetch and process that a TypeScript author gets.
+        "allowJs": true,
+        "checkJs": true,
+
         "module": "esnext",
         "moduleResolution": "bundler",
         "target": "esnext",

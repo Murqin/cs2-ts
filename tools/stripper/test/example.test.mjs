@@ -100,6 +100,24 @@ function checkJs(source) {
     }
 }
 
+test("the shipped tsconfig checks JavaScript too", () => {
+    // The plugin writes this one config into the author's scripts directory, and .ts and
+    // .js sit there side by side — a jsconfig cannot coexist with a tsconfig over one
+    // folder, so this config has to cover both or the JavaScript author gets nothing.
+    // check() leaves its plugin.ts behind and tsc compiles the whole directory, so the
+    // TypeScript file has to go or its diagnostics answer instead of this one's.
+    rmSync(join(workspace, "plugin.ts"), { force: true });
+    writeFileSync(join(workspace, "plugin.js"), "export const r = fetch('http://x');\n");
+    try {
+        const output = execFileSync(process.execPath, [tsc, "-p", workspace], { encoding: "utf8", stdio: "pipe" });
+        assert.fail(`expected a diagnostic, got: ${output}`);
+    } catch (error) {
+        assert.match(error.stdout ?? "", /TS2304|TS2580|TS2584|TS2591/);
+    } finally {
+        rmSync(join(workspace, "plugin.js"), { force: true });
+    }
+});
+
 test("the JavaScript example checks clean against the shipped jsconfig", () => {
     const example = readFileSync(join(repository, "examples", "scripts", "rounds.js"), "utf8");
     assert.equal(checkJs(example), "");
