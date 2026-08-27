@@ -25,8 +25,15 @@ public sealed class Cs2TsPlugin : BasePlugin
     private FileSystemWatcher? _watcher;
     private bool _scriptsLoaded;
 
-    /// <summary>Where a server operator drops their <c>.ts</c> files.</summary>
+    /// <summary>Where a server operator drops their script files.</summary>
     private string ScriptDirectory => Path.Combine(ModuleDirectory, "scripts");
+
+    /// <summary>
+    /// Both are first-class. A .js file has nothing to strip, so accepting one costs the
+    /// runtime nothing — and the audience this is aimed at, people who already write
+    /// Valve's cs_script, write JavaScript.
+    /// </summary>
+    private static readonly string[] ScriptExtensions = ["*.ts", "*.js"];
 
     public override void Load(bool hotReload)
     {
@@ -192,8 +199,11 @@ public sealed class Cs2TsPlugin : BasePlugin
                 return;
             }
 
-            var path = Path.Combine(ScriptDirectory, $"{requested}.ts");
-            if (!File.Exists(path))
+            var path = new[] { ".ts", ".js" }
+                .Select(extension => Path.Combine(ScriptDirectory, requested + extension))
+                .FirstOrDefault(File.Exists);
+
+            if (path is null)
             {
                 Console.WriteLine($"[CS2-TS] no such script: {requested}");
                 return;
@@ -224,8 +234,25 @@ public sealed class Cs2TsPlugin : BasePlugin
         }
 
         string[] found = Directory.Exists(ScriptDirectory)
-            ? Directory.GetFiles(ScriptDirectory, "*.ts", SearchOption.TopDirectoryOnly)
+            ? ScriptExtensions
+                .SelectMany(pattern => Directory.GetFiles(ScriptDirectory, pattern, SearchOption.TopDirectoryOnly))
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .ToArray()
             : [];
+
+        // vip.ts and vip.js would both want to be "vip". Rather than let the second one
+        // silently replace the first, both are refused: which one won would depend on
+        // directory order, which is not something an operator can reason about.
+        foreach (var clash in found
+                     .GroupBy(Path.GetFileNameWithoutExtension, StringComparer.Ordinal)
+                     .Where(group => group.Count() > 1)
+                     .ToArray())
+        {
+            Console.WriteLine(
+                $"[CS2-TS] '{clash.Key}' matches more than one file " +
+                $"({string.Join(", ", clash.Select(Path.GetFileName))}); rename one. Neither was loaded.");
+            found = found.Where(path => Path.GetFileNameWithoutExtension(path) != clash.Key).ToArray();
+        }
 
         var onDisk = found.Select(path => Path.GetFileNameWithoutExtension(path)).ToHashSet(StringComparer.Ordinal);
 
@@ -259,14 +286,14 @@ public sealed class Cs2TsPlugin : BasePlugin
         catch (IOException exception)
         {
             // A save in progress is the usual reason. The watcher will fire again.
-            Console.WriteLine($"[CS2-TS] could not read {name}.ts: {exception.Message}");
+            Console.WriteLine($"[CS2-TS] could not read {Path.GetFileName(path)}: {exception.Message}");
             return;
         }
 
         var result = _host.Load(name, Path.GetFileName(path), source);
         if (result.Succeeded)
         {
-            Console.WriteLine($"[CS2-TS] loaded {name}.ts");
+            Console.WriteLine($"[CS2-TS] loaded {Path.GetFileName(path)}");
             return;
         }
 
@@ -287,7 +314,9 @@ public sealed class Cs2TsPlugin : BasePlugin
     /// </summary>
     private void WatchForChanges()
     {
-        _watcher = new FileSystemWatcher(ScriptDirectory, "*.ts")
+        // One watcher, filtered in the handler: FileSystemWatcher takes a single
+        // pattern, and two watchers over one directory would double every event.
+        _watcher = new FileSystemWatcher(ScriptDirectory)
         {
             NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
             EnableRaisingEvents = true,
@@ -331,15 +360,32 @@ public sealed class Cs2TsPlugin : BasePlugin
         }
 
         // AddTimer must be called from the game thread, so the hop happens first.
-        void OnChanged(object _, FileSystemEventArgs e) => Server.NextFrame(() => Schedule(e.FullPath));
+        static bool IsScript(string path) =>
+            path.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) ||
+            path.EndsWith(".js", StringComparison.OrdinalIgnoreCase);
+
+        void OnChanged(object _, FileSystemEventArgs e)
+        {
+            if (IsScript(e.FullPath))
+            {
+                Server.NextFrame(() => Schedule(e.FullPath));
+            }
+        }
 
         _watcher.Changed += OnChanged;
         _watcher.Created += OnChanged;
         _watcher.Deleted += OnChanged;
         _watcher.Renamed += (_, e) => Server.NextFrame(() =>
         {
-            Schedule(e.OldFullPath);
-            Schedule(e.FullPath);
+            if (IsScript(e.OldFullPath))
+            {
+                Schedule(e.OldFullPath);
+            }
+
+            if (IsScript(e.FullPath))
+            {
+                Schedule(e.FullPath);
+            }
         });
     }
 

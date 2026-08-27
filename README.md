@@ -137,6 +137,23 @@ fail to type-check rather than to run. Decorators are the case that config
 cannot catch — they are proposed JavaScript rather than a TypeScript extension —
 so the stripper reports those itself, along with anything that does not parse.
 
+## JavaScript works too
+
+A `.js` file has nothing to strip, so it is loaded exactly like a `.ts` one. That
+is not an afterthought: Valve's `cs_script`, which this project expects its
+authors to arrive from, is JavaScript.
+
+The extension decides how the file is parsed, and that matters more than it
+sounds. Read as TypeScript, `a < b > (c)` is a call with type arguments, so the
+stripper would erase `< b >` and hand back `a       (c)` — working, different,
+silently wrong JavaScript with no diagnostic. Read as JavaScript it is left
+alone.
+
+JavaScript authors get the same guard rails from
+[`jsconfig.json`](templates/jsconfig.json): `checkJs` with the same `lib` and
+`types` pinning, so `fetch` and `process` still fail in the editor rather than on
+the server, with JSDoc types wherever they are wanted.
+
 ## Roadmap
 
 | Phase | Scope | |
@@ -167,9 +184,10 @@ events into dispatches, and drains queued work once a tick.
 
 ## Writing a script
 
-`templates/tsconfig.json` and `templates/cs2ts.d.ts` are what an author compiles
-against; `examples/scripts/welcome.ts` is a working script, and it is exercised by
-both test suites so it cannot drift away from the runtime.
+`templates/tsconfig.json` (or `templates/jsconfig.json`) and `templates/cs2ts.d.ts`
+are what an author compiles against. `examples/scripts/welcome.ts` and
+`examples/scripts/rounds.js` are working scripts, and both are exercised by both
+test suites so they cannot drift away from the runtime.
 
 ```ts
 on("player_connect", (player: PlayerHandle): void => {
@@ -184,8 +202,8 @@ on("player_connect", (player: PlayerHandle): void => {
 });
 ```
 
-Drop a `.ts` file in the plugin's `scripts/` directory and it loads; save it again
-and it reloads. `cs2ts_status` lists what is loaded.
+Drop a `.ts` or `.js` file in the plugin's `scripts/` directory and it loads; save
+it again and it reloads. `cs2ts_status` lists what is loaded.
 
 ## License
 
