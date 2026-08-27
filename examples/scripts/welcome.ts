@@ -41,8 +41,11 @@ on("player_connect", (player: Player): void => {
 });
 
 on("player_spawn", (player: Player): void => {
-    // isAlive is the guard for everything that lives on the pawn. Without it, this
-    // reads position on a spectator and throws — catchably, but there is no reason to.
+    // isAlive is the guard for everything that lives on the pawn, and player_spawn is
+    // where it earns its keep: the first spawn after a map change arrives before the
+    // pawn does — measured on a live server, team 0 and no pawn at all — while every
+    // later one has it. Without the guard this works all game and throws once, at the
+    // very start, which is the worst way for a bug to behave.
     if (!player.isAlive) {
         return;
     }

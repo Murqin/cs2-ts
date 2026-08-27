@@ -48,7 +48,13 @@ declare global {
      * one changes the value on the server while every player keeps seeing the old one.
      */
     interface Player extends EntityHandle {
-        /** Whether the player is alive and in the world. Never throws. */
+        /**
+         * Whether the player is alive and in the world. Never throws.
+         *
+         * Worth checking inside `player_spawn` too: the first spawn after a map change
+         * arrives before the pawn does, so `health` and `position` throw there while
+         * every later spawn reads fine.
+         */
         readonly isAlive: boolean;
 
         /** The name the player is showing right now. */
