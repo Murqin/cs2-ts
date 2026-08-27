@@ -16,7 +16,7 @@
   <ItemGroup>
     <!-- V8Bootstrap lives here: it is a precondition for the process surviving, not a
          spike detail, so both the spike and the runtime take it from one place. -->
-    <ProjectReference Include="../Cs2Ts.Runtime/Cs2Ts.Runtime.csproj" />
+    <ProjectReference Include="../../src/Cs2Ts.Runtime/Cs2Ts.Runtime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -191,6 +191,11 @@ cd tools/stripper && npm test                  # tsconfig, declarations, the exa
 
 `src/Cs2Ts.Runtime` holds everything with logic in it and knows nothing about
 CounterStrikeSharp, so it is tested without a server.
+`bench/Cs2Ts.Spike` is the measurement plugin behind the numbers above — it is kept
+because a project that claims things were measured should ship what measured them, and it
+lives outside `src/` because it is not part of what a server operator installs. Running it
+alongside the real plugin puts a second V8 in the process and skews what it is there to
+measure.
 `src/Cs2Ts.Plugin` is the binding: it starts V8 safely, turns CounterStrikeSharp
 events into dispatches, and drains queued work once a tick.
 
