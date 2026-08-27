@@ -27,6 +27,7 @@ public sealed class Cs2TsPlugin : BasePlugin
     private FileSystemWatcher? _watcher;
     private bool _scriptsLoaded;
     private bool _engineChecked;
+    private bool _engineIsOurs;
 
     /// <summary>Where a server operator drops their script files.</summary>
     private string ScriptDirectory => Path.Combine(ModuleDirectory, "scripts");
@@ -128,16 +129,27 @@ public sealed class Cs2TsPlugin : BasePlugin
         engine.AddHostObject("console", new ConsoleApi(plugin.Name, Console.WriteLine));
         engine.AddHostObject("players", new PlayersApi(_players!));
 
-        // Once, for the first engine. If the bootstrap had quietly failed and scripts
-        // were running on the game's own V8, nothing would crash and nothing would look
-        // wrong — so the check has to be made rather than assumed.
+        // Once, for the first engine, and silent when it passes. An operator has no
+        // question this answers on a working server — the bootstrap already logged that
+        // it succeeded — and a line that only ever says "the normal thing happened" is
+        // the kind of noise that trains people to stop reading the log.
+        //
+        // It is not silent when it fails, because that failure has no other symptom:
+        // nothing crashes, nothing looks wrong, and the isolation everything else here
+        // assumes is simply absent.
         if (!_engineChecked)
         {
             _engineChecked = true;
-            Console.WriteLine(V8Bootstrap.LooksLikeOurV8(engine)
-                ? "[CS2-TS] engine check ok: scripts run on ClearScript's V8, not the game's"
-                : "[CS2-TS] ENGINE CHECK FAILED: this engine looks like the game's V8. " +
-                  "The bootstrap did not isolate us; script behaviour is not what this plugin assumes.");
+            _engineIsOurs = V8Bootstrap.LooksLikeOurV8(engine);
+
+            if (!_engineIsOurs)
+            {
+                Console.WriteLine(
+                    "[CS2-TS] WARNING: the scripting engine is not the one this plugin ships. " +
+                    "Scripts are running on the game's own JavaScript engine, which is years older " +
+                    "and shared with the map. Expect missing language features and no isolation. " +
+                    "Check that ClearScriptV8.linux-x64.so is present next to the plugin.");
+            }
         }
     }
 
@@ -239,6 +251,11 @@ public sealed class Cs2TsPlugin : BasePlugin
             Console.WriteLine($"[CS2-TS] {_host.Loaded.Count} script(s): {string.Join(", ", _host.Loaded)}");
             Console.WriteLine($"[CS2-TS] queued frames: {_host.Frames.Count}, dropped: {_host.Frames.Dropped}");
             Console.WriteLine($"[CS2-TS] watchdog interruptions: {_host.Watchdog.Interruptions}");
+
+            // Available to whoever asks, rather than announced to everyone who does not.
+            Console.WriteLine(_engineChecked
+                ? $"[CS2-TS] engine: {(_engineIsOurs ? "the one this plugin ships" : "the game's own — see the warning at load")}"
+                : "[CS2-TS] engine: not started yet");
         });
     }
 
@@ -433,6 +450,7 @@ public sealed class Cs2TsPlugin : BasePlugin
         _host = null;
         _scriptsLoaded = false;
         _engineChecked = false;
+        _engineIsOurs = false;
 
         _players?.Clear();
         _players = null;
