@@ -27,6 +27,11 @@ declare global {
          * This is the escape hatch. What comes back is the CounterStrikeSharp object
          * itself, untyped on purpose: past this point the script is responsible for its
          * own validity checking, and for whatever it does with a native object.
+         *
+         * It reads and it calls methods; it cannot write a networked field. Those are
+         * ref-returning properties in CounterStrikeSharp and there is no way to assign
+         * to one from script — measured. So writing health, armour or money goes
+         * through the facade or not at all.
          */
         resolve(): T;
 

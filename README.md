@@ -44,9 +44,9 @@ Phase 2 has started with the player facade: `player.health = 100` is one stateme
 script and two in CounterStrikeSharp, where leaving the second one out changes the value
 on the server while every client keeps showing the old one. Hiding steps that fail
 silently when forgotten is what a facade is for; shorter spelling is a side effect. It
-runs on a real server — reads, writes, `teleport` and the dead-player error were checked
-against bots on de_dust2, and the schema names behind the writes were confirmed by
-deliberately breaking one and watching CounterStrikeSharp warn about it. Nothing has been
+runs on a real server, and the claim was checked from both sides with a client connected:
+a facade write reaches the HUD, while the same field written past the facade changes on
+the server and never arrives — no error, no warning, nothing in the log. Nothing has been
 run for longer than a few minutes or with more than a handful of bots.
 
 Prior art is not encouraging, and that is worth stating up front. Swiftly

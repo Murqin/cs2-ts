@@ -15,8 +15,9 @@ on("round_start", (timeLimit: number): void => {
 
     // Writing health here is one statement. Through CounterStrikeSharp it is two — set
     // the field, then mark it changed — and leaving the second one out gives every
-    // client a stale number while the server believes the new one. The facade owes the
-    // author that step.
+    // client a stale number while the server believes the new one. That was checked
+    // with a client connected: the facade's write shows up on the HUD, the same write
+    // made past the facade never arrives and reports nothing.
     for (const player of players.all()) {
         if (player.isAlive && player.team !== Team.Spectator) {
             player.health = 100;
