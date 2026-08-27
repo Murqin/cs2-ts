@@ -66,6 +66,24 @@ public sealed class ScriptHostTests(HostFixture fixture) : IDisposable
     private PluginLoadResult Load(string name, string typeScript) =>
         Host.Load(name, $"{name}.ts", typeScript);
 
+    /// <summary>
+    /// The engine check has to say yes for a healthy engine, or it is a check that
+    /// would never fire.
+    ///
+    /// Outside the CS2 process there is only one V8, so this cannot prove the check
+    /// discriminates — that was done on a server, by reading the same features from a
+    /// script and finding all of them present on an engine three years newer than the
+    /// game's. What this pins is that a working engine is not reported as broken.
+    /// </summary>
+    [Fact]
+    public void TheEngineCheckPassesOnAHealthyEngine()
+    {
+        using var runtime = new Microsoft.ClearScript.V8.V8Runtime("engine-check");
+        using var engine = runtime.CreateScriptEngine("engine-check");
+
+        Assert.True(V8Bootstrap.LooksLikeOurV8(engine));
+    }
+
     [Fact]
     public void LoadsATypeScriptPluginAndDispatchesToIt()
     {

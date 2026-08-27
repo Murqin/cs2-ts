@@ -26,6 +26,7 @@ public sealed class Cs2TsPlugin : BasePlugin
     private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;
     private FileSystemWatcher? _watcher;
     private bool _scriptsLoaded;
+    private bool _engineChecked;
 
     /// <summary>Where a server operator drops their script files.</summary>
     private string ScriptDirectory => Path.Combine(ModuleDirectory, "scripts");
@@ -126,6 +127,18 @@ public sealed class Cs2TsPlugin : BasePlugin
         engine.AddHostObject("server", new ServerApi(plugin, _host!.Frames));
         engine.AddHostObject("console", new ConsoleApi(plugin.Name, Console.WriteLine));
         engine.AddHostObject("players", new PlayersApi(_players!));
+
+        // Once, for the first engine. If the bootstrap had quietly failed and scripts
+        // were running on the game's own V8, nothing would crash and nothing would look
+        // wrong — so the check has to be made rather than assumed.
+        if (!_engineChecked)
+        {
+            _engineChecked = true;
+            Console.WriteLine(V8Bootstrap.LooksLikeOurV8(engine)
+                ? "[CS2-TS] engine check ok: scripts run on ClearScript's V8, not the game's"
+                : "[CS2-TS] ENGINE CHECK FAILED: this engine looks like the game's V8. " +
+                  "The bootstrap did not isolate us; script behaviour is not what this plugin assumes.");
+        }
     }
 
     private void RegisterEvents()
@@ -419,6 +432,7 @@ public sealed class Cs2TsPlugin : BasePlugin
         _host?.Dispose();
         _host = null;
         _scriptsLoaded = false;
+        _engineChecked = false;
 
         _players?.Clear();
         _players = null;
