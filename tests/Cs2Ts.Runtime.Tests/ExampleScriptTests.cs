@@ -201,16 +201,16 @@ public sealed class ExampleScriptTests : IDisposable
         Assert.True(LoadExample().Succeeded);
         var controller = _world.Add(7, "murqin");
 
-        Assert.Equal(1, _host.DispatchCommand("whereami", _table.For(7), []));
+        Assert.Equal(1, _host.DispatchCommand("whereami", _table.For(7), []).Taken);
         Assert.Equal(["1, 2, 3 on de_dust2"], controller.Chat);
 
         // From the server console there is no player, and the example says so rather
         // than throwing — which is the case the null in the signature exists for.
-        Assert.Equal(1, _host.DispatchCommand("whereami", null, ["x"]));
+        Assert.Equal(1, _host.DispatchCommand("whereami", null, ["x"]).Taken);
         Assert.Contains("whereami: nobody ran this — args were [x]", _console.Lines);
 
         controller.Pawn = null;
-        Assert.Equal(1, _host.DispatchCommand("whereami", _table.For(7), []));
+        Assert.Equal(1, _host.DispatchCommand("whereami", _table.For(7), []).Taken);
         Assert.Contains("you are not in the world right now", controller.Chat);
 
         Assert.Empty(_errors);
@@ -224,10 +224,10 @@ public sealed class ExampleScriptTests : IDisposable
 
         var controller = _world.Add(7, "murqin");
 
-        Assert.Equal(1, _host.DispatchCommand("ping", _table.For(7), ["one"]));
+        Assert.Equal(1, _host.DispatchCommand("ping", _table.For(7), ["one"]).Taken);
         Assert.Equal(["pong (1 argument)"], controller.Chat);
 
-        Assert.Equal(1, _host.DispatchCommand("ping", _table.For(7), []));
+        Assert.Equal(1, _host.DispatchCommand("ping", _table.For(7), []).Taken);
         Assert.Contains("pong (0 arguments)", controller.Chat);
 
         Assert.Empty(_errors);

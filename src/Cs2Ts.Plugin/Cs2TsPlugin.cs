@@ -264,10 +264,17 @@ public sealed class Cs2TsPlugin : BasePlugin
                 ? _players.For(userId)
                 : null;
 
-            if (_host.DispatchCommand(name, player, args) == 0)
+            var outcome = _host.DispatchCommand(name, player, args);
+            if (outcome.Taken > 0)
             {
-                command.ReplyToCommand($"No script is handling '{name}' right now.");
+                // It ran. If it threw, the boundary has already said so, with the
+                // script's own file and line — repeating it here would only add noise.
+                return;
             }
+
+            command.ReplyToCommand(outcome.Skipped > 0
+                ? $"'{name}' is switched off after repeated errors; see the server log."
+                : $"No script is handling '{name}' right now.");
         });
     }
 

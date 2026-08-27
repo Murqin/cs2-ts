@@ -84,6 +84,61 @@ public sealed class ScriptHostTests(HostFixture fixture) : IDisposable
         Assert.True(V8Bootstrap.LooksLikeOurV8(engine));
     }
 
+    /// <summary>
+    /// A reload must not cost the author their file and line.
+    ///
+    /// It did, and only on a server: every plugin engine shares one V8Runtime, so the
+    /// second load of "x.ts" met a document of that name already in ClearScript's store
+    /// and was renamed "x [2].ts". Every stack frame then pointed at a file nobody has,
+    /// and the location was dropped — leaving "error in plugin 'x'" with nowhere to
+    /// look. Tests that load once cannot see it, which is why this one loads twice.
+    /// </summary>
+    [Fact]
+    public void ReloadingKeepsTheAuthorsFileAndLine()
+    {
+        const string Source =
+            """
+            on("boom", (): void => {
+                throw new Error("from the script");
+            });
+            """;
+
+        for (var load = 1; load <= 3; load++)
+        {
+            Assert.True(Host.Load("located", "located.ts", Source).Succeeded);
+            Host.Dispatch("boom");
+
+            var error = Assert.Single(Errors);
+            Assert.Equal("located.ts", error.FileName);
+            Assert.Equal(2, error.Line);
+            Assert.StartsWith("located.ts(2,", error.ToString());
+            Errors.Clear();
+        }
+    }
+
+    /// <summary>
+    /// A file name with a space in it is a name someone will use, and it used to take
+    /// the location with it: the frame pattern excluded whitespace.
+    /// </summary>
+    [Fact]
+    public void AFileNameWithASpaceKeepsItsLocation()
+    {
+        Assert.True(Host.Load(
+            "spaced",
+            "vip system.ts",
+            """
+            on("boom", (): void => {
+                throw new Error("from the script");
+            });
+            """).Succeeded);
+
+        Host.Dispatch("boom");
+
+        var error = Assert.Single(Errors);
+        Assert.Equal("vip system.ts", error.FileName);
+        Assert.Equal(2, error.Line);
+    }
+
     [Fact]
     public void LoadsATypeScriptPluginAndDispatchesToIt()
     {

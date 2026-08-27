@@ -183,6 +183,11 @@ public sealed class ScriptPlugin : IDisposable
     private void RunTopLevel(string javaScript)
     {
         using var guard = _watchdog?.Guard(_engine);
+        // The name here is what every stack frame will carry, so it is the author's own
+        // file name and nothing else. ClearScript may still decorate it — see
+        // ScriptError, which undoes that — and IsTransient is not the way out: it
+        // trades "vip [2].ts" for "vip.ts [temp]", which is the same problem wearing a
+        // different suffix.
         _engine.Execute(new DocumentInfo(FileName), javaScript);
     }
 
@@ -192,13 +197,21 @@ public sealed class ScriptPlugin : IDisposable
     /// One failing handler does not stop the others, and does not reach the caller:
     /// the caller is a CounterStrikeSharp event running under native code.
     /// </summary>
-    public int Dispatch(string eventName, params object?[] args)
+    public int Dispatch(string eventName, params object?[] args) =>
+        DispatchDetailed(eventName, args).Completed;
+
+    /// <summary>
+    /// The same dispatch, keeping what became of each handler. Commands need the
+    /// detail: telling whoever typed one that nothing handled it is only true when
+    /// nothing was registered, not when the handler ran and threw.
+    /// </summary>
+    public DispatchOutcome DispatchDetailed(string eventName, params object?[] args)
     {
         ArgumentException.ThrowIfNullOrEmpty(eventName);
 
         if (_disposed || _token.IsCancellationRequested)
         {
-            return 0;
+            return default;
         }
 
         Registration[] registrations;
@@ -206,13 +219,15 @@ public sealed class ScriptPlugin : IDisposable
         {
             if (!_handlers.TryGetValue(eventName, out var list))
             {
-                return 0;
+                return default;
             }
 
             registrations = [.. list];
         }
 
-        var ran = 0;
+        var completed = 0;
+        var failed = 0;
+        var skipped = 0;
         foreach (var registration in registrations)
         {
             var outcome = Boundary.Invoke(registration.HandlerName, () =>
@@ -221,13 +236,21 @@ public sealed class ScriptPlugin : IDisposable
                 return registration.Handler.InvokeAsFunction(args);
             });
 
-            if (outcome == BoundaryOutcome.Completed)
+            switch (outcome)
             {
-                ran++;
+                case BoundaryOutcome.Completed:
+                    completed++;
+                    break;
+                case BoundaryOutcome.Failed:
+                    failed++;
+                    break;
+                default:
+                    skipped++;
+                    break;
             }
         }
 
-        return ran;
+        return new DispatchOutcome(completed, failed, skipped);
     }
 
     /// <summary>

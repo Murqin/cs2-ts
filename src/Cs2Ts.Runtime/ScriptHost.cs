@@ -229,19 +229,34 @@ public sealed class ScriptHost : IDisposable
     }
 
     /// <summary>
-    /// Runs a command, and returns how many handlers took it. Zero means no loaded
-    /// script answers that name — worth telling whoever typed it, because the
-    /// alternative is a command that appears to work and does nothing.
+    /// Runs a command and reports what became of it, in enough detail for the caller to
+    /// say something true: nobody registered it, it ran, or it is switched off after
+    /// repeated failures. Collapsing those into one number is how a command that threw
+    /// came to report itself as unregistered.
     /// </summary>
     /// <param name="name">The command, without the console prefix.</param>
     /// <param name="player">Who ran it, or <c>null</c> from the server console.</param>
     /// <param name="args">Everything after the command itself.</param>
-    public int DispatchCommand(string name, object? player, string[] args)
+    public DispatchOutcome DispatchCommand(string name, object? player, string[] args)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         ArgumentNullException.ThrowIfNull(args);
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
-        return Dispatch(ScriptPlugin.HandlerKey(name), player, args);
+        ScriptPlugin[] plugins;
+        lock (_gate)
+        {
+            plugins = [.. _plugins.Values];
+        }
+
+        var key = ScriptPlugin.HandlerKey(name);
+        var outcome = default(DispatchOutcome);
+        foreach (var plugin in plugins)
+        {
+            outcome += plugin.DispatchDetailed(key, player, args);
+        }
+
+        return outcome;
     }
 
     /// <summary>
