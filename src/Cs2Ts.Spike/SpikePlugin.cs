@@ -27,7 +27,8 @@ public sealed class SpikePlugin : BasePlugin
     public override void Load(bool hotReload)
     {
         var control = Environment.GetEnvironmentVariable("CS2TS_NO_DEEPBIND") == "1";
-        var mode = control ? "control" : "deepbind";
+        var noV8 = Environment.GetEnvironmentVariable("CS2TS_NO_V8") == "1";
+        var mode = noV8 ? "baseline" : control ? "control" : "deepbind";
 
         SpikeLog.Open(Path.Combine(Path.GetTempPath(), $"cs2ts-spike-{mode}.log"));
         SpikeLog.Write($"mode={mode} hotReload={hotReload}");
@@ -35,13 +36,25 @@ public sealed class SpikePlugin : BasePlugin
 
         try
         {
+            PrepareServer();
+            ScheduleBotFill();
+
+            if (noV8)
+            {
+                // The CounterStrikeSharp baseline: this plugin is loaded and ticking,
+                // but no V8 exists in the process beyond Valve's own. Everything the
+                // loaded run does on top of this is what the scripting layer costs.
+                SpikeLog.Write("no-V8 baseline run: skipping every ClearScript path");
+                ScheduleFrametimeBench(null);
+                return;
+            }
+
             if (!control && !V8Bootstrap.Install(ModuleDirectory, SpikeLog.Write))
             {
                 return;
             }
 
             Coexistence();
-            PrepareServer();
             ScheduleBoundaryBench();
         }
         catch (Exception ex)
@@ -103,6 +116,34 @@ public sealed class SpikePlugin : BasePlugin
         SpikeLog.Write($"server prepared: {string.Join("; ", setup)}");
     }
 
+    /// <summary>
+    /// The bot quota does not stick when it is set during plugin load: the game rules
+    /// are not up yet and only a couple of bots ever join. Re-issuing it once the map
+    /// is running is what actually fills the server.
+    /// </summary>
+    private void ScheduleBotFill()
+    {
+        AddTimer(8.0f, () =>
+        {
+            Server.ExecuteCommand("bot_quota_mode fill");
+            Server.ExecuteCommand("bot_quota 10");
+            SpikeLog.Write("bot quota re-issued");
+        });
+    }
+
+    private void ScheduleFrametimeBench(Action? perTickWork)
+    {
+        // Sixty seconds at 64 tick. Long enough for a major collection to land, which
+        // is the event this benchmark exists to catch.
+        AddTimer(30.0f, () =>
+        {
+            SpikeLog.Write($"players at frametime start: {Utilities.GetPlayers().Count(p => p.IsValid)}");
+            new FrametimeBench(this, SpikeLog.Write, ticks: 3840, perTickWork).Start();
+        });
+
+        SpikeLog.Write("frametime benchmark scheduled for T+30s");
+    }
+
     private void ScheduleBoundaryBench()
     {
         // Benchmarks belong on the game thread, and not during map load: measuring
@@ -125,6 +166,13 @@ public sealed class SpikePlugin : BasePlugin
                 // 640 ticks is ten seconds at 64 tick: long enough for a tail, short
                 // enough that the run finishes without supervision.
                 new TickBench(this, _engine, SpikeLog.Write, ticks: 640).Start(userIds);
+
+                // The loaded half of the frametime comparison: the same per-tick script
+                // work a real handler would do, so the distribution reflects the cost
+                // rather than an idle engine.
+                var readHealth = (Microsoft.ClearScript.ScriptObject)_engine.Script.tickRead;
+                var id = userIds.Length > 0 ? userIds[0] : 0;
+                AddTimer(15.0f, () => ScheduleFrametimeBench(() => readHealth.InvokeAsFunction(id)));
             }
             catch (Exception ex)
             {
