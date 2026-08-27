@@ -31,10 +31,18 @@ PLT, so without `RTLD_DEEPBIND` plus a `DllImportResolver` pointed at that
 handle the process aborts inside Valve's V8 on the first engine. Both halves are
 required; see `src/Cs2Ts.Runtime/V8Bootstrap.cs`.
 
-Phase 1's four parts are written and tested — type stripping, an exception boundary,
-handle resolution, and a host with per-plugin engines, hot reload and a watchdog — but
-none of it has been run inside a CS2 server yet, and there is no player API: a script
-reaches the game through `handle.resolve()` for now. Treat it as unproven.
+Phase 1's four parts — type stripping, an exception boundary, handle resolution, and a
+host with per-plugin engines, hot reload and a watchdog — run inside a real CS2 server:
+scripts load, events reach TypeScript, and editing a `.ts` file reloads it while the
+server is running. Running it there also found a crash that no amount of desk work
+would have: a script's top-level code used to run during plugin load, before the game
+was initialised, where reading `Server.CurrentTime` segfaults the process. That is a
+native crash, so the exception boundary cannot contain it; scripts now wait for the
+map to be up.
+
+There is still no player API — a script reaches the game through `handle.resolve()` —
+and nothing has been run for longer than a few minutes or with more than a handful of
+bots.
 
 Prior art is not encouraging, and that is worth stating up front. Swiftly
 shipped a JS/TS plugin layer and abandoned it (QuickJS was too slow, embedding
@@ -134,7 +142,7 @@ so the stripper reports those itself, along with anything that does not parse.
 | Phase | Scope | |
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
-| 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **written, not yet run on a server** |
+| 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
 | 2 | Player and entity APIs, commands, timers, escape hatch | |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
 | 4 | Module resolution, permissions, plugin distribution | |

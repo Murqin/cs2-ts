@@ -23,6 +23,7 @@ public sealed class Cs2TsPlugin : BasePlugin
     private ScriptHost? _host;
     private EntityHandleTable<CCSPlayerController>? _players;
     private FileSystemWatcher? _watcher;
+    private bool _scriptsLoaded;
 
     /// <summary>Where a server operator drops their <c>.ts</c> files.</summary>
     private string ScriptDirectory => Path.Combine(ModuleDirectory, "scripts");
@@ -43,14 +44,56 @@ public sealed class Cs2TsPlugin : BasePlugin
         _host.Configure = InstallApi;
 
         Directory.CreateDirectory(ScriptDirectory);
-        LoadAll();
         WatchForChanges();
 
         // Background work comes back here, on the game thread, once a tick.
-        RegisterListener<Listeners.OnTick>(() => _host?.DrainFrames());
+        RegisterListener<Listeners.OnTick>(OnTick);
+
+        // The signal that the game can answer. It has to be OnMapStart rather than a
+        // tick: an empty server hibernates as soon as the map is up, and a hibernating
+        // server does not tick at all, so a tick-gated load would never happen on a
+        // server nobody has joined yet.
+        RegisterListener<Listeners.OnMapStart>(_ => LoadScriptsOnce());
 
         RegisterEvents();
         RegisterCommands();
+    }
+
+    /// <summary>
+    /// Runs the deferred work, and holds the first script load until the game is up.
+    ///
+    /// A script's top-level code runs when the plugin loads it, and at plugin-load time
+    /// the game is not initialised yet. That is not a nuisance, it is a crash: reading
+    /// Server.CurrentTime there segfaults the process — measured, reproducibly. A native
+    /// crash is not something the script boundary can contain, because there is no
+    /// managed exception to catch and no process left to report it, so the only defence
+    /// is not to run script code until the game can answer.
+    ///
+    /// Server.MapName is the readiness probe, and it is one that was measured rather
+    /// than assumed: it is null while the plugin is loading and a real name once a map
+    /// is running.
+    /// </summary>
+    private void OnTick()
+    {
+        // The secondary trigger, for a plugin loaded while a map is already running:
+        // OnMapStart has been and gone, but the loop is turning, so the game is up.
+        LoadScriptsOnce();
+        _host?.DrainFrames();
+    }
+
+    /// <summary>
+    /// Loads every script, once, and only once the game can answer. Both triggers call
+    /// it and both run on the game thread, so the flag needs no lock.
+    /// </summary>
+    private void LoadScriptsOnce()
+    {
+        if (_scriptsLoaded || _host is null || string.IsNullOrEmpty(Server.MapName))
+        {
+            return;
+        }
+
+        _scriptsLoaded = true;
+        LoadAll();
     }
 
     /// <summary>
@@ -269,6 +312,13 @@ public sealed class Cs2TsPlugin : BasePlugin
                     pending.Remove(path);
                 }
 
+                if (!_scriptsLoaded)
+                {
+                    // The game is not up yet, so the first load has not happened. It
+                    // will pick this file up when it does.
+                    return;
+                }
+
                 if (File.Exists(path))
                 {
                     LoadFile(path);
@@ -310,6 +360,7 @@ public sealed class Cs2TsPlugin : BasePlugin
 
         _host?.Dispose();
         _host = null;
+        _scriptsLoaded = false;
 
         _players?.Clear();
         _players = null;
