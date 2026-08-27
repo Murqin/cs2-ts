@@ -49,6 +49,13 @@ a facade write reaches the HUD, while the same field written past the facade cha
 the server and never arrives — no error, no warning, nothing in the log. Nothing has been
 run for longer than a few minutes or with more than a handful of bots.
 
+Two of the risks phase 0 could not settle are now measured. A second plugin engine costs
+less memory than a running server's own noise — eight of them together moved RSS by under
+4 MB, against a 10 MB-per-engine budget — because engines share one V8 runtime and each is
+a context rather than an isolate. And the collision that shaped the whole design was
+tested from the other side at last: on Valve's own `script_zoo` map, which runs seven
+`cs_script` files, their V8 and ours both executed in one process with no fault.
+
 Prior art is not encouraging, and that is worth stating up front. Swiftly
 shipped a JS/TS plugin layer and abandoned it (QuickJS was too slow, embedding
 V8 in a C++ host proved "extremely complex"); its successor returned to C#. All

@@ -171,4 +171,38 @@ public static class V8Bootstrap
         log($"bootstrap ok deepbind={soPath} handle=0x{handle.ToInt64():x}");
         return true;
     }
+
+    /// <summary>
+    /// Checks that a plugin engine is running ClearScript's V8 and not the game's.
+    ///
+    /// The bootstrap's whole job is to send our calls to our own V8 rather than to the
+    /// one already in the process. If it silently failed, scripts would run on Valve's
+    /// V8 instead — and the symptom would not be a crash, it would be everything
+    /// appearing to work while the isolation the design depends on does not exist.
+    ///
+    /// The two builds are years apart, so a feature that postdates the game's engine is
+    /// a direct reading of which one compiled this. RegExp.escape landed in V8 13.5;
+    /// the version CS2 ships is 11.9.
+    /// </summary>
+    /// <returns>True when the engine is newer than the game's, with no way to be sure which.</returns>
+    public static bool LooksLikeOurV8(Microsoft.ClearScript.V8.V8ScriptEngine engine)
+    {
+        ArgumentNullException.ThrowIfNull(engine);
+
+        try
+        {
+            return engine.Evaluate(
+                """
+                typeof RegExp.escape === "function" &&
+                typeof Float16Array === "function" &&
+                typeof Set.prototype.union === "function"
+                """) is true;
+        }
+        catch
+        {
+            // A throw here is itself an answer of sorts, but not one worth crashing over:
+            // the caller logs and carries on.
+            return false;
+        }
+    }
 }
