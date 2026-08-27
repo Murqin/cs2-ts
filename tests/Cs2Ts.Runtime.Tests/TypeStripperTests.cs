@@ -222,6 +222,87 @@ public sealed class TypeStripperTests(StripperFixture fixture, ITestOutputHelper
         Assert.InRange(stripper.LoadTime.TotalMilliseconds, 0, 2000);
     }
 
+    /// <summary>
+    /// A .js file has nothing to strip, so it has to come back exactly as it went in.
+    /// Authors who already write Valve's cs_script write JavaScript, so this is the
+    /// path most of them arrive on.
+    /// </summary>
+    [Theory]
+    [InlineData("const a = 1;\nexport function f(x) { return x * 2; }\n")]
+    [InlineData("/** @param {number} x */\nexport function f(x) { return x; }\n")]
+    [InlineData("class A { #p = 1; static s = 2; get v() { return this.#p; } }\n")]
+    [InlineData("const v = a?.b?.[0] ?? c;\n")]
+    [InlineData("const re = /ab+c/gi;\n")]
+    public void LeavesJavaScriptExactlyAsItFoundIt(string source)
+    {
+        var result = Stripper.Strip("plugin.js", source);
+
+        Assert.True(result.Succeeded, string.Join("; ", result.Diagnostics.Select(d => d.ToString())));
+        Assert.Equal(source, result.JavaScript);
+    }
+
+    /// <summary>
+    /// The reason the parser mode has to follow the extension rather than default to
+    /// TypeScript. Read as TypeScript, `a &lt; b &gt; (c)` is a call with type arguments,
+    /// so the stripper erases the type arguments and hands back different, working,
+    /// silently wrong JavaScript — no diagnostic, no clue.
+    /// </summary>
+    [Fact]
+    public void DoesNotMistakeAComparisonForTypeArgumentsInJavaScript()
+    {
+        const string source = "const r = a < b > (c);\n";
+
+        var asJavaScript = Stripper.Strip("plugin.js", source);
+        Assert.True(asJavaScript.Succeeded);
+        Assert.Equal(source, asJavaScript.JavaScript);
+
+        // Pinned so the hazard stays visible: the same text in a .ts file really is
+        // read as type arguments, and that is correct for TypeScript.
+        var asTypeScript = Stripper.Strip("plugin.ts", source);
+        Assert.True(asTypeScript.Succeeded);
+        Assert.NotEqual(source, asTypeScript.JavaScript);
+    }
+
+    [Theory]
+    [InlineData("plugin.js")]
+    [InlineData("plugin.mjs")]
+    [InlineData("plugin.cjs")]
+    [InlineData("PLUGIN.JS")]
+    public void TreatsEveryJavaScriptExtensionAsJavaScript(string fileName)
+    {
+        const string source = "const r = a < b > (c);\n";
+
+        Assert.Equal(source, Stripper.Strip(fileName, source).JavaScript);
+    }
+
+    /// <summary>
+    /// The guards that are about the runtime rather than about types still apply to a
+    /// .js file: V8 rejects decorators whatever the file is called.
+    /// </summary>
+    [Fact]
+    public void StillRefusesDecoratorsInJavaScript()
+    {
+        var result = Stripper.Strip("plugin.js", "class A {\n    @dec m() {}\n}\n");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("CS2TS_DECORATOR", Assert.Single(result.Diagnostics).Code);
+    }
+
+    /// <summary>
+    /// TypeScript syntax inside a .js file is stripped rather than refused — measured,
+    /// and worth pinning because it is not the obvious behaviour. The extension is not
+    /// a gate: renaming a working .ts file to .js keeps it working. The one thing the
+    /// extension really decides is the ambiguity above.
+    /// </summary>
+    [Fact]
+    public void StripsTypeScriptSyntaxFoundInAJavaScriptFileRatherThanRefusingIt()
+    {
+        var result = Stripper.Strip("plugin.js", "export function f(x: number): string { return `${x}`; }\n");
+
+        Assert.True(result.Succeeded);
+        Assert.DoesNotContain(": number", result.JavaScript);
+    }
+
     [Fact]
     public void DisposedStripperRefusesToBeUsed()
     {

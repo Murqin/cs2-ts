@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Cs2Ts.Plugin/Cs2Ts.Plugin.csproj" />
     <Project Path="src/Cs2Ts.Runtime/Cs2Ts.Runtime.csproj" />
     <Project Path="src/Cs2Ts.Spike/Cs2Ts.Spike.csproj" />
   </Folder>

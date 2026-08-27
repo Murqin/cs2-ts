@@ -1,0 +1,31 @@
+// For authors who would rather write JavaScript. The runtime treats .js and .ts the
+// same way — a .js file simply has nothing to strip — but the guard rails do not come
+// for free, and this file is what puts them back.
+//
+// Editors pick a jsconfig.json up automatically, so a JavaScript author gets the same
+// "this does not exist on the server" errors a TypeScript author gets, without writing
+// a single type annotation. Types can still be added in JSDoc where they are wanted.
+{
+    "compilerOptions": {
+        // The whole point. Without it a .js file is never checked and the first sign
+        // that fetch does not exist is a dead plugin on a live server.
+        "checkJs": true,
+        "allowJs": true,
+        "noEmit": true,
+
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "target": "esnext",
+
+        // Same reasoning as the TypeScript config: esnext only, no DOM, no ambient
+        // @types/node, so fetch / process / setTimeout / console / require fail here
+        // rather than at runtime. Every host API arrives from cs2ts.d.ts.
+        "lib": ["esnext"],
+        "types": [],
+
+        "strict": true,
+        "noFallthroughCasesInSwitch": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true
+    }
+}

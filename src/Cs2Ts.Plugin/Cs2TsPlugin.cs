@@ -1,0 +1,414 @@
+using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Commands;
+using Cs2Ts.Runtime;
+
+namespace Cs2Ts.Plugin;
+
+/// <summary>
+/// The CounterStrikeSharp plugin that hosts CS2-TS.
+///
+/// Everything with logic in it lives in Cs2Ts.Runtime, which knows nothing about
+/// CounterStrikeSharp and is tested without a server. This class is the binding: it
+/// starts V8 safely, turns CounterStrikeSharp events into dispatches, gives the handle
+/// table a way to resolve players, and drains queued work once a tick.
+/// </summary>
+public sealed class Cs2TsPlugin : BasePlugin
+{
+    public override string ModuleName => "CS2-TS";
+    public override string ModuleVersion => "0.1.0";
+    public override string ModuleAuthor => "Icarus Murqin";
+    public override string ModuleDescription => "TypeScript scripting for CounterStrike 2.";
+
+    private ScriptHost? _host;
+    private EntityHandleTable<CCSPlayerController>? _players;
+    private FileSystemWatcher? _watcher;
+    private bool _scriptsLoaded;
+
+    /// <summary>Where a server operator drops their script files.</summary>
+    private string ScriptDirectory => Path.Combine(ModuleDirectory, "scripts");
+
+    /// <summary>
+    /// Both are first-class. A .js file has nothing to strip, so accepting one costs the
+    /// runtime nothing — and the audience this is aimed at, people who already write
+    /// Valve's cs_script, write JavaScript.
+    /// </summary>
+    private static readonly string[] ScriptExtensions = ["*.ts", "*.js"];
+
+    public override void Load(bool hotReload)
+    {
+        // Before anything touches ClearScript. The CS2 server keeps Valve's own V8 in
+        // the global symbol scope, and without this the first engine aborts the process
+        // rather than throwing.
+        if (!V8Bootstrap.Install(ModuleDirectory, message => Console.WriteLine($"[CS2-TS] {message}")))
+        {
+            Console.WriteLine("[CS2-TS] V8 bootstrap failed; no scripts will be loaded.");
+            return;
+        }
+
+        _host = new ScriptHost(Report);
+        _players = new EntityHandleTable<CCSPlayerController>("player", ResolvePlayer);
+        _host.Configure = InstallApi;
+
+        Directory.CreateDirectory(ScriptDirectory);
+        WatchForChanges();
+
+        // Background work comes back here, on the game thread, once a tick.
+        RegisterListener<Listeners.OnTick>(OnTick);
+
+        // The signal that the game can answer. It has to be OnMapStart rather than a
+        // tick: an empty server hibernates as soon as the map is up, and a hibernating
+        // server does not tick at all, so a tick-gated load would never happen on a
+        // server nobody has joined yet.
+        RegisterListener<Listeners.OnMapStart>(_ => LoadScriptsOnce());
+
+        RegisterEvents();
+        RegisterCommands();
+    }
+
+    /// <summary>
+    /// Runs the deferred work, and holds the first script load until the game is up.
+    ///
+    /// A script's top-level code runs when the plugin loads it, and at plugin-load time
+    /// the game is not initialised yet. That is not a nuisance, it is a crash: reading
+    /// Server.CurrentTime there segfaults the process — measured, reproducibly. A native
+    /// crash is not something the script boundary can contain, because there is no
+    /// managed exception to catch and no process left to report it, so the only defence
+    /// is not to run script code until the game can answer.
+    ///
+    /// Server.MapName is the readiness probe, and it is one that was measured rather
+    /// than assumed: it is null while the plugin is loading and a real name once a map
+    /// is running.
+    /// </summary>
+    private void OnTick()
+    {
+        // The secondary trigger, for a plugin loaded while a map is already running:
+        // OnMapStart has been and gone, but the loop is turning, so the game is up.
+        LoadScriptsOnce();
+        _host?.DrainFrames();
+    }
+
+    /// <summary>
+    /// Loads every script, once, and only once the game can answer. Both triggers call
+    /// it and both run on the game thread, so the flag needs no lock.
+    /// </summary>
+    private void LoadScriptsOnce()
+    {
+        if (_scriptsLoaded || _host is null || string.IsNullOrEmpty(Server.MapName))
+        {
+            return;
+        }
+
+        _scriptsLoaded = true;
+        LoadAll();
+    }
+
+    /// <summary>
+    /// The handle table's one link to the game. It answers null for a player who has
+    /// left and for one who is still around but no longer valid, because a script
+    /// cannot tell those apart and should not have to.
+    /// </summary>
+    private static CCSPlayerController? ResolvePlayer(long userId)
+    {
+        var controller = Utilities.GetPlayerFromUserid((int)userId);
+        return controller is { IsValid: true } ? controller : null;
+    }
+
+    /// <summary>
+    /// Installs the globals a plugin gets. Called for each engine before its code runs,
+    /// so a plugin can use these at its top level.
+    /// </summary>
+    private void InstallApi(ScriptPlugin plugin, Microsoft.ClearScript.V8.V8ScriptEngine engine)
+    {
+        engine.AddHostObject("server", new ServerApi(plugin, _host!.Frames));
+        engine.AddHostObject("console", new ConsoleApi(plugin.Name, Console.WriteLine));
+        engine.AddHostObject("players", new PlayersApi(_players!));
+    }
+
+    private void RegisterEvents()
+    {
+        // A deliberately short list. The facade is meant to stay behind
+        // CounterStrikeSharp's surface, and events are added when something needs them
+        // rather than in advance.
+        RegisterEventHandler<EventRoundStart>((@event, _) =>
+        {
+            _host?.Dispatch("round_start", @event.Timelimit);
+            return HookResult.Continue;
+        });
+
+        RegisterEventHandler<EventRoundEnd>((@event, _) =>
+        {
+            _host?.Dispatch("round_end", @event.Winner);
+            return HookResult.Continue;
+        });
+
+        RegisterEventHandler<EventPlayerConnectFull>((@event, _) =>
+        {
+            DispatchForPlayer("player_connect", @event.Userid);
+            return HookResult.Continue;
+        });
+
+        RegisterEventHandler<EventPlayerDisconnect>((@event, _) =>
+        {
+            DispatchForPlayer("player_disconnect", @event.Userid);
+            return HookResult.Continue;
+        });
+
+        RegisterEventHandler<EventPlayerDeath>((@event, _) =>
+        {
+            DispatchForPlayer("player_death", @event.Userid);
+            return HookResult.Continue;
+        });
+
+        RegisterEventHandler<EventPlayerSpawn>((@event, _) =>
+        {
+            DispatchForPlayer("player_spawn", @event.Userid);
+            return HookResult.Continue;
+        });
+    }
+
+    /// <summary>
+    /// Hands the script a handle rather than a controller. The controller is alive right
+    /// now, inside this event; the handle is still meaningful five seconds from now,
+    /// which is when a script is likely to look at it.
+    /// </summary>
+    private void DispatchForPlayer(string eventName, CCSPlayerController? controller)
+    {
+        if (_host is null || _players is null || controller?.UserId is not { } userId)
+        {
+            return;
+        }
+
+        _host.Dispatch(eventName, _players.For(userId));
+    }
+
+    private void RegisterCommands()
+    {
+        AddCommand("cs2ts_reload", "Reloads one CS2-TS script, or all of them.", (_, command) =>
+        {
+            if (_host is null)
+            {
+                return;
+            }
+
+            var requested = command.ArgCount > 1 ? command.GetArg(1) : null;
+            if (string.IsNullOrWhiteSpace(requested))
+            {
+                LoadAll();
+                Console.WriteLine($"[CS2-TS] reloaded {_host.Loaded.Count} script(s)");
+                return;
+            }
+
+            var path = new[] { ".ts", ".js" }
+                .Select(extension => Path.Combine(ScriptDirectory, requested + extension))
+                .FirstOrDefault(File.Exists);
+
+            if (path is null)
+            {
+                Console.WriteLine($"[CS2-TS] no such script: {requested}");
+                return;
+            }
+
+            LoadFile(path);
+        });
+
+        AddCommand("cs2ts_status", "Lists loaded CS2-TS scripts.", (_, _) =>
+        {
+            if (_host is null)
+            {
+                Console.WriteLine("[CS2-TS] not running");
+                return;
+            }
+
+            Console.WriteLine($"[CS2-TS] {_host.Loaded.Count} script(s): {string.Join(", ", _host.Loaded)}");
+            Console.WriteLine($"[CS2-TS] queued frames: {_host.Frames.Count}, dropped: {_host.Frames.Dropped}");
+            Console.WriteLine($"[CS2-TS] watchdog interruptions: {_host.Watchdog.Interruptions}");
+        });
+    }
+
+    private void LoadAll()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        string[] found = Directory.Exists(ScriptDirectory)
+            ? ScriptExtensions
+                .SelectMany(pattern => Directory.GetFiles(ScriptDirectory, pattern, SearchOption.TopDirectoryOnly))
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .ToArray()
+            : [];
+
+        // vip.ts and vip.js would both want to be "vip". Rather than let the second one
+        // silently replace the first, both are refused: which one won would depend on
+        // directory order, which is not something an operator can reason about.
+        foreach (var clash in found
+                     .GroupBy(Path.GetFileNameWithoutExtension, StringComparer.Ordinal)
+                     .Where(group => group.Count() > 1)
+                     .ToArray())
+        {
+            Console.WriteLine(
+                $"[CS2-TS] '{clash.Key}' matches more than one file " +
+                $"({string.Join(", ", clash.Select(Path.GetFileName))}); rename one. Neither was loaded.");
+            found = found.Where(path => Path.GetFileNameWithoutExtension(path) != clash.Key).ToArray();
+        }
+
+        var onDisk = found.Select(path => Path.GetFileNameWithoutExtension(path)).ToHashSet(StringComparer.Ordinal);
+
+        // A script whose file was deleted while the server ran is still loaded until
+        // someone says otherwise, so reloading everything has to mean removals too.
+        foreach (var name in _host.Loaded.Where(name => !onDisk.Contains(name)).ToArray())
+        {
+            _host.Unload(name);
+            Console.WriteLine($"[CS2-TS] unloaded {name} (file is gone)");
+        }
+
+        foreach (var path in found)
+        {
+            LoadFile(path);
+        }
+    }
+
+    private void LoadFile(string path)
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        var name = Path.GetFileNameWithoutExtension(path);
+        string source;
+        try
+        {
+            source = File.ReadAllText(path);
+        }
+        catch (IOException exception)
+        {
+            // A save in progress is the usual reason. The watcher will fire again.
+            Console.WriteLine($"[CS2-TS] could not read {Path.GetFileName(path)}: {exception.Message}");
+            return;
+        }
+
+        var result = _host.Load(name, Path.GetFileName(path), source);
+        if (result.Succeeded)
+        {
+            Console.WriteLine($"[CS2-TS] loaded {Path.GetFileName(path)}");
+            return;
+        }
+
+        foreach (var line in result.Report())
+        {
+            Console.WriteLine($"[CS2-TS] {line}");
+        }
+    }
+
+    /// <summary>
+    /// Reloads a script when its file changes.
+    ///
+    /// The watcher's callbacks arrive on a thread pool thread, and everything the reload
+    /// touches — V8, the game — belongs to the game thread, so the work is handed back
+    /// through Server.NextFrame rather than done where it was noticed. Editors write a
+    /// file in several steps, so the reload is deferred slightly and a burst of events
+    /// collapses into one load.
+    /// </summary>
+    private void WatchForChanges()
+    {
+        // One watcher, filtered in the handler: FileSystemWatcher takes a single
+        // pattern, and two watchers over one directory would double every event.
+        _watcher = new FileSystemWatcher(ScriptDirectory)
+        {
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
+            EnableRaisingEvents = true,
+        };
+
+        var pending = new HashSet<string>();
+
+        void Schedule(string path)
+        {
+            lock (pending)
+            {
+                if (!pending.Add(path))
+                {
+                    return;
+                }
+            }
+
+            AddTimer(0.5f, () =>
+            {
+                lock (pending)
+                {
+                    pending.Remove(path);
+                }
+
+                if (!_scriptsLoaded)
+                {
+                    // The game is not up yet, so the first load has not happened. It
+                    // will pick this file up when it does.
+                    return;
+                }
+
+                if (File.Exists(path))
+                {
+                    LoadFile(path);
+                }
+                else if (_host is not null && _host.Unload(Path.GetFileNameWithoutExtension(path)))
+                {
+                    Console.WriteLine($"[CS2-TS] unloaded {Path.GetFileNameWithoutExtension(path)} (file is gone)");
+                }
+            });
+        }
+
+        // AddTimer must be called from the game thread, so the hop happens first.
+        static bool IsScript(string path) =>
+            path.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) ||
+            path.EndsWith(".js", StringComparison.OrdinalIgnoreCase);
+
+        void OnChanged(object _, FileSystemEventArgs e)
+        {
+            if (IsScript(e.FullPath))
+            {
+                Server.NextFrame(() => Schedule(e.FullPath));
+            }
+        }
+
+        _watcher.Changed += OnChanged;
+        _watcher.Created += OnChanged;
+        _watcher.Deleted += OnChanged;
+        _watcher.Renamed += (_, e) => Server.NextFrame(() =>
+        {
+            if (IsScript(e.OldFullPath))
+            {
+                Schedule(e.OldFullPath);
+            }
+
+            if (IsScript(e.FullPath))
+            {
+                Schedule(e.FullPath);
+            }
+        });
+    }
+
+    private static void Report(ScriptError error)
+    {
+        Console.WriteLine($"[CS2-TS] {error}");
+
+        if (error.StackTrace is not null)
+        {
+            Console.WriteLine(error.StackTrace);
+        }
+    }
+
+    public override void Unload(bool hotReload)
+    {
+        _watcher?.Dispose();
+        _watcher = null;
+
+        _host?.Dispose();
+        _host = null;
+        _scriptsLoaded = false;
+
+        _players?.Clear();
+        _players = null;
+    }
+}

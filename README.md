@@ -31,7 +31,18 @@ PLT, so without `RTLD_DEEPBIND` plus a `DllImportResolver` pointed at that
 handle the process aborts inside Valve's V8 on the first engine. Both halves are
 required; see `src/Cs2Ts.Runtime/V8Bootstrap.cs`.
 
-Phase 1 is in progress, and nothing here is usable as a plugin host yet.
+Phase 1's four parts — type stripping, an exception boundary, handle resolution, and a
+host with per-plugin engines, hot reload and a watchdog — run inside a real CS2 server:
+scripts load, events reach TypeScript, and editing a `.ts` file reloads it while the
+server is running. Running it there also found a crash that no amount of desk work
+would have: a script's top-level code used to run during plugin load, before the game
+was initialised, where reading `Server.CurrentTime` segfaults the process. That is a
+native crash, so the exception boundary cannot contain it; scripts now wait for the
+map to be up.
+
+There is still no player API — a script reaches the game through `handle.resolve()` —
+and nothing has been run for longer than a few minutes or with more than a handful of
+bots.
 
 Prior art is not encouraging, and that is worth stating up front. Swiftly
 shipped a JS/TS plugin layer and abandoned it (QuickJS was too slow, embedding
@@ -126,12 +137,29 @@ fail to type-check rather than to run. Decorators are the case that config
 cannot catch — they are proposed JavaScript rather than a TypeScript extension —
 so the stripper reports those itself, along with anything that does not parse.
 
+## JavaScript works too
+
+A `.js` file has nothing to strip, so it is loaded exactly like a `.ts` one. That
+is not an afterthought: Valve's `cs_script`, which this project expects its
+authors to arrive from, is JavaScript.
+
+The extension decides how the file is parsed, and that matters more than it
+sounds. Read as TypeScript, `a < b > (c)` is a call with type arguments, so the
+stripper would erase `< b >` and hand back `a       (c)` — working, different,
+silently wrong JavaScript with no diagnostic. Read as JavaScript it is left
+alone.
+
+JavaScript authors get the same guard rails from
+[`jsconfig.json`](templates/jsconfig.json): `checkJs` with the same `lib` and
+`types` pinning, so `fetch` and `process` still fail in the editor rather than on
+the server, with JSDoc types wherever they are wanted.
+
 ## Roadmap
 
 | Phase | Scope | |
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
-| 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | in progress |
+| 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
 | 2 | Player and entity APIs, commands, timers, escape hatch | |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
 | 4 | Module resolution, permissions, plugin distribution | |
@@ -146,8 +174,36 @@ step needs Node; the rest does not.
 cd tools/stripper && npm ci && npm run build   # writes Resources/stripper.js.gz
 cd ../.. && dotnet build Cs2Ts.slnx
 dotnet test tests/Cs2Ts.Runtime.Tests          # host side
-cd tools/stripper && npm test                  # the shipped tsconfig's promises
+cd tools/stripper && npm test                  # tsconfig, declarations, the example
 ```
+
+`src/Cs2Ts.Runtime` holds everything with logic in it and knows nothing about
+CounterStrikeSharp, so it is tested without a server.
+`src/Cs2Ts.Plugin` is the binding: it starts V8 safely, turns CounterStrikeSharp
+events into dispatches, and drains queued work once a tick.
+
+## Writing a script
+
+`templates/tsconfig.json` (or `templates/jsconfig.json`) and `templates/cs2ts.d.ts`
+are what an author compiles against. `examples/scripts/welcome.ts` and
+`examples/scripts/rounds.js` are working scripts, and both are exercised by both
+test suites so they cannot drift away from the runtime.
+
+```ts
+on("player_connect", (player: PlayerHandle): void => {
+    console.log(`player ${player.id} connected`);
+
+    server.nextFrame((): void => {
+        if (!player.isValid) {
+            return;
+        }
+        console.log(`player ${player.id} is still here`);
+    });
+});
+```
+
+Drop a `.ts` or `.js` file in the plugin's `scripts/` directory and it loads; save
+it again and it reloads. `cs2ts_status` lists what is loaded.
 
 ## License
 

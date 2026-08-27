@@ -113,8 +113,20 @@ function collectDecorators(sourceFile, report) {
     ts.forEachChild(sourceFile, walk);
 }
 
+/**
+ * Picks the parser mode from the file's extension.
+ *
+ * This is not a formality. Parsed as TypeScript, `a < b > (c)` reads as a call with
+ * type arguments, so the stripper erases `< b >` and hands back `a       (c)` — valid
+ * JavaScript turned into different, silently wrong JavaScript, with no diagnostic.
+ * Measured. Parsed as JavaScript the same line survives untouched.
+ */
+function scriptKindFor(fileName) {
+    return /\.[cm]?js$/i.test(fileName) ? ts.ScriptKind.JS : ts.ScriptKind.TS;
+}
+
 function strip(fileName, source) {
-    const sourceFile = ts.createSourceFile(fileName, source, PARSE_OPTIONS, false, ts.ScriptKind.TS);
+    const sourceFile = ts.createSourceFile(fileName, source, PARSE_OPTIONS, false, scriptKindFor(fileName));
     const diagnostics = [];
 
     const report = (node, described) => {
