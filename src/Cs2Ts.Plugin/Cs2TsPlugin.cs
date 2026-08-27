@@ -10,8 +10,9 @@ namespace Cs2Ts.Plugin;
 ///
 /// Everything with logic in it lives in Cs2Ts.Runtime, which knows nothing about
 /// CounterStrikeSharp and is tested without a server. This class is the binding: it
-/// starts V8 safely, turns CounterStrikeSharp events into dispatches, gives the handle
-/// table a way to resolve players, and drains queued work once a tick.
+/// starts V8 safely, turns CounterStrikeSharp events into dispatches, gives the player
+/// table a way to resolve players and a way to act on them, and drains queued work
+/// once a tick.
 /// </summary>
 public sealed class Cs2TsPlugin : BasePlugin
 {
@@ -21,7 +22,7 @@ public sealed class Cs2TsPlugin : BasePlugin
     public override string ModuleDescription => "TypeScript scripting for CounterStrike 2.";
 
     private ScriptHost? _host;
-    private EntityHandleTable<CCSPlayerController>? _players;
+    private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;
     private FileSystemWatcher? _watcher;
     private bool _scriptsLoaded;
 
@@ -47,7 +48,8 @@ public sealed class Cs2TsPlugin : BasePlugin
         }
 
         _host = new ScriptHost(Report);
-        _players = new EntityHandleTable<CCSPlayerController>("player", ResolvePlayer);
+        _players = new PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>(
+            "player", ResolvePlayer, new CssPlayerOperations());
         _host.Configure = InstallApi;
 
         Directory.CreateDirectory(ScriptDirectory);
@@ -104,7 +106,7 @@ public sealed class Cs2TsPlugin : BasePlugin
     }
 
     /// <summary>
-    /// The handle table's one link to the game. It answers null for a player who has
+    /// The facade table's one link to the game. It answers null for a player who has
     /// left and for one who is still around but no longer valid, because a script
     /// cannot tell those apart and should not have to.
     /// </summary>
@@ -168,8 +170,8 @@ public sealed class Cs2TsPlugin : BasePlugin
     }
 
     /// <summary>
-    /// Hands the script a handle rather than a controller. The controller is alive right
-    /// now, inside this event; the handle is still meaningful five seconds from now,
+    /// Hands the script a facade rather than a controller. The controller is alive right
+    /// now, inside this event; the facade is still meaningful five seconds from now,
     /// which is when a script is likely to look at it.
     /// </summary>
     private void DispatchForPlayer(string eventName, CCSPlayerController? controller)

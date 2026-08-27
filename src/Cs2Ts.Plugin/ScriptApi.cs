@@ -73,19 +73,19 @@ public sealed class ConsoleApi(string pluginName, Action<string> write)
 }
 
 /// <summary>
-/// The <c>players</c> global. Hands out handles, never controllers: what a script keeps
+/// The <c>players</c> global. Hands out facades, never controllers: what a script keeps
 /// is an identity that stops resolving when the player leaves.
 /// </summary>
 [DefaultScriptUsage(ScriptAccess.None)]
-public sealed class PlayersApi(EntityHandleTable<CCSPlayerController> table)
+public sealed class PlayersApi(PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn> table)
 {
-    /// <summary>The handle for a userid, whether or not that player is here now.</summary>
+    /// <summary>The player for a userid, whether or not they are here now.</summary>
     [ScriptMember("byUserId")]
-    public EntityHandle<CCSPlayerController> ByUserId(int userId) => table.For(userId);
+    public PlayerFacade<CCSPlayerController, CCSPlayerPawn> ByUserId(int userId) => table.For(userId);
 
-    /// <summary>Handles for everyone currently connected.</summary>
+    /// <summary>Everyone currently connected.</summary>
     [ScriptMember("all")]
-    public EntityHandle<CCSPlayerController>[] All() =>
+    public PlayerFacade<CCSPlayerController, CCSPlayerPawn>[] All() =>
         Utilities.GetPlayers()
             .Where(p => p is { IsValid: true, UserId: not null })
             .Select(p => table.For(p.UserId!.Value))
