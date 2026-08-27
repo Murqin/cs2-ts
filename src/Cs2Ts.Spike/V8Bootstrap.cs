@@ -19,8 +19,15 @@ namespace Cs2Ts.Spike;
 /// DEEPBIND puts the object's own scope ahead of the global one, which fits this case
 /// exactly: the library imports no v8:: symbol (0 undefined), so preferring its own
 /// definitions costs nothing.
+///
+/// The flags only take effect if they are applied to the file ClearScript actually
+/// opens. The host loads plugin assemblies from memory, so Assembly.Location is blank,
+/// ClearScript's disk search finds nothing, and P/Invoke resolution answers with a copy
+/// under a temp directory that the preload never touched. Claiming that resolution is
+/// therefore not an optimisation — without it the preload is dead weight and the server
+/// aborts.
 /// </summary>
-internal static class V8Preload
+internal static class V8Bootstrap
 {
     private const int RtldNow = 0x00002;
     private const int RtldDeepBind = 0x00008;
@@ -110,5 +117,34 @@ internal static class V8Preload
         var message = DlError();
         error = message == IntPtr.Zero ? "dlopen failed without a message" : Marshal.PtrToStringAnsi(message);
         return IntPtr.Zero;
+    }
+
+    /// <summary>
+    /// Preloads with DEEPBIND and routes ClearScript's P/Invoke resolution to that
+    /// handle. Both halves are required; either alone leaves the process aborting
+    /// inside Valve's V8. Safe to call once per process.
+    /// </summary>
+    public static bool Install(string pluginDirectory, Action<string> log)
+    {
+        var soPath = Locate(pluginDirectory);
+        if (soPath is null)
+        {
+            log("bootstrap FAILED: ClearScriptV8.linux-x64.so not found on any candidate path");
+            return false;
+        }
+
+        var handle = LoadDeepBind(soPath, out var error);
+        if (handle == IntPtr.Zero)
+        {
+            log($"bootstrap FAILED: dlopen {soPath}: {error}");
+            return false;
+        }
+
+        NativeLibrary.SetDllImportResolver(
+            typeof(V8ScriptEngine).Assembly,
+            (name, _, _) => name.Contains("ClearScriptV8", StringComparison.Ordinal) ? handle : IntPtr.Zero);
+
+        log($"bootstrap ok deepbind={soPath} handle=0x{handle.ToInt64():x}");
+        return true;
     }
 }

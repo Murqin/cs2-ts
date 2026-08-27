@@ -1,32 +1,33 @@
-using System.Runtime.InteropServices;
+using System.Linq;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using Microsoft.ClearScript.V8;
 
 namespace Cs2Ts.Spike;
 
 /// <summary>
-/// Phase 0, step 0: can a second V8 live in the CS2 server process at all?
+/// Phase 0 probe. Step 0 asks whether a second V8 can live in the CS2 server process
+/// at all; step 1 measures what one crossing of the C# / JavaScript boundary costs.
+/// Step 0 runs first and unconditionally, because a failure there leaves nothing to
+/// measure.
 ///
-/// This deliberately measures nothing about the C# to JavaScript boundary. If two V8
-/// builds cannot coexist there is no boundary left to measure, so this runs first and
-/// on its own.
-///
-/// Set CS2TS_DEEPBIND=1 to take the RTLD_DEEPBIND path; leave it unset for the
-/// unmitigated control run. Both runs write to the same log so they can be diffed.
+/// Set CS2TS_NO_DEEPBIND=1 for the unmitigated control run, which is expected to abort
+/// the server inside Valve's V8. The mitigation is on by default: it is a precondition
+/// for the process surviving, not a tuning option.
 /// </summary>
 public sealed class SpikePlugin : BasePlugin
 {
     public override string ModuleName => "CS2-TS Spike";
-    public override string ModuleVersion => "0.0.1";
+    public override string ModuleVersion => "0.0.2";
     public override string ModuleAuthor => "Icarus Murqin";
-    public override string ModuleDescription => "Phase 0 step 0: V8 coexistence probe.";
+    public override string ModuleDescription => "Phase 0: V8 coexistence probe and boundary benchmark.";
 
     private V8ScriptEngine? _engine;
 
     public override void Load(bool hotReload)
     {
-        var useDeepBind = Environment.GetEnvironmentVariable("CS2TS_DEEPBIND") == "1";
-        var mode = useDeepBind ? "deepbind" : "plain";
+        var control = Environment.GetEnvironmentVariable("CS2TS_NO_DEEPBIND") == "1";
+        var mode = control ? "control" : "deepbind";
 
         SpikeLog.Open(Path.Combine(Path.GetTempPath(), $"cs2ts-spike-{mode}.log"));
         SpikeLog.Write($"mode={mode} hotReload={hotReload}");
@@ -34,81 +35,33 @@ public sealed class SpikePlugin : BasePlugin
 
         try
         {
-            Probe(useDeepBind);
+            if (!control && !V8Bootstrap.Install(ModuleDirectory, SpikeLog.Write))
+            {
+                return;
+            }
+
+            Coexistence();
+            PrepareServer();
+            ScheduleBoundaryBench();
         }
         catch (Exception ex)
         {
-            // A managed exception here is the good outcome: the process survived and
-            // named the problem. A symbol collision is far more likely to be a SIGSEGV,
-            // which never reaches this handler.
+            // A managed exception is the good outcome: the process survived and named
+            // the problem. A symbol collision is a SIGABRT, which never gets here.
             SpikeLog.Write($"FAILED (managed exception) {ex.GetType().Name}: {ex.Message}");
         }
     }
 
-    private void Probe(bool useDeepBind)
+    private void Coexistence()
     {
-        SpikeLog.Write($"plugin dir={ModuleDirectory}");
-        SpikeLog.Write($"clearscript asm={typeof(V8ScriptEngine).Assembly.Location}");
-        SpikeLog.Write($"appdomain base={AppDomain.CurrentDomain.BaseDirectory}");
-
-        var temps = V8Preload.TempCopies().ToArray();
-        SpikeLog.Write($"temp copies before load: {(temps.Length == 0 ? "none" : string.Join(", ", temps))}");
-
-        var candidates = V8Preload.CandidatePaths(ModuleDirectory).Distinct().Where(File.Exists).ToArray();
-        if (candidates.Length == 0)
-        {
-            SpikeLog.Write("FAILED native library not found on any candidate path");
-            return;
-        }
-
-        SpikeLog.Write($"candidates={string.Join(", ", candidates)}");
-
-        if (useDeepBind)
-        {
-            var soPath = candidates[0];
-            SpikeLog.Write($"step 1/6 dlopen RTLD_NOW|RTLD_DEEPBIND {soPath} ...");
-            var handle = V8Preload.LoadDeepBind(soPath, out var error);
-            if (handle == IntPtr.Zero)
-            {
-                SpikeLog.Write($"FAILED dlopen: {error}");
-                return;
-            }
-
-            SpikeLog.Write($"step 1/6 ok handle=0x{handle.ToInt64():x}");
-
-            // ClearScript reaches the native library through P/Invoke, and P/Invoke
-            // resolution runs through the load context. Left alone, the host answers
-            // it by copying the library to a temp directory and loading that copy —
-            // a different file, so the DEEPBIND flags above would not apply to it.
-            // Answering the resolution ourselves is what makes the preload count.
-            NativeLibrary.SetDllImportResolver(typeof(V8ScriptEngine).Assembly, (name, _, _) =>
-            {
-                var claimed = name.Contains("ClearScriptV8", StringComparison.Ordinal);
-                SpikeLog.Write($"resolver: {name} -> {(claimed ? "deepbind handle" : "default")}");
-                return claimed ? handle : IntPtr.Zero;
-            });
-
-            SpikeLog.Write("step 1/6 resolver installed");
-        }
-        else
-        {
-            SpikeLog.Write("step 1/6 skipped (no preload, control run)");
-        }
-
-        SpikeLog.Write("step 2/6 constructing V8ScriptEngine ...");
+        SpikeLog.Write("step 0: constructing V8ScriptEngine ...");
         _engine = new V8ScriptEngine("cs2ts-spike");
-        SpikeLog.Write("step 2/6 ok");
+        SpikeLog.Write($"step 0: 1+1 = {_engine.Evaluate("1 + 1")}");
 
-        SpikeLog.Write("step 3/6 evaluating 1+1 ...");
-        var sum = _engine.Evaluate("1 + 1");
-        SpikeLog.Write($"step 3/6 ok result={sum}");
-
-        // A first expression only proves the engine initialised. Compilation, the
-        // garbage collector and the platform's worker threads are separate code paths,
-        // and those are where a mismatched V8 is most likely to reach for a structure
-        // laid out by the other build.
-        SpikeLog.Write("step 4/6 allocating to force a V8 garbage collection ...");
-        var live = _engine.Evaluate(
+        // A first expression only proves the engine initialised. Compilation and
+        // garbage collection are separate code paths, and those are where a
+        // mismatched V8 reaches for a structure laid out by the other build.
+        var allocated = _engine.Evaluate(
             """
             let sink = 0;
             for (let round = 0; round < 40; round++) {
@@ -120,21 +73,66 @@ public sealed class SpikePlugin : BasePlugin
             }
             sink;
             """);
-        SpikeLog.Write($"step 4/6 ok allocated={live}");
-
-        SpikeLog.Write("step 5/6 CollectGarbage(true) ...");
         _engine.CollectGarbage(true);
-        SpikeLog.Write("step 5/6 ok");
+        SpikeLog.Write($"step 0: allocated={allocated}, collected, engine alive");
+    }
 
-        // Teardown and a second engine exercise isolate disposal, which is where a
-        // corrupted heap tends to surface if it has not already.
-        SpikeLog.Write("step 6/6 dispose and recreate ...");
-        _engine.Dispose();
-        _engine = new V8ScriptEngine("cs2ts-spike-2");
-        var second = _engine.Evaluate("[1,2,3].map(n => n * 3).join(',')");
-        SpikeLog.Write($"step 6/6 ok second={second}");
+    /// <summary>
+    /// An empty CS2 server hibernates, which stops the game loop: timers never fire and
+    /// there are no entities to measure. Bots solve both at once — they run the loop and
+    /// they carry real controllers and pawns.
+    /// </summary>
+    private static void PrepareServer()
+    {
+        string[] setup =
+        [
+            "sv_hibernate_when_empty 0",
+            "bot_join_after_player 0",
+            "mp_limitteams 0",
+            "mp_autoteambalance 0",
+            "bot_quota_mode fill",
+            "bot_quota 10",
+            "mp_warmup_end",
+        ];
 
-        SpikeLog.Write("SUCCESS all steps passed");
+        foreach (var command in setup)
+        {
+            Server.ExecuteCommand(command);
+        }
+
+        SpikeLog.Write($"server prepared: {string.Join("; ", setup)}");
+    }
+
+    private void ScheduleBoundaryBench()
+    {
+        // Benchmarks belong on the game thread, and not during map load: measuring
+        // while the server is still spawning entities reports startup contention
+        // rather than steady-state cost.
+        AddTimer(25.0f, () =>
+        {
+            if (_engine is null)
+            {
+                return;
+            }
+
+            SpikeLog.Write("");
+            SpikeLog.Write("=== step 1: boundary benchmark (game thread) ===");
+            try
+            {
+                BoundaryBench.Run(_engine, SpikeLog.Write, iterations: 50_000, warmup: 20_000);
+                var userIds = EntityBench.Run(_engine, SpikeLog.Write, iterations: 20_000, warmup: 5_000);
+
+                // 640 ticks is ten seconds at 64 tick: long enough for a tail, short
+                // enough that the run finishes without supervision.
+                new TickBench(this, _engine, SpikeLog.Write, ticks: 640).Start(userIds);
+            }
+            catch (Exception ex)
+            {
+                SpikeLog.Write($"bench FAILED {ex.GetType().Name}: {ex.Message}");
+            }
+        });
+
+        SpikeLog.Write("boundary benchmark scheduled for T+25s on the game thread");
     }
 
     private static string ValveV8Modules()
