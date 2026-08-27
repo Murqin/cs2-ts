@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- CounterStrikeSharp 1.0.373 targets net10.0 and ships its own .NET 10 runtime. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Cs2Ts.Plugin</AssemblyName>
+    <RootNamespace>Cs2Ts.Plugin</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Cs2Ts.Runtime/Cs2Ts.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Provided by the host at runtime; do not ship a second copy into the plugin folder. -->
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.373" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+</Project>

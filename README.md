@@ -31,7 +31,10 @@ PLT, so without `RTLD_DEEPBIND` plus a `DllImportResolver` pointed at that
 handle the process aborts inside Valve's V8 on the first engine. Both halves are
 required; see `src/Cs2Ts.Runtime/V8Bootstrap.cs`.
 
-Phase 1 is in progress, and nothing here is usable as a plugin host yet.
+Phase 1's four parts are written and tested — type stripping, an exception boundary,
+handle resolution, and a host with per-plugin engines, hot reload and a watchdog — but
+none of it has been run inside a CS2 server yet, and there is no player API: a script
+reaches the game through `handle.resolve()` for now. Treat it as unproven.
 
 Prior art is not encouraging, and that is worth stating up front. Swiftly
 shipped a JS/TS plugin layer and abandoned it (QuickJS was too slow, embedding
@@ -131,7 +134,7 @@ so the stripper reports those itself, along with anything that does not parse.
 | Phase | Scope | |
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
-| 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | in progress |
+| 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **written, not yet run on a server** |
 | 2 | Player and entity APIs, commands, timers, escape hatch | |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
 | 4 | Module resolution, permissions, plugin distribution | |
@@ -146,8 +149,35 @@ step needs Node; the rest does not.
 cd tools/stripper && npm ci && npm run build   # writes Resources/stripper.js.gz
 cd ../.. && dotnet build Cs2Ts.slnx
 dotnet test tests/Cs2Ts.Runtime.Tests          # host side
-cd tools/stripper && npm test                  # the shipped tsconfig's promises
+cd tools/stripper && npm test                  # tsconfig, declarations, the example
 ```
+
+`src/Cs2Ts.Runtime` holds everything with logic in it and knows nothing about
+CounterStrikeSharp, so it is tested without a server.
+`src/Cs2Ts.Plugin` is the binding: it starts V8 safely, turns CounterStrikeSharp
+events into dispatches, and drains queued work once a tick.
+
+## Writing a script
+
+`templates/tsconfig.json` and `templates/cs2ts.d.ts` are what an author compiles
+against; `examples/scripts/welcome.ts` is a working script, and it is exercised by
+both test suites so it cannot drift away from the runtime.
+
+```ts
+on("player_connect", (player: PlayerHandle): void => {
+    console.log(`player ${player.id} connected`);
+
+    server.nextFrame((): void => {
+        if (!player.isValid) {
+            return;
+        }
+        console.log(`player ${player.id} is still here`);
+    });
+});
+```
+
+Drop a `.ts` file in the plugin's `scripts/` directory and it loads; save it again
+and it reloads. `cs2ts_status` lists what is loaded.
 
 ## License
 
