@@ -27,7 +27,7 @@ namespace Cs2Ts.Runtime;
 /// therefore not an optimisation — without it the preload is dead weight and the server
 /// aborts.
 /// </summary>
-public static class V8Bootstrap
+public static partial class V8Bootstrap
 {
     private const int RtldNow = 0x00002;
     private const int RtldDeepBind = 0x00008;
@@ -205,4 +205,37 @@ public static class V8Bootstrap
             return false;
         }
     }
+
+    /// <summary>
+    /// The process-wide C locale, as glibc currently has it.
+    ///
+    /// setlocale has one setting per process, and LC_NUMERIC decides what a decimal
+    /// point is. A library that switches it to a locale using commas changes what every
+    /// printf and strtod in the process produces and parses — including the game's own,
+    /// which never asked. That failure is silent, wrong by a factor of a thousand in the
+    /// wrong places, and would look like anything except a locale problem.
+    ///
+    /// Reading it costs nothing, so the plugin reads it before and after building an
+    /// engine and complains if it moved.
+    /// </summary>
+    public static string CurrentLocale()
+    {
+        try
+        {
+            // NULL queries rather than sets. LC_ALL is 6 on glibc.
+            var pointer = SetLocale(6, null);
+            return pointer == IntPtr.Zero ? "unknown" : Marshal.PtrToStringUTF8(pointer) ?? "unknown";
+        }
+        catch (Exception)
+        {
+            // Not every platform this could run on has glibc's setlocale under that
+            // name. A diagnostic that throws is worse than one that shrugs.
+            return "unavailable";
+        }
+    }
+
+    // DllImport rather than LibraryImport: the generated marshalling code needs unsafe
+    // blocks, and turning those on across the assembly to read a string is a poor trade.
+    [DllImport("libc", EntryPoint = "setlocale", CharSet = CharSet.Ansi)]
+    private static extern IntPtr SetLocale(int category, string? locale);
 }

@@ -28,6 +28,7 @@ public sealed class Cs2TsPlugin : BasePlugin
     private bool _scriptsLoaded;
     private bool _engineChecked;
     private bool _engineIsOurs;
+    private string _localeAtLoad = "";
 
     /// <summary>Where a server operator drops their script files.</summary>
     private string ScriptDirectory => Path.Combine(ModuleDirectory, "scripts");
@@ -41,6 +42,13 @@ public sealed class Cs2TsPlugin : BasePlugin
 
     public override void Load(bool hotReload)
     {
+        // Read before anything of ours runs, so that a change made by the bootstrap or
+        // by V8 itself is attributable. setlocale has one setting for the whole process
+        // and LC_NUMERIC decides what a decimal point is; a library that switches it
+        // changes what every printf and strtod in the server produces, including the
+        // game's own, and nothing about the resulting breakage looks like a locale.
+        _localeAtLoad = V8Bootstrap.CurrentLocale();
+
         // Before anything touches ClearScript. The CS2 server keeps Valve's own V8 in
         // the global symbol scope, and without this the first engine aborts the process
         // rather than throwing.
@@ -143,6 +151,16 @@ public sealed class Cs2TsPlugin : BasePlugin
         {
             _engineChecked = true;
             _engineIsOurs = V8Bootstrap.LooksLikeOurV8(engine);
+
+            var localeNow = V8Bootstrap.CurrentLocale();
+            if (localeNow != _localeAtLoad)
+            {
+                Console.WriteLine(
+                    $"[CS2-TS] WARNING: the process locale changed from '{_localeAtLoad}' to '{localeNow}' " +
+                    "while the scripting engine was starting. That setting is shared with the game, and " +
+                    "under a locale that writes decimals with commas the server's own number parsing " +
+                    "misreads values without reporting anything.");
+            }
 
             if (!_engineIsOurs)
             {
@@ -299,6 +317,7 @@ public sealed class Cs2TsPlugin : BasePlugin
             Console.WriteLine(_engineChecked
                 ? $"[CS2-TS] engine: {(_engineIsOurs ? "the one this plugin ships" : "the game's own — see the warning at load")}"
                 : "[CS2-TS] engine: not started yet");
+            Console.WriteLine($"[CS2-TS] process locale: {V8Bootstrap.CurrentLocale()} (was '{_localeAtLoad}' at load)");
         });
     }
 
