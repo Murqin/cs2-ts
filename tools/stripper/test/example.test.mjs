@@ -54,16 +54,36 @@ test("an unknown event name is rejected", () => {
 });
 
 test("a handler with the wrong signature is rejected", () => {
-    assert.match(check('on("round_start", (player: PlayerHandle) => {});\n'), /TS2345|TS2769/);
+    assert.match(check('on("round_start", (player: Player) => {});\n'), /TS2345|TS2769/);
 });
 
 test("resolve() returns something the script has to narrow itself", () => {
     // The escape hatch is untyped on purpose; using it as if it were typed must fail.
-    assert.match(check('on("player_death", (p: PlayerHandle) => { p.resolve().Health; });\n'), /TS2339|TS2571|TS18046/);
+    assert.match(check('on("player_death", (p: Player) => { p.resolve().Health; });\n'), /TS2339|TS2571|TS18046/);
 });
 
 test("isValid and id are usable without narrowing", () => {
-    assert.equal(check('on("player_death", (p: PlayerHandle) => { if (p.isValid) { p.id.toFixed(0); } });\n'), "");
+    assert.equal(check('on("player_death", (p: Player) => { if (p.isValid) { p.id.toFixed(0); } });\n'), "");
+});
+
+test("the facade's writable members are writable and its readable ones are not", () => {
+    assert.equal(check('on("player_spawn", (p: Player) => { p.health = 100; p.armor = 50; p.money = 16000; });\n'), "");
+
+    // name and team describe the player; writing them would look like it worked.
+    assert.match(check('on("player_spawn", (p: Player) => { p.name = "x"; });\n'), /TS2540/);
+    assert.match(check('on("player_spawn", (p: Player) => { p.team = 2; });\n'), /TS2540/);
+});
+
+test("a position is a copy, and the compiler says so", () => {
+    // The whole reason position is not CounterStrikeSharp's Vector: a script that
+    // mutated one would be writing into entity memory, and this must not compile.
+    assert.match(check('on("player_spawn", (p: Player) => { p.position.x = 0; });\n'), /TS2540/);
+    assert.equal(check('on("player_spawn", (p: Player) => { p.teleport(p.position.x, p.position.y, p.position.z + 64); });\n'), "");
+});
+
+test("steamId is a string, because a 64-bit id is not a JavaScript number", () => {
+    assert.equal(check('on("player_connect", (p: Player) => { p.sendChat(p.steamId.slice(0, 4)); });\n'), "");
+    assert.match(check('on("player_connect", (p: Player) => { p.steamId.toFixed(0); });\n'), /TS2339|TS2551/);
 });
 
 // ---- the JavaScript half ----

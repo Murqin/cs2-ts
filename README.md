@@ -40,9 +40,11 @@ was initialised, where reading `Server.CurrentTime` segfaults the process. That 
 native crash, so the exception boundary cannot contain it; scripts now wait for the
 map to be up.
 
-There is still no player API — a script reaches the game through `handle.resolve()` —
-and nothing has been run for longer than a few minutes or with more than a handful of
-bots.
+Phase 2 has started with the player facade: `player.health = 100` is one statement in a
+script and two in CounterStrikeSharp, where leaving the second one out changes the value
+on the server while every client keeps showing the old one. Hiding steps that fail
+silently when forgotten is what a facade is for; shorter spelling is a side effect.
+Nothing has been run for longer than a few minutes or with more than a handful of bots.
 
 Prior art is not encouraging, and that is worth stating up front. Swiftly
 shipped a JS/TS plugin layer and abandoned it (QuickJS was too slow, embedding
@@ -160,7 +162,7 @@ the server, with JSDoc types wherever they are wanted.
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
 | 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
-| 2 | Player and entity APIs, commands, timers, escape hatch | |
+| 2 | Player and entity APIs, commands, timers, escape hatch | player facade landed |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
 | 4 | Module resolution, permissions, plugin distribution | |
 
@@ -190,15 +192,27 @@ are what an author compiles against. `examples/scripts/welcome.ts` and
 test suites so they cannot drift away from the runtime.
 
 ```ts
-on("player_connect", (player: PlayerHandle): void => {
-    console.log(`player ${player.id} connected`);
+on("player_connect", (player: Player): void => {
+    player.sendChat(`welcome, ${player.name}`);
 
     server.nextFrame((): void => {
+        // The player object holds a userid, not a pointer, so keeping it across a
+        // frame is safe: isValid answers instead of the server crashing.
         if (!player.isValid) {
             return;
         }
-        console.log(`player ${player.id} is still here`);
+        console.log(`${player.name} is still here`);
     });
+});
+
+on("round_start", (): void => {
+    for (const player of players.all()) {
+        // isAlive is the guard for anything that lives on the pawn — health, armour,
+        // position. A spectator has none of those.
+        if (player.isAlive) {
+            player.health = 100;
+        }
+    }
 });
 ```
 

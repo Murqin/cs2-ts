@@ -12,16 +12,18 @@ on("round_start", (timeLimit) => {
     console.log(`round ${rounds} started, ${timeLimit}s limit, on ${server.mapName}`);
 });
 
-/** @param {PlayerHandle} player */
+/** @param {Player} player */
 function greet(player) {
-    // A handle keeps an identity, not a pointer. Holding it across a frame is safe;
-    // isValid says whether the player is still here.
+    player.sendChat(`welcome, ${player.name}`);
+
+    // A player object keeps an identity, not a pointer. Holding it across a frame is
+    // safe; isValid says whether they are still here.
     server.nextFrame(() => {
         if (!player.isValid) {
             return;
         }
 
-        console.log(`player ${player.id} is still here, ${players.all().length} connected`);
+        console.log(`${player.name} is still here, ${players.all().length} connected`);
     });
 }
 
