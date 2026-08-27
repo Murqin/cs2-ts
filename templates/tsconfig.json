@@ -1,0 +1,40 @@
+// The tsconfig CS2-TS plugin authors compile against. Its job is to fail on the
+// developer's machine for everything the server cannot run, so that no mistake is
+// discovered first as a dead plugin on a live server.
+{
+    "compilerOptions": {
+        // The server strips types, it does not compile them. enum, namespace, parameter
+        // properties and import aliases all need emitted runtime code, so they have to
+        // be rejected here — the stripper can only report them once the plugin is
+        // already being loaded.
+        "erasableSyntaxOnly": true,
+
+        // Keeps import elision out of the picture: what is written is what the stripper
+        // sees, so a value import cannot silently disappear.
+        "verbatimModuleSyntax": true,
+        "isolatedModules": true,
+
+        // Plugins ship as .ts and import each other as .ts; there is no build step to
+        // rewrite the specifier. Allowed only alongside noEmit.
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "target": "esnext",
+
+        // esnext only. The DOM lib declares fetch, setTimeout and console, none of
+        // which exist in a bare V8 isolate; every host API arrives from @cs2-ts/api.
+        "lib": ["esnext"],
+
+        // Empty on purpose. An @types/node anywhere in node_modules would otherwise
+        // make fs, process and Buffer type-check and then fail at runtime.
+        "types": [],
+
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noFallthroughCasesInSwitch": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true
+    }
+}

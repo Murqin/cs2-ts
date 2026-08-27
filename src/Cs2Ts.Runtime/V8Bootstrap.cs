@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.V8;
 
-namespace Cs2Ts.Spike;
+namespace Cs2Ts.Runtime;
 
 /// <summary>
 /// Loads ClearScript's native V8 with RTLD_DEEPBIND before ClearScript's own loader
@@ -27,11 +27,14 @@ namespace Cs2Ts.Spike;
 /// therefore not an optimisation — without it the preload is dead weight and the server
 /// aborts.
 /// </summary>
-internal static class V8Bootstrap
+public static class V8Bootstrap
 {
     private const int RtldNow = 0x00002;
     private const int RtldDeepBind = 0x00008;
     private const string NativeName = "ClearScriptV8.linux-x64.so";
+
+    private static readonly Lock InstallGate = new();
+    private static bool? _installed;
 
     [DllImport("libc", EntryPoint = "dlopen", CharSet = CharSet.Ansi)]
     private static extern IntPtr DlOpen(string fileName, int flags);
@@ -47,7 +50,7 @@ internal static class V8Bootstrap
     /// glibc keys dlopen on the file rather than the spelling of the path, so hitting
     /// the same file is what matters.
     /// </summary>
-    public static IEnumerable<string> CandidatePaths(string pluginDirectory)
+    internal static IEnumerable<string> CandidatePaths(string pluginDirectory)
     {
         var location = typeof(V8ScriptEngine).Assembly.Location;
         if (!string.IsNullOrWhiteSpace(location))
@@ -79,7 +82,7 @@ internal static class V8Bootstrap
         yield return Path.Combine(pluginDirectory, NativeName);
     }
 
-    public static IEnumerable<string> TempCopies()
+    internal static IEnumerable<string> TempCopies()
     {
         string[] found;
         try
@@ -97,7 +100,7 @@ internal static class V8Bootstrap
         }
     }
 
-    public static string? Locate(string pluginDirectory)
+    internal static string? Locate(string pluginDirectory)
     {
         return CandidatePaths(pluginDirectory).Distinct().FirstOrDefault(File.Exists);
     }
@@ -105,7 +108,7 @@ internal static class V8Bootstrap
     /// <summary>
     /// Returns the dlopen handle, or IntPtr.Zero with <paramref name="error"/> set.
     /// </summary>
-    public static IntPtr LoadDeepBind(string soPath, out string? error)
+    internal static IntPtr LoadDeepBind(string soPath, out string? error)
     {
         error = null;
         var handle = DlOpen(soPath, RtldNow | RtldDeepBind);
@@ -122,9 +125,30 @@ internal static class V8Bootstrap
     /// <summary>
     /// Preloads with DEEPBIND and routes ClearScript's P/Invoke resolution to that
     /// handle. Both halves are required; either alone leaves the process aborting
-    /// inside Valve's V8. Safe to call once per process.
+    /// inside Valve's V8.
+    ///
+    /// Call this before touching any ClearScript type, from every code path that can be
+    /// the first one to do so. Repeat calls are answered from the first result:
+    /// SetDllImportResolver throws if it is given a second resolver for the same
+    /// assembly, and hot reload makes a second call the normal case rather than a bug.
     /// </summary>
     public static bool Install(string pluginDirectory, Action<string> log)
+    {
+        lock (InstallGate)
+        {
+            if (_installed is { } already)
+            {
+                log($"bootstrap already installed ({(already ? "ok" : "failed")}); reusing that result");
+                return already;
+            }
+
+            var result = InstallCore(pluginDirectory, log);
+            _installed = result;
+            return result;
+        }
+    }
+
+    private static bool InstallCore(string pluginDirectory, Action<string> log)
     {
         var soPath = Locate(pluginDirectory);
         if (soPath is null)

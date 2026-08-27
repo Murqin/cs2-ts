@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Cs2Ts.Runtime/Cs2Ts.Runtime.csproj" />
+    <Project Path="src/Cs2Ts.Spike/Cs2Ts.Spike.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Cs2Ts.Runtime.Tests/Cs2Ts.Runtime.Tests.csproj" />
+  </Folder>
+</Solution>

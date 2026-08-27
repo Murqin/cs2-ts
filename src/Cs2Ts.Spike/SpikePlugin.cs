@@ -2,6 +2,7 @@ using System.Linq;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using Microsoft.ClearScript.V8;
+using Cs2Ts.Runtime;
 
 namespace Cs2Ts.Spike;
 

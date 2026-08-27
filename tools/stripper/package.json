@@ -1,0 +1,17 @@
+{
+    "name": "@cs2-ts/stripper-build",
+    "private": true,
+    "type": "module",
+    "description": "Bundles ts-blank-space and the TypeScript parser into the single script the server-side stripper evaluates.",
+    "scripts": {
+        "build": "node build.mjs",
+        "test": "node --test \"test/**/*.test.mjs\""
+    },
+    "dependencies": {
+        "ts-blank-space": "0.9.0",
+        "typescript": "6.0.3"
+    },
+    "devDependencies": {
+        "esbuild": "0.28.2"
+    }
+}
