@@ -14,12 +14,6 @@ namespace Cs2Ts.Runtime.Tests;
 /// </summary>
 public sealed class ExampleScriptTests : IDisposable
 {
-    /// <summary>Stands in for a CounterStrikeSharp controller.</summary>
-    public sealed class FakePlayer
-    {
-        public bool Connected { get; set; } = true;
-    }
-
     [DefaultScriptUsage(ScriptAccess.None)]
     public sealed class FakeConsole
     {
@@ -55,34 +49,33 @@ public sealed class ExampleScriptTests : IDisposable
     }
 
     [DefaultScriptUsage(ScriptAccess.None)]
-    public sealed class FakePlayers(EntityHandleTable<FakePlayer> table, Func<int> count)
+    public sealed class FakePlayers(PlayerFacadeTable<FakeController, FakePawn> table, FakeWorld world)
     {
         [ScriptMember("byUserId")]
-        public EntityHandle<FakePlayer> ByUserId(int userId) => table.For(userId);
+        public PlayerFacade<FakeController, FakePawn> ByUserId(int userId) => table.For(userId);
 
         [ScriptMember("all")]
-        public EntityHandle<FakePlayer>[] All() =>
-            Enumerable.Range(1, count()).Select(id => table.For(id)).ToArray();
+        public PlayerFacade<FakeController, FakePawn>[] All() =>
+            world.Connected.Select(table.For).ToArray();
     }
 
-    private readonly Dictionary<long, FakePlayer> _world = [];
-    private readonly EntityHandleTable<FakePlayer> _table;
+    private readonly FakeWorld _world = new();
+    private readonly PlayerFacadeTable<FakeController, FakePawn> _table;
     private readonly FakeConsole _console = new();
     private readonly List<ScriptError> _errors = [];
     private readonly ScriptHost _host;
 
     public ExampleScriptTests()
     {
-        _table = new EntityHandleTable<FakePlayer>(
-            "player",
-            id => _world.TryGetValue(id, out var player) && player.Connected ? player : null);
+        _table = new PlayerFacadeTable<FakeController, FakePawn>(
+            "player", _world.Resolve, new FakeOperations(_world));
 
         _host = new ScriptHost(_errors.Add);
         _host.Configure = (plugin, engine) =>
         {
             engine.AddHostObject("console", _console);
             engine.AddHostObject("server", new FakeServer(plugin, _host!.Frames));
-            engine.AddHostObject("players", new FakePlayers(_table, () => _world.Count(e => e.Value.Connected)));
+            engine.AddHostObject("players", new FakePlayers(_table, _world));
         };
     }
 
@@ -100,17 +93,26 @@ public sealed class ExampleScriptTests : IDisposable
         var result = LoadExample();
         Assert.True(result.Succeeded, string.Join("; ", result.Report()));
 
-        _world[7] = new FakePlayer();
+        var controller = _world.Add(7, "murqin");
+        controller.Pawn!.Health = 3;
+        controller.Pawn.Armor = 0;
 
         Assert.Equal(1, _host.Dispatch("round_start", 115));
         Assert.Equal(1, _host.Dispatch("round_start", 115));
         Assert.Equal(1, _host.Dispatch("player_connect", _table.For(7)));
+        Assert.Equal(1, _host.Dispatch("player_spawn", _table.For(7)));
         Assert.Equal(1, _host.Dispatch("player_death", _table.For(7)));
 
         Assert.Contains("round 1 started, 115s limit, on de_dust2", _console.Lines);
         Assert.Contains("round 2 started, 115s limit, on de_dust2", _console.Lines);
-        Assert.Contains("player 7 connected", _console.Lines);
-        Assert.Contains("player 7 died; 1 still connected", _console.Lines);
+        Assert.Contains("murqin spawned at 1, 2, 3 with $800", _console.Lines);
+        Assert.Contains("murqin died; 1 still connected", _console.Lines);
+        Assert.Equal(["welcome, murqin"], controller.Chat);
+
+        // The example's round_start heals everyone who is in the world, and the whole
+        // point of writing it that way is that one statement is enough.
+        Assert.Equal(100, controller.Pawn.Health);
+        Assert.Equal(100, controller.Pawn.Armor);
         Assert.Empty(_errors);
     }
 
@@ -123,15 +125,15 @@ public sealed class ExampleScriptTests : IDisposable
     public void TheDeferredCallbackSurvivesThePlayerLeaving()
     {
         Assert.True(LoadExample().Succeeded);
-        _world[7] = new FakePlayer();
+        var controller = _world.Add(7, "murqin");
 
         _host.Dispatch("player_connect", _table.For(7));
-        _world[7].Connected = false;
+        _world.Disconnect(7);
 
         Assert.Equal(1, _host.DrainFrames());
 
-        Assert.Contains("player 7 connected", _console.Lines);
-        Assert.DoesNotContain("player 7 is still here on the next frame", _console.Lines);
+        Assert.Equal(["welcome, murqin"], controller.Chat);
+        Assert.DoesNotContain(_console.Lines, line => line.Contains("still here on the next frame"));
         Assert.Empty(_errors);
     }
 
@@ -143,8 +145,8 @@ public sealed class ExampleScriptTests : IDisposable
     [Fact]
     public void ArraysFromHostApisBehaveLikeJavaScriptArrays()
     {
-        _world[1] = new FakePlayer();
-        _world[2] = new FakePlayer();
+        _world.Add(1);
+        _world.Add(2);
 
         var result = _host.Load(
             "arrays",
@@ -179,13 +181,13 @@ public sealed class ExampleScriptTests : IDisposable
         // Nothing was stripped: a .js file comes back byte for byte.
         Assert.Equal(source, _host.Stripper.Strip("rounds.js", source).JavaScript);
 
-        _world[7] = new FakePlayer();
+        _world.Add(7, "murqin");
         Assert.Equal(1, _host.Dispatch("round_start", 115));
         Assert.Equal(1, _host.Dispatch("player_connect", _table.For(7)));
         Assert.Equal(1, _host.DrainFrames());
 
         Assert.Contains("round 1 started, 115s limit, on de_dust2", _console.Lines);
-        Assert.Contains("player 7 is still here, 1 connected", _console.Lines);
+        Assert.Contains("murqin is still here, 1 connected", _console.Lines);
         Assert.Empty(_errors);
     }
 
@@ -193,11 +195,11 @@ public sealed class ExampleScriptTests : IDisposable
     public void TheDeferredCallbackRunsWhenThePlayerIsStillThere()
     {
         Assert.True(LoadExample().Succeeded);
-        _world[7] = new FakePlayer();
+        _world.Add(7, "murqin", 76561198123456789UL);
 
         _host.Dispatch("player_connect", _table.For(7));
 
         Assert.Equal(1, _host.DrainFrames());
-        Assert.Contains("player 7 is still here on the next frame", _console.Lines);
+        Assert.Contains("murqin (76561198123456789) is still here on the next frame", _console.Lines);
     }
 }
