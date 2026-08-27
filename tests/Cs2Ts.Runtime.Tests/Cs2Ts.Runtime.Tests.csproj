@@ -25,6 +25,7 @@
     <!-- The shipped example is exercised as a test, so it cannot drift away from the
          host API without something failing. -->
     <None Include="../../examples/scripts/welcome.ts" Link="welcome.ts" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../examples/scripts/rounds.js" Link="rounds.js" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

@@ -162,6 +162,33 @@ public sealed class ExampleScriptTests : IDisposable
         Assert.Contains("2 true 1+2", _console.Lines);
     }
 
+    /// <summary>
+    /// The JavaScript example, through the same host. A .js file has nothing to strip,
+    /// so what this really checks is that the runtime treats both extensions alike —
+    /// and that the example a JavaScript author reads first actually runs.
+    /// </summary>
+    [Fact]
+    public void TheShippedJavaScriptExampleLoadsAndHandlesEvents()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "rounds.js");
+        var source = File.ReadAllText(path);
+
+        var result = _host.Load("rounds", "rounds.js", source);
+        Assert.True(result.Succeeded, string.Join("; ", result.Report()));
+
+        // Nothing was stripped: a .js file comes back byte for byte.
+        Assert.Equal(source, _host.Stripper.Strip("rounds.js", source).JavaScript);
+
+        _world[7] = new FakePlayer();
+        Assert.Equal(1, _host.Dispatch("round_start", 115));
+        Assert.Equal(1, _host.Dispatch("player_connect", _table.For(7)));
+        Assert.Equal(1, _host.DrainFrames());
+
+        Assert.Contains("round 1 started, 115s limit, on de_dust2", _console.Lines);
+        Assert.Contains("player 7 is still here, 1 connected", _console.Lines);
+        Assert.Empty(_errors);
+    }
+
     [Fact]
     public void TheDeferredCallbackRunsWhenThePlayerIsStillThere()
     {
