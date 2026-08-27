@@ -96,6 +96,21 @@ public sealed class SpikePlugin : BasePlugin
     /// there are no entities to measure. Bots solve both at once — they run the loop and
     /// they carry real controllers and pawns.
     /// </summary>
+    /// <summary>
+    /// How many bots to fill with. A knob rather than a constant because the open
+    /// question from phase 0 is how the cost moves with player count: 2 to 10 took the
+    /// cold crossing from 17.4 to 20.5 µs, and an extrapolation is not a measurement.
+    /// </summary>
+    private static int BotQuota =>
+        int.TryParse(Environment.GetEnvironmentVariable("CS2TS_BOTS"), out var bots) && bots > 0 ? bots : 10;
+
+    /// <summary>
+    /// Ticks of frametime to sample. The default is a minute at 64 tick, which is long
+    /// enough for a major collection; a long-run question needs a bigger number.
+    /// </summary>
+    private static int FrametimeTicks =>
+        int.TryParse(Environment.GetEnvironmentVariable("CS2TS_TICKS"), out var ticks) && ticks > 0 ? ticks : 3840;
+
     private static void PrepareServer()
     {
         string[] setup =
@@ -105,7 +120,7 @@ public sealed class SpikePlugin : BasePlugin
             "mp_limitteams 0",
             "mp_autoteambalance 0",
             "bot_quota_mode fill",
-            "bot_quota 10",
+            $"bot_quota {BotQuota}",
             "mp_warmup_end",
         ];
 
@@ -127,8 +142,8 @@ public sealed class SpikePlugin : BasePlugin
         AddTimer(8.0f, () =>
         {
             Server.ExecuteCommand("bot_quota_mode fill");
-            Server.ExecuteCommand("bot_quota 10");
-            SpikeLog.Write("bot quota re-issued");
+            Server.ExecuteCommand($"bot_quota {BotQuota}");
+            SpikeLog.Write($"bot quota re-issued at {BotQuota}");
         });
     }
 
@@ -139,10 +154,10 @@ public sealed class SpikePlugin : BasePlugin
         AddTimer(30.0f, () =>
         {
             SpikeLog.Write($"players at frametime start: {Utilities.GetPlayers().Count(p => p.IsValid)}");
-            new FrametimeBench(this, SpikeLog.Write, ticks: 3840, perTickWork).Start();
+            new FrametimeBench(this, SpikeLog.Write, FrametimeTicks, perTickWork).Start();
         });
 
-        SpikeLog.Write("frametime benchmark scheduled for T+30s");
+        SpikeLog.Write($"frametime benchmark scheduled for T+30s, {FrametimeTicks} ticks, quota {BotQuota}");
     }
 
     private void ScheduleBoundaryBench()

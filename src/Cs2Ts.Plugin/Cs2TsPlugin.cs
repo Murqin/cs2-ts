@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
@@ -292,10 +293,19 @@ public sealed class Cs2TsPlugin : BasePlugin
             return;
         }
 
+        // Timed because it is the one thing a script author pays for that they cannot
+        // see: stripping runs the TypeScript parser inside the CS2 process, on the game
+        // thread, while the server is up. Phase 0 measured it outside that process and
+        // outside DEEPBIND, so the number here is the one that counts.
+        var started = Stopwatch.GetTimestamp();
         var result = _host.Load(name, Path.GetFileName(path), source);
+        var elapsed = Stopwatch.GetElapsedTime(started);
+
         if (result.Succeeded)
         {
-            Console.WriteLine($"[CS2-TS] loaded {Path.GetFileName(path)}");
+            Console.WriteLine(
+                $"[CS2-TS] loaded {Path.GetFileName(path)} " +
+                $"({source.Length / 1024.0:F1} KB in {elapsed.TotalMilliseconds:F1} ms)");
             return;
         }
 
