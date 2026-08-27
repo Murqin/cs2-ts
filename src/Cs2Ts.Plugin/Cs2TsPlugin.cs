@@ -57,6 +57,7 @@ public sealed class Cs2TsPlugin : BasePlugin
         _host.Configure = InstallApi;
 
         Directory.CreateDirectory(ScriptDirectory);
+        AuthorSetup.Install(ScriptDirectory, message => Console.WriteLine($"[CS2-TS] {message}"));
         WatchForChanges();
 
         // Background work comes back here, on the game thread, once a tick.
@@ -311,6 +312,7 @@ public sealed class Cs2TsPlugin : BasePlugin
         string[] found = Directory.Exists(ScriptDirectory)
             ? ScriptExtensions
                 .SelectMany(pattern => Directory.GetFiles(ScriptDirectory, pattern, SearchOption.TopDirectoryOnly))
+                .Where(ScriptFile.IsScript)
                 .OrderBy(path => path, StringComparer.Ordinal)
                 .ToArray()
             : [];
@@ -444,13 +446,9 @@ public sealed class Cs2TsPlugin : BasePlugin
         }
 
         // AddTimer must be called from the game thread, so the hop happens first.
-        static bool IsScript(string path) =>
-            path.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) ||
-            path.EndsWith(".js", StringComparison.OrdinalIgnoreCase);
-
         void OnChanged(object _, FileSystemEventArgs e)
         {
-            if (IsScript(e.FullPath))
+            if (ScriptFile.IsScript(e.FullPath))
             {
                 Server.NextFrame(() => Schedule(e.FullPath));
             }
@@ -461,12 +459,12 @@ public sealed class Cs2TsPlugin : BasePlugin
         _watcher.Deleted += OnChanged;
         _watcher.Renamed += (_, e) => Server.NextFrame(() =>
         {
-            if (IsScript(e.OldFullPath))
+            if (ScriptFile.IsScript(e.OldFullPath))
             {
                 Schedule(e.OldFullPath);
             }
 
-            if (IsScript(e.FullPath))
+            if (ScriptFile.IsScript(e.FullPath))
             {
                 Schedule(e.FullPath);
             }
