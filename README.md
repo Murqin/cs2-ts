@@ -165,7 +165,7 @@ the server, with JSDoc types wherever they are wanted.
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
 | 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
-| 2 | Player and entity APIs, commands, timers, escape hatch | player facade runs on a server |
+| 2 | Player and entity APIs, commands, timers, escape hatch | facade and commands |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
 | 4 | Module resolution, permissions, plugin distribution | |
 
@@ -215,6 +215,14 @@ on("round_start", (): void => {
         if (player.isAlive) {
             player.health = 100;
         }
+    }
+});
+
+// Players type !heal; the server console runs css_heal. player is null in the second
+// case, and the compiler will not let that be forgotten.
+command("!heal", (player: Player | null): void => {
+    if (player?.isAlive) {
+        player.health = 100;
     }
 });
 ```

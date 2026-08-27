@@ -119,6 +119,38 @@ declare global {
      */
     function on<E extends keyof Cs2TsEvents>(event: E, handler: Cs2TsEvents[E]): void;
 
+    /**
+     * Registers a chat and console command.
+     *
+     * ```ts
+     * command("!heal", (player, args) => {
+     *     if (player === null) {
+     *         console.log("heal needs a player");
+     *         return;
+     *     }
+     *     player.health = 100;
+     * });
+     * ```
+     *
+     * The name is what a player types. A leading `!`, `/` or `.` is stripped — which
+     * trigger character a server uses is a server setting, so hard-coding one would
+     * break elsewhere — and what is left has to be letters, digits and underscores.
+     * The same command also answers from the server console, as `css_<name>`.
+     *
+     * `player` is `null` when it came from the console or RCON rather than from
+     * someone in the game, and the type says so because forgetting that case is how a
+     * command works in chat and throws for the operator.
+     *
+     * `args` is everything after the command itself, unparsed.
+     *
+     * A bad name throws while the script is loading, so the script does not load. That
+     * is deliberate: the alternative is a command that exists and never fires.
+     */
+    function command(
+        name: string,
+        handler: (player: Player | null, args: string[]) => void,
+    ): void;
+
     const server: {
         /**
          * Runs a callback on the game thread. The way back from asynchronous work —

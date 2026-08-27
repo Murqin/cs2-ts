@@ -28,3 +28,19 @@ function greet(player) {
 }
 
 on("player_connect", greet);
+
+// Commands work the same in JavaScript; JSDoc carries the types.
+/**
+ * @param {Player | null} player
+ * @param {string[]} args
+ */
+function ping(player, args) {
+    if (player === null) {
+        console.log("ping: from the console");
+        return;
+    }
+
+    player.sendChat(`pong (${args.length} argument${args.length === 1 ? "" : "s"})`);
+}
+
+command("!ping", ping);

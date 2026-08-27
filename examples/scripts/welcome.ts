@@ -62,3 +62,20 @@ on("player_death", (player: Player): void => {
 
     console.log(`${player.name} died; ${players.all().length} still connected`);
 });
+
+// A command. Players type !whereami; the server console runs css_whereami, which is
+// why the null case is not optional — the compiler will not let it be forgotten.
+command("!whereami", (player: Player | null, args: string[]): void => {
+    if (player === null) {
+        console.log(`whereami: nobody ran this — args were [${args.join(", ")}]`);
+        return;
+    }
+
+    if (!player.isAlive) {
+        player.sendChat("you are not in the world right now");
+        return;
+    }
+
+    const { x, y, z } = player.position;
+    player.sendChat(`${x.toFixed(0)}, ${y.toFixed(0)}, ${z.toFixed(0)} on ${server.mapName}`);
+});
