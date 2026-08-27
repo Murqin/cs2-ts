@@ -1,9 +1,9 @@
-# Project Overpass
+# CS2-TS
 
 An embedded TypeScript scripting layer for Counter-Strike 2, built on top of
 [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp).
 
-Project Overpass does not compete with CounterStrikeSharp and does not
+CS2-TS does not compete with CounterStrikeSharp and does not
 reimplement the native Source 2 layer. It uses CSS as its runtime — native
 interop, gamedata, schema access, the Metamod bridge, the .NET plugin host —
 and exposes a flat, typed scripting API on top of it, so that simple CS2
@@ -34,7 +34,7 @@ Metamod:Source
         ↓
 CounterStrikeSharp          native interop, gamedata, schema, .NET hosting
         ↓
-Project Overpass Bridge     script-friendly facade + handle resolution
+CS2-TS Bridge     script-friendly facade + handle resolution
         ↓
 ClearScript / V8            inline on the game thread
         ↓

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- CounterStrikeSharp 1.0.373 targets net10.0 and ships its own .NET 10 runtime. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Cs2Ts.Spike</AssemblyName>
+    <RootNamespace>Cs2Ts.Spike</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Provided by the host at runtime; do not ship a second copy into the plugin folder. -->
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.373" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.ClearScript.V8" Version="7.5.1" />
+    <PackageReference Include="Microsoft.ClearScript.V8.Native.linux-x64" Version="7.5.1" />
+  </ItemGroup>
+
+</Project>
