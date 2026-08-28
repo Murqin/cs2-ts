@@ -112,10 +112,18 @@ public sealed record ScriptError(
         return Build(pluginName, ScriptErrorSource.Script, message, stack, isAsync: true);
     }
 
+    /// <summary>
+    /// The prefix every document the runtime evaluates itself carries: the prelude that
+    /// defines <c>on</c>, <c>command</c> and the timers, and the TypeScript parser. A
+    /// script file can never collide with it, because it is named after the author's own
+    /// file and a colon is not in a file name we would accept.
+    /// </summary>
+    private const string InternalDocumentPrefix = "cs2ts:";
+
     private static ScriptError Build(string pluginName, ScriptErrorSource source, string message, string? details, bool isAsync)
     {
         var stack = string.IsNullOrWhiteSpace(details) ? null : details.Trim();
-        var match = stack is null ? Match.Empty : FrameLocation.Match(stack);
+        var match = stack is null ? Match.Empty : FirstAuthorFrame(stack);
 
         return new ScriptError(
             pluginName,
@@ -126,6 +134,41 @@ public sealed record ScriptError(
             match.Success ? int.Parse(match.Groups["column"].Value) : 0,
             stack,
             isAsync);
+    }
+
+    /// <summary>
+    /// The topmost frame that belongs to the author, skipping the runtime's own.
+    ///
+    /// Every global a script calls — <c>on</c>, <c>command</c>, <c>setTimeout</c> — is a
+    /// prelude function, so when one of them refuses its arguments the top frame is
+    /// cs2ts:prelude.js and the author is shown a file they have never seen and cannot
+    /// open. Measured on a server: going over the timer cap reported
+    /// "cs2ts:prelude.js(35,12)" rather than the line that called setTimeout.
+    ///
+    /// A test that asserts on the message alone does not see this, which is why the one
+    /// that did passed while the location was wrong.
+    ///
+    /// If every frame is internal the first is used anyway. That means the runtime broke
+    /// on its own, and a location inside it is then the honest answer rather than none.
+    /// </summary>
+    private static Match FirstAuthorFrame(string stack)
+    {
+        var first = Match.Empty;
+
+        for (var match = FrameLocation.Match(stack); match.Success; match = match.NextMatch())
+        {
+            if (!first.Success)
+            {
+                first = match;
+            }
+
+            if (!match.Groups["file"].Value.StartsWith(InternalDocumentPrefix, StringComparison.Ordinal))
+            {
+                return match;
+            }
+        }
+
+        return first;
     }
 
     /// <summary>

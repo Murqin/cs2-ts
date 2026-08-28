@@ -139,6 +139,28 @@ public sealed class ScriptHostTests(HostFixture fixture) : IDisposable
         Assert.Equal(2, error.Line);
     }
 
+    /// <summary>
+    /// on() and command() check their own arguments in the prelude, so their refusals
+    /// used to be reported against cs2ts:prelude.js — a file the author cannot open and
+    /// did not write. The frame the location comes from is now the first one that is
+    /// not the runtime's own.
+    /// </summary>
+    [Theory]
+    [InlineData("""on("round_start", "not a function" as unknown as () => void);""")]
+    [InlineData("""on("" as "round_start", (): void => {});""")]
+    [InlineData("""command("!x", "not a function" as unknown as () => void);""")]
+    public void APreludeArgumentRefusalPointsAtTheAuthorsLine(string call)
+    {
+        var result = Load("prelude-blame", $"""
+            const marker = 1;
+            {call}
+            """);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("prelude-blame.ts", result.Error!.FileName);
+        Assert.Equal(2, result.Error.Line);
+    }
+
     [Fact]
     public void LoadsATypeScriptPluginAndDispatchesToIt()
     {
