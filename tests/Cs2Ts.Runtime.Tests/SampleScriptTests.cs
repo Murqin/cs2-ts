@@ -4,15 +4,20 @@ using Microsoft.ClearScript;
 namespace Cs2Ts.Runtime.Tests;
 
 /// <summary>
-/// Runs the example that ships with the project, end to end: stripped, loaded, and
-/// dispatched to. The example is the first thing anyone reads, and the cost of it being
-/// subtly wrong is paid by every new author, so it is a test rather than a document.
+/// Runs whole scripts end to end: stripped, loaded, and dispatched to.
+///
+/// The scripts live in fixtures/ and are ordinary scripts rather than assertions —
+/// which is the point. Every other test here holds one part of the runtime still and
+/// pokes at it; these need stripping, dispatch, timers, reload and the command path to
+/// agree all at once, the way they have to on a server. The node suite compiles the
+/// same three files against the shipped tsconfig, so they cannot quietly become
+/// something an author could not have written.
 ///
 /// The host API is faked here because the real one lives in the CounterStrikeSharp
-/// binding, which needs a server. What is not faked is the shape: if the example starts
-/// using something the binding does not install, this stops compiling or stops running.
+/// binding, which needs a server. What is not faked is the shape: if a script starts
+/// using something the binding does not install, this stops running.
 /// </summary>
-public sealed class ExampleScriptTests : IDisposable
+public sealed class SampleScriptTests : IDisposable
 {
     [DefaultScriptUsage(ScriptAccess.None)]
     public sealed class FakeConsole
@@ -67,7 +72,7 @@ public sealed class ExampleScriptTests : IDisposable
     private FakeServer _server = null!;
     private double _now;
 
-    public ExampleScriptTests()
+    public SampleScriptTests()
     {
         _table = new PlayerFacadeTable<FakeController, FakePawn>(
             "player", _world.Resolve, new FakeOperations(_world));
@@ -104,7 +109,7 @@ public sealed class ExampleScriptTests : IDisposable
     }
 
     [Fact]
-    public void TheShippedExampleLoadsAndHandlesEvents()
+    public void TheSampleScriptLoadsAndHandlesEvents()
     {
         var result = LoadExample();
         Assert.True(result.Succeeded, string.Join("; ", result.Report()));
@@ -264,12 +269,13 @@ public sealed class ExampleScriptTests : IDisposable
     }
 
     /// <summary>
-    /// The JavaScript example, through the same host. A .js file has nothing to strip,
-    /// so what this really checks is that the runtime treats both extensions alike —
-    /// and that the example a JavaScript author reads first actually runs.
+    /// The JavaScript script, through the same host. A .js file has nothing to strip,
+    /// so what this really checks is that the runtime treats both extensions alike.
+    /// JavaScript is first class here, and a claim like that is only true while
+    /// something runs a whole .js file rather than a snippet.
     /// </summary>
     [Fact]
-    public void TheShippedJavaScriptExampleLoadsAndHandlesEvents()
+    public void TheJavaScriptSampleLoadsAndHandlesEvents()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "rounds.js");
         var source = File.ReadAllText(path);
@@ -291,11 +297,12 @@ public sealed class ExampleScriptTests : IDisposable
     }
 
     /// <summary>
-    /// The example registers a command, so the example's command has to work. It is the
-    /// first one anyone copies.
+    /// The script registers a command, so the command path has to survive everything
+    /// else the script does — registration happens at load, and firing happens much
+    /// later against whatever state the rest of the script left behind.
     /// </summary>
     [Fact]
-    public void TheShippedExampleAnswersItsCommand()
+    public void TheSampleScriptAnswersItsCommand()
     {
         Assert.True(LoadExample().Succeeded);
         var controller = _world.Add(7, "murqin");
@@ -316,7 +323,7 @@ public sealed class ExampleScriptTests : IDisposable
     }
 
     [Fact]
-    public void TheShippedJavaScriptExampleAnswersItsCommand()
+    public void TheJavaScriptSampleAnswersItsCommand()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "rounds.js");
         Assert.True(_host.Load("rounds", "rounds.js", File.ReadAllText(path)).Succeeded);

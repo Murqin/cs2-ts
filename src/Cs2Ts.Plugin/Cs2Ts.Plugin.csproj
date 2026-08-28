@@ -15,8 +15,9 @@
   <ItemGroup>
     <!--
       Shipped into the author's scripts directory on first run. They live at the
-      repository root because the node tests compile the examples against exactly these
-      files, so what an author gets and what CI checks cannot drift apart.
+      repository root because the node tests compile the test suite's sample scripts
+      against exactly these files, so what an author gets and what CI checks cannot
+      drift apart.
     -->
     <EmbeddedResource Include="../../templates/cs2ts.d.ts" LogicalName="cs2ts.d.ts" />
     <EmbeddedResource Include="../../templates/tsconfig.json" LogicalName="tsconfig.json" />

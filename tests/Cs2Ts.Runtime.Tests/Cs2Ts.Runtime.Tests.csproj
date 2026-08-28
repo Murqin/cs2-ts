@@ -22,11 +22,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The shipped example is exercised as a test, so it cannot drift away from the
-         host API without something failing. -->
-    <None Include="../../examples/scripts/welcome.ts" Link="welcome.ts" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../examples/scripts/rounds.js" Link="rounds.js" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../examples/scripts/timers.ts" Link="timers.ts" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Whole scripts, run end to end rather than asserted on in pieces: stripping,
+         dispatch, timers, reload and the command path all have to agree at once for
+         one of these to work. They are read from disk at run time, so they are copied
+         out rather than embedded. The node suite compiles the same three files against
+         the shipped tsconfig, which is what keeps them honest as script rather than as
+         a string that happens to run. -->
+    <None Include="fixtures/welcome.ts" Link="welcome.ts" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="fixtures/rounds.js" Link="rounds.js" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="fixtures/timers.ts" Link="timers.ts" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

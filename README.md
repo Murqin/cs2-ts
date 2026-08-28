@@ -216,10 +216,9 @@ Drop a `.ts` or `.js` file in the plugin's `scripts/` directory. The plugin puts
 editor gives typed globals, and `fetch`, `process` and `enum` are refused there rather
 than on a live server. The declarations are kept current on every start because they
 describe the plugin's own API; the tsconfig is written once and never touched again,
-because it is yours. `examples/scripts/welcome.ts`,
-`examples/scripts/timers.ts` and `examples/scripts/rounds.js` are working
-scripts, and all three are exercised by both test suites so they cannot drift
-away from the runtime.
+because it is yours. There is no examples directory yet: the sample scripts the
+test suites run live with the tests, and a worked set for authors is written
+alongside the documentation rather than before it.
 
 ```ts
 on("player_connect", (player: Player): void => {
