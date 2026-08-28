@@ -18,7 +18,16 @@ declare global {
         /** What this refers to: "player". */
         readonly kind: string;
 
-        /** Whether the entity is still there. Cheap; check it before doing work. */
+        /**
+         * Whether the entity is still there. Cheap; check it before doing work.
+         *
+         * False once the entity is gone, and also once the id belongs to something
+         * else. A player's userid is a place on the server rather than a person: the
+         * game takes it back when they leave and hands the number out again later. So
+         * the reference remembers the Steam ID that was there when it was made and
+         * checks it, and a reference kept across a departure reads as gone rather than
+         * quietly becoming a reference to whoever arrived next.
+         */
         readonly isValid: boolean;
 
         /**

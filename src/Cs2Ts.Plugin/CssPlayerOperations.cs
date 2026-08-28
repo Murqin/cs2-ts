@@ -33,8 +33,7 @@ public sealed class CssPlayerOperations : IPlayerOperations<CCSPlayerController,
     public string GetName(CCSPlayerController controller) => controller.PlayerName;
 
     /// <inheritdoc />
-    public string GetSteamId(CCSPlayerController controller) =>
-        controller.SteamID.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    public ulong GetSteamId(CCSPlayerController controller) => controller.SteamID;
 
     /// <inheritdoc />
     public bool IsBot(CCSPlayerController controller) => controller.IsBot;

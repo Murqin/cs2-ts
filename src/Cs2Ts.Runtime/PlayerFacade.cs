@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.ClearScript;
 
 namespace Cs2Ts.Runtime;
@@ -88,7 +89,8 @@ public sealed class PlayerFacade<TController, TPawn>
     /// </summary>
     /// <exception cref="DeadEntityException">The player has left.</exception>
     [ScriptMember("steamId")]
-    public string SteamId => _operations.GetSteamId(Controller);
+    public string SteamId =>
+        _operations.GetSteamId(Controller).ToString(CultureInfo.InvariantCulture);
 
     /// <summary>Whether this is a bot rather than a person.</summary>
     /// <exception cref="DeadEntityException">The player has left.</exception>

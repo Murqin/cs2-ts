@@ -31,11 +31,14 @@ public interface IPlayerOperations<TController, TPawn>
     string GetName(TController controller);
 
     /// <summary>
-    /// The player's Steam ID as a string, because a 64-bit id does not survive a
-    /// JavaScript number: everything above 2^53 rounds, silently, to a different
-    /// player's id.
+    /// The player's Steam ID.
+    ///
+    /// A number rather than a string, even though script is given a string: this is
+    /// read on every access as the handle's proof that the userid still belongs to the
+    /// same person, and formatting it there would allocate on the game thread once per
+    /// property read. The facade does the formatting, once, where the reason for it is.
     /// </summary>
-    string GetSteamId(TController controller);
+    ulong GetSteamId(TController controller);
 
     /// <summary>Whether this is a bot rather than a person.</summary>
     bool IsBot(TController controller);
