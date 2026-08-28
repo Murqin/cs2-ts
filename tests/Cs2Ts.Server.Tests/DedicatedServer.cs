@@ -117,7 +117,35 @@ internal sealed class DedicatedServer : IAsyncDisposable
         await server.WaitForAsync(line => line.Contains("[CS2-TS] loaded ", StringComparison.Ordinal),
             TimeSpan.FromMinutes(2), token);
 
+        // And then wait for the way in, separately. Scripts being loaded says nothing
+        // about the RCON listener, and the two do not come up in a fixed order: the
+        // first run of a suite failed here with "connection refused" against a server
+        // that was plainly up and had already printed its script list.
+        await server.WaitForRconAsync(TimeSpan.FromMinutes(1), token);
+
         return server;
+    }
+
+    /// <summary>
+    /// Waits until the server accepts an RCON connection, which is not the same moment
+    /// as its scripts being loaded.
+    /// </summary>
+    private async Task WaitForRconAsync(TimeSpan timeout, CancellationToken token)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+
+        while (true)
+        {
+            try
+            {
+                using var rcon = RconClient.Connect(Port, Password, TimeSpan.FromSeconds(5));
+                return;
+            }
+            catch (SocketException) when (DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(250, token);
+            }
+        }
     }
 
     /// <summary>Runs a console command and returns once the server has taken it.</summary>
