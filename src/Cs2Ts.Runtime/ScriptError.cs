@@ -41,8 +41,27 @@ public sealed record ScriptError(
     // function, "    at warmup.ts:2:11". ClearScript appends " -> <source line>" to the
     // top frame, which is why the line/column group is anchored rather than greedy.
     private static readonly Regex FrameLocation = new(
-        @"^\s*at\s+(?:.*?\s+\()?(?<file>[^()\s]+?):(?<line>\d+):(?<column>\d+)\)?",
+        // The file may contain spaces — "vip system.ts" is a name someone will use, and
+        // a renamed document looks like "vip [2].ts". Excluding only parentheses still
+        // pins the two shapes V8 emits, because the optional prefix has to swallow
+        // "name (" before the file group can start.
+        @"^\s*at\s+(?:.*?\s+\()?(?<file>[^()]+?):(?<line>\d+):(?<column>\d+)\)?",
         RegexOptions.Multiline | RegexOptions.Compiled);
+
+    /// <summary>
+    /// What ClearScript adds to a document name it has seen before.
+    ///
+    /// Every plugin engine shares one V8Runtime, so the second load of "vip.ts" is
+    /// renamed — "vip [2].ts", or "vip.ts [temp]" for a transient document. Left alone
+    /// it points the author at a file that does not exist, and it only happens after a
+    /// reload, which is why no test caught it and a server did.
+    ///
+    /// A file genuinely named "vip [2].ts" would be reported as "vip.ts". That is the
+    /// trade, taken knowingly: the decoration is far more likely than the name.
+    /// </summary>
+    private static readonly Regex Decoration = new(
+        @"\s\[(?:\d+|temp)\]",
+        RegexOptions.Compiled);
 
     /// <summary>
     /// tsc's diagnostic shape, so an editor or terminal that already knows how to turn
@@ -102,7 +121,7 @@ public sealed record ScriptError(
             pluginName,
             source,
             message.Trim(),
-            match.Success ? match.Groups["file"].Value : null,
+            match.Success ? Decoration.Replace(match.Groups["file"].Value, "") : null,
             match.Success ? int.Parse(match.Groups["line"].Value) : 0,
             match.Success ? int.Parse(match.Groups["column"].Value) : 0,
             stack,

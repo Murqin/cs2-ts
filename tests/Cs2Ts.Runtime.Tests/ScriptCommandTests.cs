@@ -79,8 +79,8 @@ public sealed class ScriptCommandTests(CommandHostFixture fixture) : IDisposable
             """);
 
         Assert.True(result.Succeeded, string.Join("; ", result.Report()));
-        Assert.Equal(1, Host.DispatchCommand("greet", caller, ["a", "b"]));
-        Assert.Equal(1, Host.DispatchCommand("greet", null, []));
+        Assert.Equal(1, Host.DispatchCommand("greet", caller, ["a", "b"]).Taken);
+        Assert.Equal(1, Host.DispatchCommand("greet", null, []).Taken);
 
         Assert.Equal(["player [a|b]", "console []"], fixture.Recorded);
         Assert.Empty(Errors);
@@ -92,7 +92,7 @@ public sealed class ScriptCommandTests(CommandHostFixture fixture) : IDisposable
         Assert.True(Load("spelling", """command("/spelling_test", (): void => sink.record(1));""").Succeeded);
 
         // The script wrote a slash; the server knows it by the bare name either way.
-        Assert.Equal(1, Host.DispatchCommand("spelling_test", null, []));
+        Assert.Equal(1, Host.DispatchCommand("spelling_test", null, []).Taken);
         Assert.Contains("spelling_test", fixture.Announced);
     }
 
@@ -112,10 +112,10 @@ public sealed class ScriptCommandTests(CommandHostFixture fixture) : IDisposable
     public void ReloadingReplacesTheHandlerRatherThanAddingOne()
     {
         Assert.True(Load("reload", """command("!reload_test", (): void => sink.record(1));""").Succeeded);
-        Assert.Equal(1, Host.DispatchCommand("reload_test", null, []));
+        Assert.Equal(1, Host.DispatchCommand("reload_test", null, []).Taken);
 
         Assert.True(Load("reload", """command("!reload_test", (): void => sink.record(2));""").Succeeded);
-        Assert.Equal(1, Host.DispatchCommand("reload_test", null, []));
+        Assert.Equal(1, Host.DispatchCommand("reload_test", null, []).Taken);
 
         // The old handler is gone with its context, not running alongside the new one.
         Assert.Equal([1, 2], fixture.Sink.Values);
@@ -127,7 +127,7 @@ public sealed class ScriptCommandTests(CommandHostFixture fixture) : IDisposable
         Assert.True(Load("first", """command("!shared", (): void => sink.record(1));""").Succeeded);
         Assert.True(Load("second", """command("!shared", (): void => sink.record(2));""").Succeeded);
 
-        Assert.Equal(2, Host.DispatchCommand("shared", null, []));
+        Assert.Equal(2, Host.DispatchCommand("shared", null, []).Taken);
         Assert.Equal([1, 2], fixture.Sink.Values.Order().ToList());
     }
 
@@ -135,20 +135,52 @@ public sealed class ScriptCommandTests(CommandHostFixture fixture) : IDisposable
     public void UnloadingTakesTheCommandOutOfService()
     {
         Assert.True(Load("gone", """command("!gone_test", (): void => sink.record(1));""").Succeeded);
-        Assert.Equal(1, Host.DispatchCommand("gone_test", null, []));
+        Assert.Equal(1, Host.DispatchCommand("gone_test", null, []).Taken);
 
         Host.Unload("gone");
 
         // Zero is the answer the binding turns into "no script is handling this",
         // which is the whole reason it is a count rather than void.
-        Assert.Equal(0, Host.DispatchCommand("gone_test", null, []));
+        Assert.Equal(0, Host.DispatchCommand("gone_test", null, []).Taken);
     }
 
     [Fact]
     public void NobodyAnsweringIsNotAnError()
     {
-        Assert.Equal(0, Host.DispatchCommand("never_registered", null, []));
+        var outcome = Host.DispatchCommand("never_registered", null, []);
+
+        Assert.True(outcome.Unhandled);
         Assert.Empty(Errors);
+    }
+
+    [Fact]
+    public void AHandlerSwitchedOffByFloodProtectionIsNotTheSameAsNoHandler()
+    {
+        // Its own message on the binding's side: a command that exists and has been
+        // taken out of service is a different thing to tell an operator than one
+        // nobody registered, and the fix for each is different.
+        var host = new ScriptHost(_ => { }, new ScriptHostOptions(Policy: new BoundaryPolicy(2, TimeSpan.FromMinutes(1))));
+        try
+        {
+            Assert.True(host.Load(
+                "flood",
+                "flood.ts",
+                """command("!flood_test", (): void => { throw new Error("again"); });""").Succeeded);
+
+            for (var i = 0; i < 3; i++)
+            {
+                host.DispatchCommand("flood_test", null, []);
+            }
+
+            var outcome = host.DispatchCommand("flood_test", null, []);
+            Assert.Equal(0, outcome.Taken);
+            Assert.Equal(1, outcome.Skipped);
+            Assert.False(outcome.Unhandled);
+        }
+        finally
+        {
+            host.Dispose();
+        }
     }
 
     [Fact]
@@ -183,9 +215,14 @@ public sealed class ScriptCommandTests(CommandHostFixture fixture) : IDisposable
             });
             """).Succeeded);
 
-        // It ran; it just failed. The count is of handlers invoked, and the failure is
-        // reported against the script rather than reaching the server.
-        Host.DispatchCommand("boom_test", null, []);
+        // It ran; it just failed. Taken counts handlers that took the call, so the
+        // binding can tell "nobody registered this" apart from "it threw" — measured on
+        // a server, where a throwing command reported itself as unregistered.
+        var outcome = Host.DispatchCommand("boom_test", null, []);
+        Assert.Equal(1, outcome.Taken);
+        Assert.Equal(1, outcome.Failed);
+        Assert.Equal(0, outcome.Completed);
+        Assert.False(outcome.Unhandled);
 
         var error = Assert.Single(Errors);
         Assert.Equal("boom", error.PluginName);
@@ -203,7 +240,7 @@ public sealed class ScriptCommandTests(CommandHostFixture fixture) : IDisposable
             on("separate_test", (): void => sink.record(2));
             """).Succeeded);
 
-        Assert.Equal(1, Host.DispatchCommand("separate_test", null, []));
+        Assert.Equal(1, Host.DispatchCommand("separate_test", null, []).Taken);
         Assert.Equal(1, Host.Dispatch("separate_test"));
 
         // Commands share the handler table with events so that unloading and the
