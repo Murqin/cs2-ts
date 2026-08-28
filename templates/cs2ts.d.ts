@@ -28,10 +28,20 @@ declare global {
          * itself, untyped on purpose: past this point the script is responsible for its
          * own validity checking, and for whatever it does with a native object.
          *
-         * It reads and it calls methods; it cannot write a networked field. Those are
-         * ref-returning properties in CounterStrikeSharp and there is no way to assign
-         * to one from script — measured. So writing health, armour or money goes
-         * through the facade or not at all.
+         * What it reaches is narrower than it looks, and this was measured on a server
+         * rather than assumed. Ordinary CLR members work: `PlayerName` comes back as a
+         * string, and methods can be called. Networked schema fields do not work at
+         * all, in either direction:
+         *
+         * - Reading one gives an object with nothing on it. `typeof` says "object",
+         *   `Object.keys` is empty, `Number()` is `NaN`, `valueOf()` returns the same
+         *   object, and it has no `GetType`. There is no way to get a number out of it.
+         * - Writing one throws "The property set method is unavailable or
+         *   inaccessible" — clearly, at least, rather than silently doing nothing.
+         *
+         * They are ref-returning properties in CounterStrikeSharp, which is why. So
+         * health, armour, money, position and team go through the facade or not at
+         * all — the escape hatch is not a way round a gap in it.
          */
         resolve(): T;
 
@@ -45,8 +55,16 @@ declare global {
      * Two guards never throw, and one of them is the right one to reach for:
      *
      * - `isValid` — are they still on the server?
-     * - `isAlive` — are they in the world? False for spectators and for the dead,
-     *   which is exactly the case that makes `health`, `armor` and `position` throw.
+     * - `isAlive` — are they in the world? False for spectators and for the dead.
+     *
+     * `isAlive` is the guard to write, and not because the alternative throws. A dead
+     * player still has a pawn — a corpse — so `health`, `armor` and `position` read
+     * from it and return 0, 0 and where they fell. They throw only when there is no
+     * pawn at all: a spectator, or someone who has not spawned yet. Measured on a
+     * server, because the opposite was written here first.
+     *
+     * So `try`/`catch` is not a substitute for `isAlive`: healing a player without
+     * checking will quietly set a corpse to 100 rather than raise anything.
      *
      * Writing `health`, `armor` or `money` also tells the clients about it. Doing the
      * same thing through CounterStrikeSharp is two calls, and forgetting the second

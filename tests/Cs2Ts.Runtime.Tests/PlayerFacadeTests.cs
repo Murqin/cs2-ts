@@ -177,8 +177,14 @@ public sealed class PlayerFacadeTests : IDisposable
         Assert.True(player.IsValid);
         Assert.False(player.IsAlive);
 
-        // A corpse still has a pawn, so health reads rather than throwing.
+        // A corpse still has a pawn, so all three read rather than throwing. Only Health
+        // was pinned here before, and the declarations told authors that being dead was
+        // "exactly the case that makes health, armor and position throw" — which a
+        // server disproved for all three at once. The behaviour was right; the sentence
+        // describing it was not.
         Assert.Equal(0, player.Health);
+        Assert.Equal(0, player.Armor);
+        Assert.NotNull(player.Position);
     }
 
     [Fact]
