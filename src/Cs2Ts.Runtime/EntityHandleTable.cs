@@ -17,6 +17,7 @@ namespace Cs2Ts.Runtime;
 public sealed class EntityHandleTable<TEntity> where TEntity : class
 {
     private readonly Func<long, TEntity?> _resolve;
+    private readonly Func<TEntity, long>? _witness;
     private readonly Lock _gate = new();
     private readonly Dictionary<long, EntityHandle<TEntity>> _handles = [];
 
@@ -26,13 +27,22 @@ public sealed class EntityHandleTable<TEntity> where TEntity : class
     /// return null for an entity that exists but is no longer valid, since a script
     /// cannot tell the two apart and should not have to.
     /// </param>
-    public EntityHandleTable(string kind, Func<long, TEntity?> resolve)
+    /// <param name="witness">
+    /// A second identity, one that belongs to the thing itself rather than to the place
+    /// it occupies — a player's Steam ID against their userid. A handle remembers what
+    /// it saw the first time it resolved and stops resolving if that stops matching, so
+    /// that a recycled userid cannot quietly turn a handle into a reference to somebody
+    /// else. Optional: without one a handle trusts the resolver, which is the behaviour
+    /// this table had before.
+    /// </param>
+    public EntityHandleTable(string kind, Func<long, TEntity?> resolve, Func<TEntity, long>? witness = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(kind);
         ArgumentNullException.ThrowIfNull(resolve);
 
         Kind = kind;
         _resolve = resolve;
+        _witness = witness;
     }
 
     /// <summary>What these handles refer to — "player", "entity".</summary>
@@ -64,7 +74,7 @@ public sealed class EntityHandleTable<TEntity> where TEntity : class
                 return existing;
             }
 
-            var handle = new EntityHandle<TEntity>(Kind, id, _resolve);
+            var handle = new EntityHandle<TEntity>(Kind, id, _resolve, _witness);
             _handles[id] = handle;
             return handle;
         }

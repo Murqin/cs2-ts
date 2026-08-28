@@ -99,7 +99,7 @@ public sealed class FakeOperations(FakeWorld world) : IPlayerOperations<FakeCont
 
     public string GetName(FakeController controller) => controller.Name;
 
-    public string GetSteamId(FakeController controller) => controller.SteamId.ToString();
+    public ulong GetSteamId(FakeController controller) => controller.SteamId;
 
     public bool IsBot(FakeController controller) => controller.IsBot;
 

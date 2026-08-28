@@ -23,13 +23,23 @@ namespace Cs2Ts.Runtime;
 public sealed class EntityHandle<TEntity> : IEquatable<EntityHandle<TEntity>>
     where TEntity : class
 {
-    private readonly Func<long, TEntity?> _resolve;
+    /// <summary>
+    /// No second identity has been seen yet. It has to be a value the game cannot
+    /// produce, and zero is not one: every bot on a server reports a Steam ID of zero,
+    /// which was measured rather than assumed.
+    /// </summary>
+    private const long Unwitnessed = long.MinValue;
 
-    internal EntityHandle(string kind, long id, Func<long, TEntity?> resolve)
+    private readonly Func<long, TEntity?> _resolve;
+    private readonly Func<TEntity, long>? _witness;
+    private long _seen = Unwitnessed;
+
+    internal EntityHandle(string kind, long id, Func<long, TEntity?> resolve, Func<TEntity, long>? witness = null)
     {
         Kind = kind;
         Id = id;
         _resolve = resolve;
+        _witness = witness;
     }
 
     /// <summary>The durable identity. Survives everything the entity itself does not.</summary>
@@ -83,12 +93,45 @@ public sealed class EntityHandle<TEntity> : IEquatable<EntityHandle<TEntity>>
         return read(Resolve());
     }
 
+    /// <summary>
+    /// Resolves, and refuses an entity that is not the one this handle was made for.
+    ///
+    /// <see cref="Id"/> is a userid, and a userid is a place in a list rather than a
+    /// person: it is reset to 65535 when its owner leaves, and the number is eventually
+    /// handed to somebody else. A handle kept across that would go on resolving — to a
+    /// different person, quietly, with no crash and no error. It would be a script
+    /// setting a stranger's health, which is worse than the use-after-free the rest of
+    /// this type prevents, because nothing about it looks wrong.
+    ///
+    /// So a second identity is read on the first successful lookup and compared on
+    /// every one after it. For a player that is their Steam ID, which belongs to them
+    /// rather than to a slot.
+    ///
+    /// Two consequences worth naming. If the original owner comes back to the same
+    /// userid, the handle resolves again — that is the same person, so resolving is
+    /// right. And a handle made for a userid that was never seen resolve has nothing to
+    /// compare against, so the first entity it finds becomes the one it means; there is
+    /// no earlier truth for it to know.
+    /// </summary>
     private TEntity? Lookup()
     {
         // A resolver that throws is a host bug, but it would reach script as a dead
         // entity and send the author looking at their own code. Letting it out keeps
         // the blame where ScriptBoundary can classify it.
-        return _resolve(Id);
+        var entity = _resolve(Id);
+        if (entity is null || _witness is null)
+        {
+            return entity;
+        }
+
+        var seen = _witness(entity);
+        if (_seen == Unwitnessed)
+        {
+            _seen = seen;
+            return entity;
+        }
+
+        return _seen == seen ? entity : null;
     }
 
     /// <summary>

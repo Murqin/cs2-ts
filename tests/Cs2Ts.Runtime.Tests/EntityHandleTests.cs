@@ -17,6 +17,9 @@ public sealed class EntityHandleTests : IDisposable
 
         public string Name { get; } = name;
 
+        /// <summary>The identity that belongs to the person rather than to the slot.</summary>
+        public long SteamId { get; init; }
+
         public int Health { get; set; } = 100;
 
         public bool IsValid { get; set; } = true;
@@ -29,9 +32,9 @@ public sealed class EntityHandleTests : IDisposable
 
         public int Lookups { get; private set; }
 
-        public FakePlayer Add(long userId, string name)
+        public FakePlayer Add(long userId, string name, long steamId = 0)
         {
-            var player = new FakePlayer(userId, name);
+            var player = new FakePlayer(userId, name) { SteamId = steamId };
             _players[userId] = player;
             return player;
         }
@@ -54,6 +57,7 @@ public sealed class EntityHandleTests : IDisposable
     private readonly V8ScriptEngine _engine;
     private readonly FakeWorld _world = new();
     private readonly EntityHandleTable<FakePlayer> _players;
+    private readonly EntityHandleTable<FakePlayer> _witnessed;
 
     public EntityHandleTests()
     {
@@ -62,6 +66,7 @@ public sealed class EntityHandleTests : IDisposable
         // there, which is not something a plugin should be able to do.
         _engine = _runtime.CreateScriptEngine("handle-tests", V8ScriptEngineFlags.HideHostExceptions);
         _players = new EntityHandleTable<FakePlayer>("player", _world.Resolve);
+        _witnessed = new EntityHandleTable<FakePlayer>("player", _world.Resolve, player => player.SteamId);
     }
 
     public void Dispose()
@@ -336,6 +341,107 @@ public sealed class EntityHandleTests : IDisposable
 
         Assert.Equal("murqin", Eval("player.resolve().Name"));
         Assert.Equal(100, Eval("player.resolve().Health"));
+    }
+
+
+    /// <summary>
+    /// The bug this guards against does not crash and does not log. A userid is a place
+    /// in a list, not a person: the game gives it back when its owner leaves and hands
+    /// it to somebody else later. A handle kept across that would go on resolving, and
+    /// the script would write to a stranger.
+    /// </summary>
+    [Fact]
+    public void StopsResolvingWhenTheUseridHasBeenGivenToSomebodyElse()
+    {
+        _world.Add(7, "murqin", steamId: 76561198000000001);
+        var handle = _witnessed.For(7);
+        Assert.Equal("murqin", handle.Read(p => p.Name));
+
+        _world.Disconnect(7);
+        _world.Add(7, "stranger", steamId: 76561198000000002);
+
+        Assert.False(handle.IsValid);
+        Assert.Null(handle.Find());
+        Assert.Throws<DeadEntityException>(() => handle.Resolve());
+    }
+
+    /// <summary>
+    /// Deliberate, not an oversight. The check asks whether this is the same person,
+    /// and if they came back to the same userid the answer is yes — refusing them would
+    /// be inventing a second rule to enforce a wording rather than a fact.
+    /// </summary>
+    [Fact]
+    public void ResolvesAgainIfTheOriginalOwnerComesBackToTheSameUserid()
+    {
+        _world.Add(7, "murqin", steamId: 76561198000000001);
+        var handle = _witnessed.For(7);
+        Assert.True(handle.IsValid);
+
+        _world.Disconnect(7);
+        _world.Add(7, "stranger", steamId: 76561198000000002);
+        Assert.False(handle.IsValid);
+
+        _world.Disconnect(7);
+        _world.Add(7, "murqin again", steamId: 76561198000000001);
+
+        Assert.True(handle.IsValid);
+        Assert.Equal("murqin again", handle.Read(p => p.Name));
+    }
+
+    /// <summary>
+    /// A handle made for a userid nobody has seen has no earlier truth to compare
+    /// against, so whoever it finds first is who it means. Worth pinning: it is the one
+    /// gap the check does not close, and it is the shape players.byUserId() has.
+    /// </summary>
+    [Fact]
+    public void TakesTheFirstEntityItSeesAsTheOneItMeans()
+    {
+        var handle = _witnessed.For(7);
+        Assert.False(handle.IsValid);
+
+        _world.Add(7, "whoever", steamId: 76561198000000009);
+
+        Assert.True(handle.IsValid);
+        Assert.Equal("whoever", handle.Read(p => p.Name));
+    }
+
+    /// <summary>
+    /// The known limit, written down rather than discovered later. Every bot on a
+    /// server reports a Steam ID of zero — measured, ten of them at once — so two bots
+    /// on one userid are indistinguishable to this check. It is the reason the userid
+    /// stays the identity and this is only a guard on top of it.
+    /// </summary>
+    [Fact]
+    public void CannotTellApartTwoEntitiesThatShareAnIdentity()
+    {
+        _world.Add(7, "bot one", steamId: 0);
+        var handle = _witnessed.For(7);
+        Assert.Equal("bot one", handle.Read(p => p.Name));
+
+        _world.Disconnect(7);
+        _world.Add(7, "bot two", steamId: 0);
+
+        Assert.True(handle.IsValid);
+        Assert.Equal("bot two", handle.Read(p => p.Name));
+    }
+
+    /// <summary>
+    /// Without a second identity the table behaves as it always did: it believes the
+    /// resolver. The check is opt-in because not every kind of entity has an identity
+    /// that outlives its slot.
+    /// </summary>
+    [Fact]
+    public void TrustsTheResolverWhenThereIsNothingToCompareAgainst()
+    {
+        _world.Add(7, "murqin", steamId: 76561198000000001);
+        var handle = _players.For(7);
+        Assert.Equal("murqin", handle.Read(p => p.Name));
+
+        _world.Disconnect(7);
+        _world.Add(7, "stranger", steamId: 76561198000000002);
+
+        Assert.True(handle.IsValid);
+        Assert.Equal("stranger", handle.Read(p => p.Name));
     }
 
     /// <summary>

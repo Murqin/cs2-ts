@@ -282,6 +282,74 @@ public sealed class PlayerFacadeTests : IDisposable
         Assert.Equal(16000, controller.Money);
     }
 
+    /// <summary>
+    /// The facade gets the userid check for free, and this is where it matters most: a
+    /// facade is the thing a script actually keeps — in a timer, in a Map, in a closure
+    /// from five rounds ago. Resolving it to whoever inherited the userid would be a
+    /// script healing, moving or paying a stranger with nothing in the log about it.
+    /// </summary>
+    [Fact]
+    public void StopsResolvingWhenTheUseridHasBeenGivenToSomebodyElse()
+    {
+        _world.Add(7, "murqin", 76561198123456789UL);
+        var player = _players.For(7);
+        Assert.Equal("murqin", player.Name);
+
+        _world.Disconnect(7);
+        _world.Add(7, "stranger", 76561198000000002UL);
+
+        Assert.False(player.IsValid);
+        Assert.False(player.IsAlive);
+        Assert.Throws<DeadEntityException>(() => player.Name);
+        Assert.Throws<DeadEntityException>(() => player.Health = 100);
+    }
+
+    /// <summary>
+    /// The same userid handed to the same person is still that person, so the facade
+    /// starts working again. Stated as a test because the alternative — keeping it dead
+    /// forever — is what the wording "the handle stays dead" would suggest, and it is
+    /// not what this does or what it should do.
+    /// </summary>
+    [Fact]
+    public void ResolvesAgainWhenTheOriginalPlayerComesBack()
+    {
+        _world.Add(7, "murqin", 76561198123456789UL);
+        var player = _players.For(7);
+        Assert.True(player.IsValid);
+
+        _world.Disconnect(7);
+        _world.Add(7, "stranger", 76561198000000002UL);
+        Assert.False(player.IsValid);
+
+        _world.Disconnect(7);
+        _world.Add(7, "murqin", 76561198123456789UL);
+
+        Assert.True(player.IsValid);
+        Assert.Equal("murqin", player.Name);
+    }
+
+    /// <summary>
+    /// Script sees the same refusal it sees for a player who simply left: a catchable
+    /// Error, and isValid false beforehand. There is deliberately no separate signal for
+    /// "somebody else has your userid" — from the script's side the player it was
+    /// holding is gone either way.
+    /// </summary>
+    [Fact]
+    public void ScriptSeesAReusedUseridAsAPlayerWhoLeft()
+    {
+        _world.Add(7, "murqin", 76561198123456789UL);
+        Expose(7);
+        Assert.Equal("murqin", _engine.Evaluate("player.name"));
+
+        _world.Disconnect(7);
+        _world.Add(7, "stranger", 76561198000000002UL);
+
+        Assert.Equal(false, _engine.Evaluate("player.isValid"));
+        Assert.Equal(
+            "player 7 is no longer in the game",
+            _engine.Evaluate("(() => { try { return player.name; } catch (e) { return e.message; } })()"));
+    }
+
     [Fact]
     public void ScriptSeesAStringForSteamId()
     {

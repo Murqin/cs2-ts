@@ -38,7 +38,14 @@ public sealed class PlayerFacadeTable<TController, TPawn>
     {
         ArgumentNullException.ThrowIfNull(operations);
 
-        Handles = new EntityHandleTable<TController>(kind, resolve);
+        // The Steam ID is what makes a userid safe to hold on to. A userid is a place
+        // rather than a person — the game resets it to 65535 when its owner leaves and
+        // hands the number out again later — so without this a facade kept across a
+        // departure would eventually resolve to whoever took the slot, and a script
+        // would write to a stranger without anything looking wrong. Reading it costs a
+        // field read per access, which is why the operations hand it over as a number.
+        Handles = new EntityHandleTable<TController>(
+            kind, resolve, controller => unchecked((long)operations.GetSteamId(controller)));
         _operations = operations;
     }
 
