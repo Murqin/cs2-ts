@@ -101,6 +101,7 @@ public sealed class Cs2TsPlugin : BasePlugin
         // OnMapStart has been and gone, but the loop is turning, so the game is up.
         LoadScriptsOnce();
         _host?.DrainFrames();
+        _host?.AdvanceTimers();
     }
 
     /// <summary>
@@ -318,6 +319,7 @@ public sealed class Cs2TsPlugin : BasePlugin
 
             Console.WriteLine($"[CS2-TS] {_host.Loaded.Count} script(s): {string.Join(", ", _host.Loaded)}");
             Console.WriteLine($"[CS2-TS] queued frames: {_host.Frames.Count}, dropped: {_host.Frames.Dropped}");
+            Console.WriteLine($"[CS2-TS] pending timers: {_host.Timers.Count}, dropped: {_host.Timers.Dropped}");
             Console.WriteLine($"[CS2-TS] watchdog interruptions: {_host.Watchdog.Interruptions}");
 
             // Available to whoever asks, rather than announced to everyone who does not.

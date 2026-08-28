@@ -112,6 +112,34 @@ test("command arguments arrive as strings", () => {
         /TS2339|TS2551/);
 });
 
+test("the timer example compiles against the shipped tsconfig", () => {
+    const example = readFileSync(join(repository, "examples", "scripts", "timers.ts"), "utf8");
+    assert.equal(check(example), "");
+});
+
+test("the declarations put setTimeout back, and typed", () => {
+    // tsconfig.test.mjs asserts the shipped config drops setTimeout, because bare V8 has
+    // no clock. These declarations are what makes it exist again, on this runtime's own
+    // terms — so both halves have to be checked, or the pair can drift into a global
+    // that type-checks and is not installed, or one installed and not declared.
+    assert.equal(check("const id: number = setTimeout((): void => {}, 100);\nclearTimeout(id);\n"), "");
+    assert.equal(check("const id: number = setInterval((): void => {}, 100);\nclearInterval(id);\n"), "");
+
+    // The delay is optional, as it is everywhere else in JavaScript.
+    assert.equal(check("setTimeout((): void => {});\n"), "");
+});
+
+test("a timer handler that takes arguments is rejected", () => {
+    // setTimeout(fn, delay, ...args) is a Node and DOM convention this runtime does not
+    // implement. A script written that way would compile and then silently get undefined.
+    assert.match(check('setTimeout((who: string): void => {}, 100);\n'), /TS2345|TS2769/);
+    assert.match(check('setTimeout((): void => {}, 100, "extra");\n'), /TS2554/);
+});
+
+test("a timer delay has to be a number", () => {
+    assert.match(check('setTimeout((): void => {}, "100");\n'), /TS2345|TS2769/);
+});
+
 // ---- the JavaScript half ----
 
 /** Returns the tsc diagnostics for a single .js file using the shipped jsconfig. */

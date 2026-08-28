@@ -64,17 +64,20 @@ public sealed class ExampleScriptTests : IDisposable
     private readonly FakeConsole _console = new();
     private readonly List<ScriptError> _errors = [];
     private readonly ScriptHost _host;
+    private FakeServer _server = null!;
+    private double _now;
 
     public ExampleScriptTests()
     {
         _table = new PlayerFacadeTable<FakeController, FakePawn>(
             "player", _world.Resolve, new FakeOperations(_world));
 
-        _host = new ScriptHost(_errors.Add);
+        _host = new ScriptHost(_errors.Add, new ScriptHostOptions(Clock: () => _now));
         _host.Configure = (plugin, engine) =>
         {
             engine.AddHostObject("console", _console);
-            engine.AddHostObject("server", new FakeServer(plugin, _host!.Frames));
+            _server = new FakeServer(plugin, _host!.Frames);
+            engine.AddHostObject("server", _server);
             engine.AddHostObject("players", new FakePlayers(_table, _world));
         };
     }
@@ -85,6 +88,19 @@ public sealed class ExampleScriptTests : IDisposable
     {
         var path = Path.Combine(AppContext.BaseDirectory, "welcome.ts");
         return _host.Load("welcome", "welcome.ts", File.ReadAllText(path));
+    }
+
+    private PluginLoadResult LoadTimerExample()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "timers.ts");
+        return _host.Load("timers", "timers.ts", File.ReadAllText(path));
+    }
+
+    /// <summary>Moves the clock and runs the tick, the way the game loop would.</summary>
+    private int Advance(double seconds)
+    {
+        _now += seconds;
+        return _host.AdvanceTimers();
     }
 
     [Fact]
@@ -135,6 +151,89 @@ public sealed class ExampleScriptTests : IDisposable
         Assert.Equal(["welcome, murqin"], controller.Chat);
         Assert.DoesNotContain(_console.Lines, line => line.Contains("still here on the next frame"));
         Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// The timer example, run rather than merely compiled: the reminder waits, the
+    /// warmup countdown counts, and the interval stops itself.
+    /// </summary>
+    [Fact]
+    public void TheTimerExampleWaitsAndThenFires()
+    {
+        Assert.True(LoadTimerExample().Succeeded);
+        var controller = _world.Add(7, "murqin");
+
+        Assert.Equal(1, _host.Dispatch("round_start", 115));
+
+        // Nothing at 29 seconds. The reminder is a reminder, not a greeting.
+        Advance(29);
+        Assert.Empty(controller.Chat);
+
+        Advance(2);
+        Assert.Equal(["thirty seconds in — good luck"], controller.Chat);
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// The countdown clears itself from inside its own handler, which is the normal way
+    /// an interval ends and the one that has to work.
+    /// </summary>
+    [Fact]
+    public void TheWarmupCountdownStopsItself()
+    {
+        Assert.True(LoadTimerExample().Succeeded);
+        _world.Add(7, "murqin");
+
+        Assert.Equal(1, _host.Dispatch("player_connect", _table.For(7)));
+        Assert.Equal(1, _host.Timers.Count);
+
+        for (var second = 0; second < 8; second++)
+        {
+            Advance(1);
+        }
+
+        // Four announcements, then the restart, then nothing: the interval cleared
+        // itself rather than counting past zero into negative numbers.
+        Assert.Equal(
+            ["say warmup ends in 4", "say warmup ends in 3", "say warmup ends in 2", "say warmup ends in 1", "mp_restartgame 1"],
+            _server.Commands);
+        Assert.Equal(0, _host.Timers.Count);
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// The trap the example exists to show: a player captured in a timer, read three
+    /// seconds later, after they have gone. With a cached pointer this is a crash.
+    /// </summary>
+    [Fact]
+    public void ATimerHoldingAPlayerWhoLeftDoesNotFail()
+    {
+        Assert.True(LoadTimerExample().Succeeded);
+        var controller = _world.Add(7, "murqin");
+
+        Assert.Equal(1, _host.Dispatch("player_death", _table.For(7)));
+        _world.Disconnect(7);
+
+        Advance(4);
+
+        Assert.Empty(controller.Chat);
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// Reloading the timer example must not leave the previous version's countdown
+    /// running underneath the new one — the promise the declarations make to the author.
+    /// </summary>
+    [Fact]
+    public void ReloadingTheTimerExampleDoesNotDoubleItsInterval()
+    {
+        Assert.True(LoadTimerExample().Succeeded);
+        _world.Add(7, "murqin");
+        _host.Dispatch("player_connect", _table.For(7));
+        Assert.Equal(1, _host.Timers.Count);
+
+        Assert.True(LoadTimerExample().Succeeded);
+        Assert.Equal(0, _host.Timers.Count);
     }
 
     /// <summary>

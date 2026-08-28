@@ -151,6 +151,49 @@ declare global {
         handler: (player: Player | null, args: string[]) => void,
     ): void;
 
+    /**
+     * Runs `handler` once, after at least `delay` milliseconds. Returns an id for
+     * `clearTimeout`.
+     *
+     * "At least" is the honest word: timers are checked once per game tick, so on a
+     * 64 tick server nothing fires more finely than roughly every 15ms, and a delay of
+     * 0 means the next tick rather than right now. Asking for less does no harm, it
+     * just does not buy anything.
+     *
+     * The handler runs on the game thread, so it may touch the game directly — unlike a
+     * callback coming back from asynchronous work, which has to go through
+     * `server.nextFrame`.
+     *
+     * Anything the handler captures is kept alive until it fires, and a player captured
+     * five seconds ago may well have left; `Player` holds an identity rather than a
+     * pointer, so check `isValid` rather than assuming.
+     *
+     * Timers belong to the script that set them. Reloading or unloading it cancels
+     * every one of them, which is why a reload does not leave the previous version's
+     * work running underneath the new one.
+     */
+    function setTimeout(handler: () => void, delay?: number): number;
+
+    /**
+     * Runs `handler` every `delay` milliseconds until `clearInterval` is called.
+     * Returns an id.
+     *
+     * There is no catch-up. If the server hitches for two seconds, a 100ms interval
+     * fires once and is scheduled again from that moment — not twenty times in one tick
+     * to make up the difference, which is never what was wanted and lands exactly when
+     * the server can least afford it.
+     *
+     * A handler that keeps throwing is taken out of service like any other, and its
+     * interval stops with it rather than failing forever on a schedule.
+     */
+    function setInterval(handler: () => void, delay?: number): number;
+
+    /** Cancels a timer. Cancelling one that already fired, or never existed, is fine. */
+    function clearTimeout(id: number): boolean;
+
+    /** Cancels a timer. The same function as `clearTimeout`; both ids come from one counter. */
+    function clearInterval(id: number): boolean;
+
     const server: {
         /**
          * Runs a callback on the game thread. The way back from asynchronous work —
