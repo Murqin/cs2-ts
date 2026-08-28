@@ -124,10 +124,26 @@ public sealed class Cs2TsPlugin : BasePlugin
     /// left and for one who is still around but no longer valid, because a script
     /// cannot tell those apart and should not have to.
     /// </summary>
+    /// <remarks>
+    /// IsValid alone is not enough, and believing it was is a bug a server found.
+    /// It reports whether the entity is valid, not whether the person is here: a
+    /// controller for someone who has disconnected stays valid and keeps their name and
+    /// SteamID, so a handle held across their departure went on resolving to them.
+    /// Measured fifteen seconds after a real disconnect: still IsValid, still the right
+    /// name and SteamID, while players.all() correctly no longer listed them.
+    ///
+    /// Connected is the field that answers the question the handle is actually asking.
+    /// Measured across the same disconnect: Connected while playing, still Connected
+    /// during the player_disconnect event itself — so a handler for that event can still
+    /// see who left — and Disconnected afterwards, at which point UserId has also been
+    /// reset to 65535. Requiring it costs nothing and closes the window.
+    /// </remarks>
     private static CCSPlayerController? ResolvePlayer(long userId)
     {
         var controller = Utilities.GetPlayerFromUserid((int)userId);
-        return controller is { IsValid: true } ? controller : null;
+        return controller is { IsValid: true, Connected: PlayerConnectedState.Connected }
+            ? controller
+            : null;
     }
 
     /// <summary>
