@@ -35,8 +35,37 @@ public sealed class Cs2TsPlugin : BasePlugin
     private bool _engineIsOurs;
     private string _localeAtLoad = "";
 
-    /// <summary>Where a server operator drops their script files.</summary>
-    private string ScriptDirectory => Path.Combine(ModuleDirectory, "scripts");
+    /// <summary>
+    /// Where a server operator drops their script files: scripts/ next to the plugin,
+    /// unless CS2TS_SCRIPTS names somewhere else.
+    ///
+    /// The override exists so that something other than the operator's own folder can
+    /// be loaded — an automated run against a real server needs to choose exactly which
+    /// scripts are present, and a suite that has to share a directory with whatever
+    /// someone left there is a suite that fails for reasons nobody can reproduce.
+    /// A relative path would be read against the server's working directory rather than
+    /// the plugin's, which is not what anyone setting this means, so it is refused.
+    /// </summary>
+    private string ScriptDirectory
+    {
+        get
+        {
+            var configured = Environment.GetEnvironmentVariable("CS2TS_SCRIPTS");
+            if (string.IsNullOrWhiteSpace(configured))
+            {
+                return Path.Combine(ModuleDirectory, "scripts");
+            }
+
+            if (!Path.IsPathRooted(configured))
+            {
+                Console.WriteLine(
+                    $"[CS2-TS] CS2TS_SCRIPTS must be an absolute path; ignoring '{configured}'");
+                return Path.Combine(ModuleDirectory, "scripts");
+            }
+
+            return configured;
+        }
+    }
 
     /// <summary>
     /// Both are first-class. A .js file has nothing to strip, so accepting one costs the
