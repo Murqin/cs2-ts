@@ -170,10 +170,16 @@ public sealed class TimerTable
     /// rest of the tick, which is a hang with extra steps — the same trap
     /// <see cref="FrameQueue.Drain"/> snapshots its batch to avoid.
     ///
-    /// A repeating timer is rescheduled from <paramref name="now"/> rather than from when
-    /// it was due, so a server that hitches for two seconds does not then fire a 100ms
-    /// interval twenty times in one tick to catch up. Twenty runs back to back is never
-    /// what the author wanted, and it arrives exactly when the server can least afford it.
+    /// A repeating timer is rescheduled from when it was due, so the tick it spent
+    /// waiting is not added to the next period — otherwise every run is up to one tick
+    /// late and the lateness accumulates, which measured as fifty seconds an hour on a
+    /// one second interval.
+    ///
+    /// The exception is a due time already in the past, meaning more than a whole period
+    /// went by without a tick. Then the schedule is abandoned and restarted from
+    /// <paramref name="now"/>: a server that hitches for two seconds must not fire a
+    /// 100ms interval twenty times in one tick to catch up, which is never what the
+    /// author wanted and arrives exactly where the server can least afford it.
     /// </remarks>
     public int Tick(double now)
     {
@@ -196,7 +202,19 @@ public sealed class TimerTable
 
                 if (entry.Repeating)
                 {
-                    entry.DueAt = now + entry.Period;
+                    // From when it was due, not from now, so the tick it waited for the
+                    // callback does not become part of the next period. Rescheduling
+                    // from now looks equivalent and is not: every run is up to one tick
+                    // late, and from now that lateness is carried forward and added to
+                    // the next one. Measured before this: a 1s interval ran at 1.0139s,
+                    // which is fifty seconds an hour.
+                    var next = entry.DueAt + entry.Period;
+
+                    // Unless it is already in the past, which means more than one whole
+                    // period went by without a tick — a hitch, a hibernating server, a
+                    // map change. Catching up would fire the backlog all at once, so the
+                    // schedule is abandoned and restarted from now instead.
+                    entry.DueAt = next <= now ? now + entry.Period : next;
                     _due.Enqueue(id, entry.DueAt);
                 }
                 else

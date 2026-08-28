@@ -136,7 +136,9 @@ None of these exist. Every asynchronous capability — timers, HTTP, filesystem,
 database access — is a host API written on the C# side and explicitly exposed.
 `setTimeout`, `setInterval` and their `clear` pair are the first of those: they
 keep the names and the milliseconds every JavaScript author expects, and they are
-checked once per game tick, so a delay is a floor rather than a promise. Most npm
+checked once per game tick, so a delay is a floor rather than a promise. An
+interval's rate does not drift for that reason — each run is scheduled from when
+the last one was due — and it does not catch up after a stall either. Most npm
 packages will not work; dependency-free, pure-JavaScript ones may.
 
 Types are stripped, not compiled, using

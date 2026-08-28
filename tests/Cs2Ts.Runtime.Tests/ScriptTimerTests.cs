@@ -171,6 +171,60 @@ public sealed class ScriptTimerTests(TimerHostFixture fixture) : IDisposable
         Assert.Equal(2, Recorded.Count);
     }
 
+    /// <summary>
+    /// An interval must not drift.
+    ///
+    /// Timers are checked once per tick, so a run is up to one tick late. Rescheduling
+    /// from that moment rather than from when it was due carries the lateness into the
+    /// next period, where it happens again — measured on a server as a one second
+    /// interval running at 1.0139s, fifty seconds of drift an hour.
+    ///
+    /// The tick here is deliberately not a divisor of the period, so every run lands
+    /// late and a drifting implementation loses ground on each one.
+    /// </summary>
+    [Fact]
+    public void AnIntervalDoesNotDrift()
+    {
+        Assert.True(Load("steady", """
+            setInterval((): void => sink.record(1), 100);
+            """).Succeeded);
+
+        // 15.7ms rather than a round 15.625: a tick that divides the period exactly
+        // never lands late, so it cannot show drift at all. 640 of them is 10.048s.
+        for (var tick = 0; tick < 640; tick++)
+        {
+            Advance(0.0157);
+        }
+
+        // Ten seconds of a 100ms interval is a hundred runs. Carrying each run's
+        // lateness into the next period costs about a tick every time, which over ten
+        // seconds loses roughly eight of them.
+        Assert.Equal(100, Recorded.Count);
+    }
+
+    /// <summary>
+    /// Drift-free rescheduling must not become catch-up. A gap longer than the period
+    /// means the schedule is abandoned rather than replayed.
+    /// </summary>
+    [Fact]
+    public void AnIntervalRestartsItsScheduleAfterALongGap()
+    {
+        Assert.True(Load("resync", """
+            setInterval((): void => sink.record(1), 100);
+            """).Succeeded);
+
+        // One firing for the gap itself, and then the next one a full period later
+        // rather than a burst of the twenty that were missed.
+        //
+        // The steps deliberately miss the due time rather than landing on it: 2.0 + 0.1
+        // and 2.0 + 0.05 + 0.05 are different doubles, and a test sitting exactly on the
+        // boundary measures floating point rather than the schedule.
+        Assert.Equal(1, Advance(2));
+        Assert.Equal(0, Advance(0.09));
+        Assert.Equal(1, Advance(0.02));
+        Assert.Equal(2, Recorded.Count);
+    }
+
     [Fact]
     public void ClearingATimeoutStopsIt()
     {
