@@ -136,6 +136,49 @@ test("a timer handler that takes arguments is rejected", () => {
     assert.match(check('setTimeout((): void => {}, 100, "extra");\n'), /TS2554/);
 });
 
+test("the escape hatch takes an entity and gives back a number", () => {
+    assert.equal(
+        check([
+            'on("player_spawn", (p: Player): void => {',
+            "    if (!p.isAlive) { return; }",
+            "    const pawn = unsafe.pawn(p);",
+            '    const health: number = unsafe.getInt(pawn, "CBaseEntity", "m_iHealth");',
+            '    unsafe.setInt(pawn, "CBaseEntity", "m_iHealth", health + 25);',
+            "});",
+            "",
+        ].join("\n")),
+        "");
+});
+
+test("what the escape hatch returns is untyped, like resolve()", () => {
+    // An entity is a native object with no declared shape. A script that treats one as
+    // if it had members must not compile — the same bargain resolve() makes.
+    assert.match(
+        check('on("player_spawn", (p: Player) => { unsafe.pawn(p).Health; });\n'),
+        /TS2339|TS2571|TS18046/);
+});
+
+test("there is no setString to reach for", () => {
+    // Its absence is a decision, not an oversight: CounterStrikeSharp's string setter
+    // writes a pointer where its getter reads characters. If it ever appears here it
+    // should be because someone meant it.
+    assert.match(
+        check('on("player_spawn", (p: Player) => { unsafe.setString(unsafe.pawn(p), "C", "f", "x"); });\n'),
+        /TS2339|TS2551/);
+});
+
+test("the escape hatch's value types are checked", () => {
+    assert.match(
+        check('on("player_spawn", (p: Player) => { unsafe.setBool(unsafe.pawn(p), "C", "f", 1); });\n'),
+        /TS2345|TS2769/);
+    assert.match(
+        check('on("player_spawn", (p: Player) => { unsafe.setInt(unsafe.pawn(p), "C", "f"); });\n'),
+        /TS2554/);
+    assert.match(
+        check('on("player_spawn", (p: Player) => { const n: number = unsafe.getString(unsafe.pawn(p), "C", "f"); });\n'),
+        /TS2322/);
+});
+
 test("a timer delay has to be a number", () => {
     assert.match(check('setTimeout((): void => {}, "100");\n'), /TS2345|TS2769/);
 });

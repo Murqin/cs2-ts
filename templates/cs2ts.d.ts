@@ -39,9 +39,10 @@ declare global {
          * - Writing one throws "The property set method is unavailable or
          *   inaccessible" — clearly, at least, rather than silently doing nothing.
          *
-         * They are ref-returning properties in CounterStrikeSharp, which is why. So
-         * health, armour, money, position and team go through the facade or not at
-         * all — the escape hatch is not a way round a gap in it.
+         * They are ref-returning properties in CounterStrikeSharp, which is why.
+         * Health, armour, money and position are all on that side of the line, so this
+         * is not the way to reach them: use the facade, or `unsafe` for a field the
+         * facade does not have.
          */
         resolve(): T;
 
@@ -250,6 +251,77 @@ declare global {
 
         /** Everyone currently connected. */
         all(): Player[];
+    };
+
+    /**
+     * Entity fields the facade does not cover, read and written by name.
+     *
+     * ```ts
+     * const pawn = unsafe.pawn(player);
+     * unsafe.setInt(pawn, "CBaseEntity", "m_iHealth", 55);
+     * ```
+     *
+     * The facade is the way to do the ordinary things, and it will always be behind the
+     * game. This is the way through for the rest — the fields nobody has written a
+     * facade member for. `resolve()` cannot do it: schema fields are the one kind of
+     * member that does not survive the trip into script, which is why the names are
+     * passed as strings and the reading and writing happen on the host side.
+     *
+     * It is called `unsafe` because it is, in a specific way. The names are not checked
+     * by the compiler and they are not obvious:
+     *
+     * - The class is the one that **declares** the field, not the one that inherits it.
+     *   Health is `CBaseEntity.m_iHealth` even when the entity is a `CCSPlayerPawn`.
+     *   Armour is `CCSPlayerPawn.m_ArmorValue`. Getting this wrong is the normal way to
+     *   get it wrong.
+     * - A name the schema does not know throws, with the pair that failed in the
+     *   message. That check is the reason this is usable at all: underneath,
+     *   CounterStrikeSharp resolves an unknown name to offset zero and writes there,
+     *   over the entity's vtable pointer, without reporting anything.
+     * - The type has to match the field. Reading an int field with `getFloat` returns
+     *   the same bytes read as a float, which is a number, and a wrong one. Nothing
+     *   here can catch that.
+     *
+     * Writes replicate: the state change the engine needs is sent for you, for the
+     * fields that are networked.
+     *
+     * Both accessors take an entity from `pawn()` or `controller()`. Do not keep one
+     * past the statement that made it — the pawn a script stored is freed at the end of
+     * the round, and the `Player` it came from is the thing designed to be kept.
+     */
+    const unsafe: {
+        /**
+         * The player's controller: the half of them that persists, where name, team and
+         * money live. The same object `player.resolve()` returns. Throws if the player
+         * has left.
+         */
+        controller(player: Player): unknown;
+
+        /**
+         * The player's pawn: their body, where health, armour and position live. Throws
+         * if the player has left, and if they are not in the world — check `isAlive`.
+         */
+        pawn(player: Player): unknown;
+
+        getInt(entity: unknown, className: string, field: string): number;
+        setInt(entity: unknown, className: string, field: string, value: number): void;
+
+        getFloat(entity: unknown, className: string, field: string): number;
+        setFloat(entity: unknown, className: string, field: string, value: number): void;
+
+        getBool(entity: unknown, className: string, field: string): boolean;
+        setBool(entity: unknown, className: string, field: string, value: boolean): void;
+
+        /**
+         * Reads a string field, as the characters stored in the field itself.
+         *
+         * There is no `setString`, on purpose. CounterStrikeSharp's two halves disagree
+         * about what a string field is — the getter reads characters from the field's
+         * own address, the setter writes an eight-byte pointer there — so for every
+         * field where reading works, writing would overwrite the first eight characters
+         * and report nothing.
+         */
+        getString(entity: unknown, className: string, field: string): string;
     };
 }
 
