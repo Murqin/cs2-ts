@@ -178,10 +178,15 @@ declare global {
      * Runs `handler` every `delay` milliseconds until `clearInterval` is called.
      * Returns an id.
      *
-     * There is no catch-up. If the server hitches for two seconds, a 100ms interval
-     * fires once and is scheduled again from that moment — not twenty times in one tick
-     * to make up the difference, which is never what was wanted and lands exactly when
-     * the server can least afford it.
+     * The rate does not drift. Each run is scheduled from when the previous one was
+     * due, not from when it actually ran, so the tick it waited is not added to the next
+     * period. Carrying it forward would cost about a tick every time — on a one second
+     * interval, fifty seconds an hour.
+     *
+     * There is no catch-up either. If the server hitches for two seconds, a 100ms
+     * interval fires once and starts a fresh schedule — not twenty times in one tick to
+     * make up the difference, which is never what was wanted and lands exactly when the
+     * server can least afford it.
      *
      * A handler that keeps throwing is taken out of service like any other, and its
      * interval stops with it rather than failing forever on a schedule.
