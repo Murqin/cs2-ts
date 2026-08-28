@@ -182,7 +182,7 @@ the server, with JSDoc types wherever they are wanted.
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
 | 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
-| 2 | Player and entity APIs, commands, timers, escape hatch | facade, commands and timers |
+| 2 | Player and entity APIs, commands, timers, escape hatch | facade, commands, timers and the escape hatch |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
 | 4 | Module resolution, permissions, plugin distribution | |
 

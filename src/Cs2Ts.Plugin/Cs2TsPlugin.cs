@@ -24,6 +24,11 @@ public sealed class Cs2TsPlugin : BasePlugin
 
     private ScriptHost? _host;
     private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;
+
+    // One instance, shared by the facade and the escape hatch. Both need the rule for
+    // what counts as a pawn, and two copies of that rule would drift.
+    private readonly CssPlayerOperations _operations = new();
+
     private FileSystemWatcher? _watcher;
     private bool _scriptsLoaded;
     private bool _engineChecked;
@@ -61,7 +66,7 @@ public sealed class Cs2TsPlugin : BasePlugin
         _host = new ScriptHost(Report);
         _host.CommandRegistered = RegisterScriptCommand;
         _players = new PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>(
-            "player", ResolvePlayer, new CssPlayerOperations());
+            "player", ResolvePlayer, _operations);
         _host.Configure = InstallApi;
 
         Directory.CreateDirectory(ScriptDirectory);
@@ -155,6 +160,7 @@ public sealed class Cs2TsPlugin : BasePlugin
         engine.AddHostObject("server", new ServerApi(plugin, _host!.Frames));
         engine.AddHostObject("console", new ConsoleApi(plugin.Name, Console.WriteLine));
         engine.AddHostObject("players", new PlayersApi(_players!));
+        engine.AddHostObject("unsafe", new UnsafeApi(_operations));
 
         // Once, for the first engine, and silent when it passes. An operator has no
         // question this answers on a working server — the bootstrap already logged that
