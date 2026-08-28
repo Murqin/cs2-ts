@@ -134,7 +134,10 @@ http    net     stream  Buffer      fetch       require()
 
 None of these exist. Every asynchronous capability — timers, HTTP, filesystem,
 database access — is a host API written on the C# side and explicitly exposed.
-Most npm packages will not work; dependency-free, pure-JavaScript ones may.
+`setTimeout`, `setInterval` and their `clear` pair are the first of those: they
+keep the names and the milliseconds every JavaScript author expects, and they are
+checked once per game tick, so a delay is a floor rather than a promise. Most npm
+packages will not work; dependency-free, pure-JavaScript ones may.
 
 Types are stripped, not compiled, using
 [ts-blank-space](https://github.com/bloomberg/ts-blank-space), which replaces
@@ -144,8 +147,13 @@ at the right place in the `.ts` file without a source map.
 Only erasable syntax is supported. `enum`, `namespace`, parameter properties and
 import aliases are rejected at author time by the shipped
 [`tsconfig.json`](templates/tsconfig.json), whose `erasableSyntaxOnly` also has
-`lib` and `types` pinned so that `fetch`, `process`, `setTimeout` and `console`
-fail to type-check rather than to run. Decorators are the case that config
+`lib` and `types` pinned so that `fetch`, `process`, `setTimeout`, `console` and
+`require` fail to type-check rather than to run. What a script may actually reach
+comes back one name at a time, from [`cs2ts.d.ts`](templates/cs2ts.d.ts) — so
+`console` and the timers exist again, on this runtime's own terms, while `fetch`
+and `process` stay gone. Both halves are tested, because a global that
+type-checks and is not installed is the same bug as one installed and not
+declared. Decorators are the case that config
 cannot catch — they are proposed JavaScript rather than a TypeScript extension —
 so the stripper reports those itself, along with anything that does not parse.
 
@@ -172,7 +180,7 @@ the server, with JSDoc types wherever they are wanted.
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
 | 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
-| 2 | Player and entity APIs, commands, timers, escape hatch | facade and commands |
+| 2 | Player and entity APIs, commands, timers, escape hatch | facade, commands and timers |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
 | 4 | Module resolution, permissions, plugin distribution | |
 
@@ -206,9 +214,10 @@ Drop a `.ts` or `.js` file in the plugin's `scripts/` directory. The plugin puts
 editor gives typed globals, and `fetch`, `process` and `enum` are refused there rather
 than on a live server. The declarations are kept current on every start because they
 describe the plugin's own API; the tsconfig is written once and never touched again,
-because it is yours. `examples/scripts/welcome.ts` and
-`examples/scripts/rounds.js` are working scripts, and both are exercised by both
-test suites so they cannot drift away from the runtime.
+because it is yours. `examples/scripts/welcome.ts`,
+`examples/scripts/timers.ts` and `examples/scripts/rounds.js` are working
+scripts, and all three are exercised by both test suites so they cannot drift
+away from the runtime.
 
 ```ts
 on("player_connect", (player: Player): void => {
@@ -240,6 +249,17 @@ command("!heal", (player: Player | null): void => {
     if (player?.isAlive) {
         player.health = 100;
     }
+});
+
+on("player_death", (player: Player): void => {
+    // Timers belong to the script that set them, so saving the file cancels this one
+    // rather than leaving the old version's work running under the new one. Three
+    // seconds is long enough for the player to have left; isValid is the question.
+    setTimeout((): void => {
+        if (player.isValid) {
+            player.sendChat("respawning shortly");
+        }
+    }, 3_000);
 });
 ```
 

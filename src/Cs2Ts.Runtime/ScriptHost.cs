@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 
@@ -12,7 +13,16 @@ namespace Cs2Ts.Runtime;
 /// Generous on purpose: it exists to bound a hang, not to police slow code.
 /// </param>
 /// <param name="Policy">When a repeatedly failing handler is taken out of service.</param>
-public sealed record ScriptHostOptions(TimeSpan Budget = default, BoundaryPolicy? Policy = null)
+/// <param name="Clock">
+/// Reads a monotonic number of seconds, for timers. The default counts from when the
+/// host was built. Not the game's own clock: <c>Server.CurrentTime</c> restarts at zero
+/// on a map change, and scripts are not reloaded there, so every pending timer would be
+/// left waiting for a time that had already gone past.
+/// </param>
+public sealed record ScriptHostOptions(
+    TimeSpan Budget = default,
+    BoundaryPolicy? Policy = null,
+    Func<double>? Clock = null)
 {
     /// <summary>Half a second is dozens of ticks: nothing working takes that long.</summary>
     public TimeSpan Budget { get; } = Budget == default ? TimeSpan.FromMilliseconds(500) : Budget;
@@ -33,6 +43,7 @@ public sealed class ScriptHost : IDisposable
     private readonly Action<ScriptError> _report;
     private readonly ScriptHostOptions _options;
     private readonly Lock _gate = new();
+    private readonly Func<double> _clock;
     private readonly Dictionary<string, ScriptPlugin> _plugins = [];
     private readonly HashSet<string> _knownCommands = new(StringComparer.Ordinal);
     private bool _disposed;
@@ -45,6 +56,10 @@ public sealed class ScriptHost : IDisposable
 
         _report = report;
         _options = options ?? new ScriptHostOptions();
+
+        var started = Stopwatch.StartNew();
+        _clock = _options.Clock ?? (() => started.Elapsed.TotalSeconds);
+
         _runtime = new V8Runtime("cs2ts");
         _watchdog = new ScriptWatchdog(_options.Budget);
 
@@ -65,6 +80,9 @@ public sealed class ScriptHost : IDisposable
 
     /// <summary>Work waiting to run on the game thread.</summary>
     public FrameQueue Frames { get; } = new();
+
+    /// <summary>Timers every loaded plugin has set.</summary>
+    public TimerTable Timers { get; } = new();
 
     /// <summary>The watchdog, for its interruption count.</summary>
     public ScriptWatchdog Watchdog => _watchdog;
@@ -157,7 +175,9 @@ public sealed class ScriptHost : IDisposable
                 _options.Policy,
                 _watchdog,
                 Configure,
-                OnCommandRegistered);
+                OnCommandRegistered,
+                Timers,
+                _clock);
         }
         catch (Exception exception)
         {
@@ -195,7 +215,10 @@ public sealed class ScriptHost : IDisposable
             }
         }
 
+        // Before Dispose, so that work already queued is gone rather than waiting for a
+        // drain that will only find a cancelled lifetime and drop it anyway.
         Frames.Discard(plugin);
+        Timers.Discard(plugin);
         plugin.Dispose();
         return true;
     }
@@ -279,6 +302,9 @@ public sealed class ScriptHost : IDisposable
     /// <summary>Runs whatever background work has come back. Call once per tick.</summary>
     public int DrainFrames() => Frames.Drain();
 
+    /// <summary>Runs every timer that has come due. Call once per tick.</summary>
+    public int AdvanceTimers() => Timers.Tick(_clock());
+
     /// <summary>Unloads every plugin, then tears down the runtime they shared.</summary>
     public void Dispose()
     {
@@ -298,6 +324,7 @@ public sealed class ScriptHost : IDisposable
 
         foreach (var plugin in plugins)
         {
+            Timers.Discard(plugin);
             plugin.Dispose();
         }
 

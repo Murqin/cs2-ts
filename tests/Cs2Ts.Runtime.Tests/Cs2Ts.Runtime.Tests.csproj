@@ -26,6 +26,7 @@
          host API without something failing. -->
     <None Include="../../examples/scripts/welcome.ts" Link="welcome.ts" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../examples/scripts/rounds.js" Link="rounds.js" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../examples/scripts/timers.ts" Link="timers.ts" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

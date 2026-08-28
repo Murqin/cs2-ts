@@ -24,6 +24,8 @@ public sealed class ScriptPlugin : IDisposable
     private readonly Dictionary<string, List<Registration>> _handlers = [];
     private readonly HashSet<string> _commands = new(StringComparer.Ordinal);
     private Action<string>? _commandRegistered;
+    private TimerTable? _timers;
+    private Func<double>? _clock;
     private readonly CancellationTokenSource _lifetime = new();
 
     // Captured at construction. CancellationTokenSource.Token throws once the source is
@@ -98,7 +100,9 @@ public sealed class ScriptPlugin : IDisposable
         BoundaryPolicy? policy,
         ScriptWatchdog? watchdog,
         Action<ScriptPlugin, V8ScriptEngine>? configure,
-        Action<string>? commandRegistered = null)
+        Action<string>? commandRegistered = null,
+        TimerTable? timers = null,
+        Func<double>? clock = null)
     {
         // HideHostExceptions keeps the .NET exception object off the Error a script
         // catches; without it e.hostException is a way out of the sandbox. Reflection is
@@ -116,6 +120,8 @@ public sealed class ScriptPlugin : IDisposable
         var plugin = new ScriptPlugin(name, fileName, engine, boundary, watchdog)
         {
             _commandRegistered = commandRegistered,
+            _timers = timers,
+            _clock = clock,
         };
 
         try
@@ -126,6 +132,14 @@ public sealed class ScriptPlugin : IDisposable
             // bridge to exactly one callable.
             engine.Script.__cs2ts_register = new Action<string, ScriptObject>(plugin.Add);
             engine.Script.__cs2ts_command = new Action<string, ScriptObject>(plugin.AddCommand);
+
+            // Ids cross as doubles, not as the longs they are. ClearScript marshals an
+            // Int64 to script as a host object rather than a number, and a timer id that
+            // is not a number is one a script cannot compare, store in a Map, or hand
+            // back without ceremony. Ids come off a counter that starts at 1, so the
+            // exact range of a double is never in question.
+            engine.Script.__cs2ts_set_timer = new Func<ScriptObject, double, bool, double>(plugin.SetTimer);
+            engine.Script.__cs2ts_clear_timer = new Func<double, bool>(plugin.ClearTimer);
             engine.Execute(new DocumentInfo("cs2ts:prelude.js"), Prelude);
             configure?.Invoke(plugin, engine);
 
@@ -143,6 +157,12 @@ public sealed class ScriptPlugin : IDisposable
     /// The only globals a plugin starts with. <c>on</c> is a function rather than a
     /// host object member so that scripts can pass it around and so that the host
     /// object stays out of reach.
+    ///
+    /// The timer functions keep the names every JavaScript author already knows, and
+    /// take milliseconds as those names imply. What they do not keep is the pretence of
+    /// millisecond resolution: they are checked once per tick, so on a 64 tick server
+    /// nothing fires more finely than about every 15ms. That is written down in
+    /// <c>cs2ts.d.ts</c> rather than left to be discovered.
     /// </summary>
     private const string Prelude =
         """
@@ -165,7 +185,60 @@ public sealed class ScriptPlugin : IDisposable
             }
             __cs2ts_command(name, handler);
         };
+
+        function __cs2ts_delay(who, delay) {
+            if (delay === undefined) {
+                return 0;
+            }
+            if (typeof delay !== "number" || !Number.isFinite(delay)) {
+                throw new TypeError(who + "(): the delay must be a finite number of milliseconds");
+            }
+            return delay / 1000;
+        }
+
+        globalThis.setTimeout = function setTimeout(handler, delay) {
+            if (typeof handler !== "function") {
+                throw new TypeError("setTimeout(): the handler must be a function");
+            }
+            return __cs2ts_set_timer(handler, __cs2ts_delay("setTimeout", delay), false);
+        };
+
+        globalThis.setInterval = function setInterval(handler, delay) {
+            if (typeof handler !== "function") {
+                throw new TypeError("setInterval(): the handler must be a function");
+            }
+            return __cs2ts_set_timer(handler, __cs2ts_delay("setInterval", delay), true);
+        };
+
+        globalThis.clearTimeout = function clearTimeout(id) {
+            return typeof id === "number" && __cs2ts_clear_timer(id);
+        };
+
+        globalThis.clearInterval = globalThis.clearTimeout;
         """;
+
+    /// <summary>
+    /// Schedules a script callback. The delay arrives in seconds: the prelude converts
+    /// from the milliseconds an author writes, so the unit only exists at the edge.
+    /// </summary>
+    private double SetTimer(ScriptObject handler, double delaySeconds, bool repeating)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        if (_timers is null || _clock is null)
+        {
+            throw new InvalidOperationException(
+                "timers are not available in this host; setTimeout and setInterval do nothing here");
+        }
+
+        return _timers.Set(this, delaySeconds, repeating, _clock(), () => handler.InvokeAsFunction());
+    }
+
+    /// <summary>
+    /// Cancels one of this plugin's timers. Cancelling something that is not there is
+    /// not an error in JavaScript and is not one here either.
+    /// </summary>
+    private bool ClearTimer(double id) => _timers is not null && _timers.Clear(this, (long)id);
 
     /// <summary>
     /// The key a command's handlers are stored under. Commands share the handler table
@@ -328,6 +401,11 @@ public sealed class ScriptPlugin : IDisposable
 
         _disposed = true;
         _lifetime.Cancel();
+
+        // Here rather than only in the host's unload path, so that every way a plugin can
+        // end takes its timers with it — including a load that threw partway through, by
+        // which point it may already have set some.
+        _timers?.Discard(this);
 
         lock (_handlers)
         {
