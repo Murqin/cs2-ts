@@ -352,6 +352,33 @@ public sealed class ScriptTimerTests(TimerHostFixture fixture) : IDisposable
 
         Assert.False(result.Succeeded);
         Assert.Contains("timers pending", result.Error!.Message);
+
+        // The line that called setTimeout, not the prelude that defines it. Asserting
+        // only the message is what let this ship wrong: a server reported
+        // "cs2ts:prelude.js(35,12)" while this test was green.
+        Assert.Equal("greedy.ts", result.Error.FileName);
+        Assert.Equal(2, result.Error.Line);
+    }
+
+    /// <summary>
+    /// The same rule for the argument checks the prelude makes itself. Every global a
+    /// script calls is a prelude function, so without skipping those frames every one of
+    /// these refusals points at a file the author has never seen.
+    /// </summary>
+    [Theory]
+    [InlineData("(setTimeout as unknown as (h?: unknown) => number)(undefined);")]
+    [InlineData("(setInterval as unknown as (h?: unknown) => number)(undefined);")]
+    [InlineData("setTimeout((): void => {}, NaN as number);")]
+    public void APreludeRefusalPointsAtTheAuthorsLine(string call)
+    {
+        var result = Load("refused", $"""
+            const marker = 1;
+            {call}
+            """);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("refused.ts", result.Error!.FileName);
+        Assert.Equal(2, result.Error.Line);
     }
 
     /// <summary>The cap is per plugin, not shared: one greedy script must not starve another.</summary>
