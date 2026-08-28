@@ -179,6 +179,14 @@ test("the escape hatch's value types are checked", () => {
         /TS2322/);
 });
 
+test("a tick handler takes nothing and returns nothing", () => {
+    assert.equal(check('on("tick", (): void => {});\n'), "");
+
+    // The tick carries no argument. Declaring one would compile and then silently get
+    // undefined, which is the shape of bug the declarations exist to refuse.
+    assert.match(check('on("tick", (delta: number): void => {});\n'), /TS2345|TS2769/);
+});
+
 test("a timer delay has to be a number", () => {
     assert.match(check('setTimeout((): void => {}, "100");\n'), /TS2345|TS2769/);
 });

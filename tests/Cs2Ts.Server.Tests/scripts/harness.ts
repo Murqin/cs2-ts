@@ -80,3 +80,15 @@ command("!htimer", () => {
 });
 
 console.log("HARNESS ready");
+
+// The tick event, counted rather than logged: a line per tick would be sixty-four
+// lines a second and the transcript would be useless for everything else.
+let ticks = 0;
+
+on("tick", () => {
+    ticks++;
+});
+
+command("!hticks", () => {
+    console.log(`HARNESS ticks=${ticks}`);
+});

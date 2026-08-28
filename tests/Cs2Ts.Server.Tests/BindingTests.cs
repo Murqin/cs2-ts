@@ -74,6 +74,58 @@ public sealed class BindingTests(ServerFixture fixture)
     }
 
     [Fact]
+    public async Task ATickHandlerRunsOncePerGameTick()
+    {
+        var server = fixture.Require();
+
+        var first = await TickCountAsync(server);
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        var second = await TickCountAsync(server);
+
+        // The claim is a rate, not that the handler ran at all — a handler called once
+        // and a handler called on every tick both pass "greater than zero", and the
+        // difference between them is the whole feature. This server runs at 64 tick;
+        // the range is wide enough for a busy machine and narrow enough that a handler
+        // driven by anything other than the game loop fails it.
+        var perSecond = (second - first) / 2.0;
+        Assert.InRange(perSecond, 30, 130);
+    }
+
+    [Fact]
+    public async Task ATickHandlerThatKeepsThrowingIsTakenOutOfService()
+    {
+        var server = fixture.Require();
+
+        server.ClearTranscript();
+        server.Command("css_hfailtick");
+
+        // Five failures in ten seconds is the policy, and at 64 tick that is reached in
+        // under a tenth of a second. Nothing here is waiting for a slow burn.
+        var disabled = await server.WaitForAsync(
+            line => line.Contains("has been disabled", StringComparison.Ordinal), Answer);
+        Assert.Contains("handler", disabled, StringComparison.Ordinal);
+
+        // The half that matters more: the flood actually stops. An error reported sixty
+        // four times a second costs the log, the boundary crossing and the unwind, and
+        // it does it forever.
+        server.ClearTranscript();
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        Assert.DoesNotContain(server.Transcript,
+            line => line.Contains("this tick handler always throws", StringComparison.Ordinal));
+    }
+
+    private static async Task<int> TickCountAsync(DedicatedServer server)
+    {
+        server.ClearTranscript();
+        server.Command("css_hticks");
+
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS ticks=", StringComparison.Ordinal), Answer);
+
+        return int.Parse(line[(line.IndexOf("ticks=", StringComparison.Ordinal) + 6)..].Trim());
+    }
+
+    [Fact]
     public async Task TheEscapeHatchWritesASchemaFieldTheFacadeThenReads()
     {
         var server = await fixture.RequireWithPlayersAsync();

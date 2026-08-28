@@ -132,6 +132,30 @@ declare global {
 
     /** Handler signatures for the events the runtime dispatches. */
     interface Cs2TsEvents {
+        /**
+         * Every game tick — 64 times a second on a standard server.
+         *
+         * The only event that is not something happening; it is the game loop itself,
+         * and it is the way to do anything the other events cannot express: watching a
+         * value change, driving movement, reacting faster than a round or a spawn.
+         *
+         * It carries no argument. What tick it is and how long the server has been up
+         * are both on `server`, and passing a number here that nobody uses would cost
+         * a conversion sixty-four times a second.
+         *
+         * What a handler does here it does sixty-four times a second, so this is the
+         * one place where an ordinary amount of work is too much: a loop over every
+         * player, a string built per player, an allocation kept. There is no budget
+         * enforced beyond the one that stops a handler running for half a second, so a
+         * handler that is merely slow will not be reported — it will show up as a
+         * server that feels worse.
+         *
+         * A handler that throws repeatedly is taken out of service like any other, and
+         * here that matters more than usual: without it the failure would be reported
+         * sixty-four times a second, forever.
+         */
+        tick: () => void;
+
         round_start: (timeLimit: number) => void;
         round_end: (winner: number) => void;
         player_connect: (player: Player) => void;
