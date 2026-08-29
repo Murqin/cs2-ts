@@ -18,7 +18,15 @@ namespace Cs2Ts.Runtime;
 /// so a single file has no sibling that is a module rather than a plugin — there is
 /// nothing it could import. Moving it into a folder is what gives it one.
 /// </param>
-public sealed record PluginSource(string Name, string EntryPath, string? ModuleRoot)
+/// <param name="Manifest">
+/// What the plugin says about itself, or null for a single file — which has no folder to
+/// keep one in, and is the one shape of plugin that does not need to introduce itself.
+/// </param>
+public sealed record PluginSource(
+    string Name,
+    string EntryPath,
+    string? ModuleRoot,
+    PluginManifest? Manifest = null)
 {
     /// <summary>
     /// How the entry file is named in errors and stack frames: "welcome.ts" for a
@@ -31,4 +39,7 @@ public sealed record PluginSource(string Name, string EntryPath, string? ModuleR
     public string DisplayName => ModuleRoot is null
         ? Path.GetFileName(EntryPath)
         : $"{Path.GetFileName(ModuleRoot)}/{Path.GetFileName(EntryPath)}";
+
+    /// <summary>"jetpack 1.0.0", or just "welcome" for a plugin with no manifest.</summary>
+    public string Describe() => Manifest?.ToString() ?? Name;
 }

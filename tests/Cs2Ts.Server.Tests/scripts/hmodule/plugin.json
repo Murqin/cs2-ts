@@ -1,0 +1,6 @@
+{
+    "name": "hmodule",
+    "version": "1.0.0",
+    "description": "The server suite's folder plugin: it imports a module and reports what it got.",
+    "api": "0.1"
+}
