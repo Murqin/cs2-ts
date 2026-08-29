@@ -24,6 +24,7 @@ public sealed class ScriptPlugin : IDisposable
     private readonly Dictionary<string, List<Registration>> _handlers = [];
     private readonly HashSet<string> _commands = new(StringComparer.Ordinal);
     private Action<string>? _commandRegistered;
+    private Action<string>? _eventRegistered;
     private TimerTable? _timers;
     private Func<double>? _clock;
     private readonly CancellationTokenSource _lifetime = new();
@@ -101,6 +102,7 @@ public sealed class ScriptPlugin : IDisposable
         ScriptWatchdog? watchdog,
         Action<ScriptPlugin, V8ScriptEngine>? configure,
         Action<string>? commandRegistered = null,
+        Action<string>? eventRegistered = null,
         TimerTable? timers = null,
         Func<double>? clock = null)
     {
@@ -120,6 +122,7 @@ public sealed class ScriptPlugin : IDisposable
         var plugin = new ScriptPlugin(name, fileName, engine, boundary, watchdog)
         {
             _commandRegistered = commandRegistered,
+            _eventRegistered = eventRegistered,
             _timers = timers,
             _clock = clock,
         };
@@ -130,7 +133,7 @@ public sealed class ScriptPlugin : IDisposable
             // members against the engine's access context, and a type private to this
             // class is not visible from it. A delegate sidesteps that and keeps the
             // bridge to exactly one callable.
-            engine.Script.__cs2ts_register = new Action<string, ScriptObject>(plugin.Add);
+            engine.Script.__cs2ts_register = new Action<string, ScriptObject>(plugin.AddEvent);
             engine.Script.__cs2ts_command = new Action<string, ScriptObject>(plugin.AddCommand);
 
             // Ids cross as doubles, not as the longs they are. ClearScript marshals an
@@ -367,6 +370,30 @@ public sealed class ScriptPlugin : IDisposable
         // with the server, and a command that exists before its handler does is a
         // command that can be run before it works.
         _commandRegistered?.Invoke(normalized);
+    }
+
+    /// <summary>
+    /// Registers an event handler, and tells the host which event it was.
+    ///
+    /// The host needs to know because a game event costs nothing until somebody asks
+    /// for it: the plugin layer hooks an event with the server the first time a script
+    /// mentions it, and the two hundred and seventy events nobody listens to are never
+    /// hooked at all. Same order as a command — the handler is in place before the
+    /// server is told, so the first firing cannot arrive before something can answer it.
+    /// </summary>
+    private void AddEvent(string eventName, ScriptObject handler)
+    {
+        Add(eventName, handler);
+        _eventRegistered?.Invoke(eventName);
+    }
+
+    /// <summary>Whether anything in this plugin is listening for an event.</summary>
+    public bool Handles(string eventName)
+    {
+        lock (_handlers)
+        {
+            return _handlers.ContainsKey(eventName);
+        }
     }
 
     private void Add(string eventName, ScriptObject handler)

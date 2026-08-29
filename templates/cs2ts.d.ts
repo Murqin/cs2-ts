@@ -641,7 +641,7 @@ declare global {
         health: number;
         /** CBasePlayerController/m_iIgnoreGlobalChat — A ChatIgnoreType_t. */
         ignoreGlobalChat: number;
-        /** CBasePlayerController/m_nInButtonsWhichAreToggles — A 64-bit value, as a string: it does not survive a JavaScript number. */
+        /** CBasePlayerController/m_nInButtonsWhichAreToggles — A 64-bit id, as a string: it does not survive a JavaScript number. */
         readonly inButtonsWhichAreToggles: string;
         /** CCSPlayerController/m_bInSwitchTeam */
         inSwitchTeam: boolean;
@@ -747,9 +747,9 @@ declare global {
         ping: number;
         /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
         platformType: number;
-        /** CCSPlayerController/m_nPlayerDominated — A 64-bit value, as a string: it does not survive a JavaScript number. */
+        /** CCSPlayerController/m_nPlayerDominated — A 64-bit id, as a string: it does not survive a JavaScript number. */
         readonly playerDominated: string;
-        /** CCSPlayerController/m_nPlayerDominatingMe — A 64-bit value, as a string: it does not survive a JavaScript number. */
+        /** CCSPlayerController/m_nPlayerDominatingMe — A 64-bit id, as a string: it does not survive a JavaScript number. */
         readonly playerDominatingMe: string;
         /** CBasePlayerController/m_iszPlayerName — Read-only, as every string field is. */
         readonly playerName: string;
@@ -797,7 +797,7 @@ declare global {
         spawnflags: number;
         /** CBasePlayerController/m_nSplitScreenSlot */
         splitScreenSlot: number;
-        /** CBasePlayerController/m_steamID — A 64-bit value, as a string: it does not survive a JavaScript number. */
+        /** CBasePlayerController/m_steamID — A 64-bit id, as a string: it does not survive a JavaScript number. */
         readonly steamID: string;
         /** CCSPlayerController/m_nSuspiciousHitCount */
         suspiciousHitCount: number;
@@ -835,6 +835,2672 @@ declare global {
         waterTouch: number;
         /** CBaseEntity/m_nWaterType */
         waterType: number;
+    }
+
+    /** What the `achievement_earned` event carries. */
+    interface AchievementEarnedEvent {
+        /** EventAchievementEarned.Achievement */
+        readonly achievement: number;
+        /** EventAchievementEarned.Player */
+        readonly player: Player | null;
+    }
+
+    /** What the `achievement_earned_local` event carries. */
+    interface AchievementEarnedLocalEvent {
+        /** EventAchievementEarnedLocal.Achievement */
+        readonly achievement: number;
+        /** EventAchievementEarnedLocal.Splitscreenplayer */
+        readonly splitscreenplayer: number;
+    }
+
+    /** What the `achievement_event` event carries. */
+    interface AchievementEventEvent {
+        /** EventAchievementEvent.AchievementName */
+        readonly achievementName: string;
+        /** EventAchievementEvent.CurVal */
+        readonly curVal: number;
+        /** EventAchievementEvent.MaxVal */
+        readonly maxVal: number;
+    }
+
+    /** What the `achievement_info_loaded` event carries. */
+    interface AchievementInfoLoadedEvent {
+    }
+
+    /** What the `achievement_write_failed` event carries. */
+    interface AchievementWriteFailedEvent {
+    }
+
+    /** What the `add_bullet_hit_marker` event carries. */
+    interface AddBulletHitMarkerEvent {
+        /** EventAddBulletHitMarker.AngX */
+        readonly angX: number;
+        /** EventAddBulletHitMarker.AngY */
+        readonly angY: number;
+        /** EventAddBulletHitMarker.AngZ */
+        readonly angZ: number;
+        /** EventAddBulletHitMarker.Bone */
+        readonly bone: number;
+        /** EventAddBulletHitMarker.Hit */
+        readonly hit: boolean;
+        /** EventAddBulletHitMarker.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventAddBulletHitMarker.PosX */
+        readonly posX: number;
+        /** EventAddBulletHitMarker.PosY */
+        readonly posY: number;
+        /** EventAddBulletHitMarker.PosZ */
+        readonly posZ: number;
+        /** EventAddBulletHitMarker.StartX */
+        readonly startX: number;
+        /** EventAddBulletHitMarker.StartY */
+        readonly startY: number;
+        /** EventAddBulletHitMarker.StartZ */
+        readonly startZ: number;
+    }
+
+    /** What the `add_player_sonar_icon` event carries. */
+    interface AddPlayerSonarIconEvent {
+        /** EventAddPlayerSonarIcon.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventAddPlayerSonarIcon.PosX */
+        readonly posX: number;
+        /** EventAddPlayerSonarIcon.PosY */
+        readonly posY: number;
+        /** EventAddPlayerSonarIcon.PosZ */
+        readonly posZ: number;
+    }
+
+    /** What the `ammo_pickup` event carries. */
+    interface AmmoPickupEvent {
+        /** EventAmmoPickup.Index */
+        readonly index: number;
+        /** EventAmmoPickup.Item */
+        readonly item: string;
+        /** EventAmmoPickup.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `ammo_refill` event carries. */
+    interface AmmoRefillEvent {
+        /** EventAmmoRefill.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventAmmoRefill.Success */
+        readonly success: boolean;
+    }
+
+    /** What the `announce_phase_end` event carries. */
+    interface AnnouncePhaseEndEvent {
+    }
+
+    /** What the `begin_new_match` event carries. */
+    interface BeginNewMatchEvent {
+    }
+
+    /** What the `bomb_abortdefuse` event carries. */
+    interface BombAbortdefuseEvent {
+        /** EventBombAbortdefuse.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `bomb_abortplant` event carries. */
+    interface BombAbortplantEvent {
+        /** EventBombAbortplant.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventBombAbortplant.Site */
+        readonly site: number;
+    }
+
+    /** What the `bomb_beep` event carries. */
+    interface BombBeepEvent {
+        /** EventBombBeep.Entindex */
+        readonly entindex: number;
+    }
+
+    /** What the `bomb_begindefuse` event carries. */
+    interface BombBegindefuseEvent {
+        /** EventBombBegindefuse.Haskit */
+        readonly haskit: boolean;
+        /** EventBombBegindefuse.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `bomb_beginplant` event carries. */
+    interface BombBeginplantEvent {
+        /** EventBombBeginplant.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventBombBeginplant.Site */
+        readonly site: number;
+    }
+
+    /** What the `bomb_defused` event carries. */
+    interface BombDefusedEvent {
+        /** EventBombDefused.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventBombDefused.Site */
+        readonly site: number;
+    }
+
+    /** What the `bomb_dropped` event carries. */
+    interface BombDroppedEvent {
+        /** EventBombDropped.Entindex */
+        readonly entindex: number;
+        /** EventBombDropped.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `bomb_exploded` event carries. */
+    interface BombExplodedEvent {
+        /** EventBombExploded.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventBombExploded.Site */
+        readonly site: number;
+    }
+
+    /** What the `bomb_pickup` event carries. */
+    interface BombPickupEvent {
+        /** EventBombPickup.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `bomb_planted` event carries. */
+    interface BombPlantedEvent {
+        /** EventBombPlanted.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventBombPlanted.Site */
+        readonly site: number;
+    }
+
+    /** What the `bonus_updated` event carries. */
+    interface BonusUpdatedEvent {
+        /** EventBonusUpdated.Numadvanced */
+        readonly numadvanced: number;
+        /** EventBonusUpdated.Numbronze */
+        readonly numbronze: number;
+        /** EventBonusUpdated.Numgold */
+        readonly numgold: number;
+        /** EventBonusUpdated.Numsilver */
+        readonly numsilver: number;
+    }
+
+    /** What the `bot_takeover` event carries. */
+    interface BotTakeoverEvent {
+        /** EventBotTakeover.Botid */
+        readonly botid: Player | null;
+        /** EventBotTakeover.P */
+        readonly p: number;
+        /** EventBotTakeover.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventBotTakeover.R */
+        readonly r: number;
+        /** EventBotTakeover.Y */
+        readonly y: number;
+    }
+
+    /** What the `break_breakable` event carries. */
+    interface BreakBreakableEvent {
+        /** EventBreakBreakable.Entindex */
+        readonly entindex: number;
+        /** EventBreakBreakable.Material */
+        readonly material: number;
+        /** EventBreakBreakable.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `break_prop` event carries. */
+    interface BreakPropEvent {
+        /** EventBreakProp.Entindex */
+        readonly entindex: number;
+        /** EventBreakProp.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventBreakProp.PlayerDropped */
+        readonly playerDropped: boolean;
+        /** EventBreakProp.PlayerHeld */
+        readonly playerHeld: boolean;
+        /** EventBreakProp.PlayerThrown */
+        readonly playerThrown: boolean;
+    }
+
+    /** What the `broken_breakable` event carries. */
+    interface BrokenBreakableEvent {
+        /** EventBrokenBreakable.Entindex */
+        readonly entindex: number;
+        /** EventBrokenBreakable.Material */
+        readonly material: number;
+        /** EventBrokenBreakable.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `bullet_damage` event carries. */
+    interface BulletDamageEvent {
+        /** EventBulletDamage.AimPunchX */
+        readonly aimPunchX: number;
+        /** EventBulletDamage.AimPunchY */
+        readonly aimPunchY: number;
+        /** EventBulletDamage.AimPunchZ */
+        readonly aimPunchZ: number;
+        /** EventBulletDamage.AttackTickCount */
+        readonly attackTickCount: number;
+        /** EventBulletDamage.AttackTickFrac */
+        readonly attackTickFrac: number;
+        /** EventBulletDamage.Attacker */
+        readonly attacker: Player | null;
+        /** EventBulletDamage.DamageDirX */
+        readonly damageDirX: number;
+        /** EventBulletDamage.DamageDirY */
+        readonly damageDirY: number;
+        /** EventBulletDamage.DamageDirZ */
+        readonly damageDirZ: number;
+        /** EventBulletDamage.Distance */
+        readonly distance: number;
+        /** EventBulletDamage.InAir */
+        readonly inAir: boolean;
+        /** EventBulletDamage.InaccuracyAir */
+        readonly inaccuracyAir: number;
+        /** EventBulletDamage.InaccuracyMove */
+        readonly inaccuracyMove: number;
+        /** EventBulletDamage.InaccuracyTotal */
+        readonly inaccuracyTotal: number;
+        /** EventBulletDamage.NoScope */
+        readonly noScope: boolean;
+        /** EventBulletDamage.NumPenetrations */
+        readonly numPenetrations: number;
+        /** EventBulletDamage.RecoilIndex */
+        readonly recoilIndex: number;
+        /** EventBulletDamage.RenderTickCount */
+        readonly renderTickCount: number;
+        /** EventBulletDamage.RenderTickFrac */
+        readonly renderTickFrac: number;
+        /** EventBulletDamage.ShootAngX */
+        readonly shootAngX: number;
+        /** EventBulletDamage.ShootAngY */
+        readonly shootAngY: number;
+        /** EventBulletDamage.ShootAngZ */
+        readonly shootAngZ: number;
+        /** EventBulletDamage.Type */
+        readonly type: number;
+        /** EventBulletDamage.Victim */
+        readonly victim: Player | null;
+    }
+
+    /** What the `bullet_impact` event carries. */
+    interface BulletImpactEvent {
+        /** EventBulletImpact.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventBulletImpact.X */
+        readonly x: number;
+        /** EventBulletImpact.Y */
+        readonly y: number;
+        /** EventBulletImpact.Z */
+        readonly z: number;
+    }
+
+    /** What the `buymenu_close` event carries. */
+    interface BuymenuCloseEvent {
+        /** EventBuymenuClose.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `buymenu_open` event carries. */
+    interface BuymenuOpenEvent {
+    }
+
+    /** What the `buytime_ended` event carries. */
+    interface BuytimeEndedEvent {
+    }
+
+    /** What the `cart_updated` event carries. */
+    interface CartUpdatedEvent {
+    }
+
+    /** What the `choppers_incoming_warning` event carries. */
+    interface ChoppersIncomingWarningEvent {
+        /** EventChoppersIncomingWarning.Global */
+        readonly global: boolean;
+    }
+
+    /** What the `client_disconnect` event carries. */
+    interface ClientDisconnectEvent {
+    }
+
+    /** What the `client_loadout_changed` event carries. */
+    interface ClientLoadoutChangedEvent {
+    }
+
+    /** What the `clientside_lesson_closed` event carries. */
+    interface ClientsideLessonClosedEvent {
+        /** EventClientsideLessonClosed.LessonName */
+        readonly lessonName: string;
+    }
+
+    /** What the `clientside_reload_custom_econ` event carries. */
+    interface ClientsideReloadCustomEconEvent {
+        /** EventClientsideReloadCustomEcon.Steamid */
+        readonly steamid: string;
+    }
+
+    /** What the `cs_game_disconnected` event carries. */
+    interface CsGameDisconnectedEvent {
+    }
+
+    /** What the `cs_intermission` event carries. */
+    interface CsIntermissionEvent {
+    }
+
+    /** What the `cs_match_end_restart` event carries. */
+    interface CsMatchEndRestartEvent {
+    }
+
+    /** What the `cs_pre_restart` event carries. */
+    interface CsPreRestartEvent {
+    }
+
+    /** What the `cs_prev_next_spectator` event carries. */
+    interface CsPrevNextSpectatorEvent {
+        /** EventCsPrevNextSpectator.Next */
+        readonly next: boolean;
+    }
+
+    /** What the `cs_round_final_beep` event carries. */
+    interface CsRoundFinalBeepEvent {
+    }
+
+    /** What the `cs_round_start_beep` event carries. */
+    interface CsRoundStartBeepEvent {
+    }
+
+    /** What the `cs_win_panel_match` event carries. */
+    interface CsWinPanelMatchEvent {
+    }
+
+    /** What the `cs_win_panel_round` event carries. */
+    interface CsWinPanelRoundEvent {
+        /** EventCsWinPanelRound.FinalEvent */
+        readonly finalEvent: number;
+        /** EventCsWinPanelRound.FunfactData1 */
+        readonly funfactData1: number;
+        /** EventCsWinPanelRound.FunfactData2 */
+        readonly funfactData2: number;
+        /** EventCsWinPanelRound.FunfactData3 */
+        readonly funfactData3: number;
+        /** EventCsWinPanelRound.FunfactPlayer */
+        readonly funfactPlayer: Player | null;
+        /** EventCsWinPanelRound.FunfactToken */
+        readonly funfactToken: string;
+        /** EventCsWinPanelRound.ShowTimerAttack */
+        readonly showTimerAttack: boolean;
+        /** EventCsWinPanelRound.ShowTimerDefend */
+        readonly showTimerDefend: boolean;
+        /** EventCsWinPanelRound.TimerTime */
+        readonly timerTime: number;
+    }
+
+    /** What the `decoy_detonate` event carries. */
+    interface DecoyDetonateEvent {
+        /** EventDecoyDetonate.Entityid */
+        readonly entityid: number;
+        /** EventDecoyDetonate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventDecoyDetonate.X */
+        readonly x: number;
+        /** EventDecoyDetonate.Y */
+        readonly y: number;
+        /** EventDecoyDetonate.Z */
+        readonly z: number;
+    }
+
+    /** What the `decoy_firing` event carries. */
+    interface DecoyFiringEvent {
+        /** EventDecoyFiring.Entityid */
+        readonly entityid: number;
+        /** EventDecoyFiring.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventDecoyFiring.X */
+        readonly x: number;
+        /** EventDecoyFiring.Y */
+        readonly y: number;
+        /** EventDecoyFiring.Z */
+        readonly z: number;
+    }
+
+    /** What the `decoy_started` event carries. */
+    interface DecoyStartedEvent {
+        /** EventDecoyStarted.Entityid */
+        readonly entityid: number;
+        /** EventDecoyStarted.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventDecoyStarted.X */
+        readonly x: number;
+        /** EventDecoyStarted.Y */
+        readonly y: number;
+        /** EventDecoyStarted.Z */
+        readonly z: number;
+    }
+
+    /** What the `defuser_dropped` event carries. */
+    interface DefuserDroppedEvent {
+        /** EventDefuserDropped.Entityid */
+        readonly entityid: number;
+    }
+
+    /** What the `defuser_pickup` event carries. */
+    interface DefuserPickupEvent {
+        /** EventDefuserPickup.Entityid */
+        readonly entityid: number;
+        /** EventDefuserPickup.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `demo_skip` event carries. */
+    interface DemoSkipEvent {
+        /** EventDemoSkip.DotaHeroChaseList */
+        readonly dotaHeroChaseList: number;
+        /** EventDemoSkip.Local */
+        readonly local: number;
+        /** EventDemoSkip.PlaybackTick */
+        readonly playbackTick: number;
+        /** EventDemoSkip.SkiptoTick */
+        readonly skiptoTick: number;
+        /** EventDemoSkip.UserMessageList */
+        readonly userMessageList: number;
+    }
+
+    /** What the `demo_start` event carries. */
+    interface DemoStartEvent {
+        /** EventDemoStart.DotaCombatlogList */
+        readonly dotaCombatlogList: number;
+        /** EventDemoStart.DotaHeroChaseList */
+        readonly dotaHeroChaseList: number;
+        /** EventDemoStart.DotaPickHeroList */
+        readonly dotaPickHeroList: number;
+        /** EventDemoStart.Local */
+        readonly local: number;
+    }
+
+    /** What the `demo_stop` event carries. */
+    interface DemoStopEvent {
+    }
+
+    /** What the `difficulty_changed` event carries. */
+    interface DifficultyChangedEvent {
+        /** EventDifficultyChanged.Newdifficulty */
+        readonly newdifficulty: number;
+        /** EventDifficultyChanged.Olddifficulty */
+        readonly olddifficulty: number;
+        /** EventDifficultyChanged.Strdifficulty */
+        readonly strdifficulty: string;
+    }
+
+    /** What the `dm_bonus_weapon_start` event carries. */
+    interface DmBonusWeaponStartEvent {
+        /** EventDmBonusWeaponStart.Pos */
+        readonly pos: number;
+        /** EventDmBonusWeaponStart.Time */
+        readonly time: number;
+    }
+
+    /** What the `door_break` event carries. */
+    interface DoorBreakEvent {
+        /** EventDoorBreak.Dmgstate */
+        readonly dmgstate: number;
+        /** EventDoorBreak.Entindex */
+        readonly entindex: number;
+    }
+
+    /** What the `door_close` event carries. */
+    interface DoorCloseEvent {
+        /** EventDoorClose.Checkpoint */
+        readonly checkpoint: boolean;
+        /** EventDoorClose.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `door_closed` event carries. */
+    interface DoorClosedEvent {
+        /** EventDoorClosed.Entindex */
+        readonly entindex: number;
+        /** EventDoorClosed.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `door_moving` event carries. */
+    interface DoorMovingEvent {
+        /** EventDoorMoving.Entindex */
+        readonly entindex: number;
+        /** EventDoorMoving.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `door_open` event carries. */
+    interface DoorOpenEvent {
+        /** EventDoorOpen.Entindex */
+        readonly entindex: number;
+        /** EventDoorOpen.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `drone_above_roof` event carries. */
+    interface DroneAboveRoofEvent {
+        /** EventDroneAboveRoof.Cargo */
+        readonly cargo: number;
+        /** EventDroneAboveRoof.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `drone_cargo_detached` event carries. */
+    interface DroneCargoDetachedEvent {
+        /** EventDroneCargoDetached.Cargo */
+        readonly cargo: number;
+        /** EventDroneCargoDetached.Delivered */
+        readonly delivered: boolean;
+        /** EventDroneCargoDetached.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `drone_dispatched` event carries. */
+    interface DroneDispatchedEvent {
+        /** EventDroneDispatched.DroneDispatchedParam */
+        readonly droneDispatchedParam: number;
+        /** EventDroneDispatched.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventDroneDispatched.Priority */
+        readonly priority: number;
+    }
+
+    /** What the `dronegun_attack` event carries. */
+    interface DronegunAttackEvent {
+        /** EventDronegunAttack.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `drop_rate_modified` event carries. */
+    interface DropRateModifiedEvent {
+    }
+
+    /** What the `dynamic_shadow_light_changed` event carries. */
+    interface DynamicShadowLightChangedEvent {
+    }
+
+    /** What the `dz_item_interaction` event carries. */
+    interface DzItemInteractionEvent {
+        /** EventDzItemInteraction.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventDzItemInteraction.Subject */
+        readonly subject: number;
+        /** EventDzItemInteraction.Type */
+        readonly type: string;
+    }
+
+    /** What the `enable_restart_voting` event carries. */
+    interface EnableRestartVotingEvent {
+        /** EventEnableRestartVoting.Enable */
+        readonly enable: boolean;
+    }
+
+    /** What the `endmatch_cmm_start_reveal_items` event carries. */
+    interface EndmatchCmmStartRevealItemsEvent {
+    }
+
+    /** What the `endmatch_mapvote_selecting_map` event carries. */
+    interface EndmatchMapvoteSelectingMapEvent {
+        /** EventEndmatchMapvoteSelectingMap.Count */
+        readonly count: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot1 */
+        readonly slot1: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot10 */
+        readonly slot10: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot2 */
+        readonly slot2: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot3 */
+        readonly slot3: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot4 */
+        readonly slot4: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot5 */
+        readonly slot5: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot6 */
+        readonly slot6: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot7 */
+        readonly slot7: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot8 */
+        readonly slot8: number;
+        /** EventEndmatchMapvoteSelectingMap.Slot9 */
+        readonly slot9: number;
+    }
+
+    /** What the `enter_bombzone` event carries. */
+    interface EnterBombzoneEvent {
+        /** EventEnterBombzone.Hasbomb */
+        readonly hasbomb: boolean;
+        /** EventEnterBombzone.Isplanted */
+        readonly isplanted: boolean;
+        /** EventEnterBombzone.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `enter_buyzone` event carries. */
+    interface EnterBuyzoneEvent {
+        /** EventEnterBuyzone.Canbuy */
+        readonly canbuy: boolean;
+        /** EventEnterBuyzone.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `enter_rescue_zone` event carries. */
+    interface EnterRescueZoneEvent {
+        /** EventEnterRescueZone.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `entity_killed` event carries. */
+    interface EntityKilledEvent {
+        /** EventEntityKilled.Damagebits */
+        readonly damagebits: number;
+        /** EventEntityKilled.EntindexAttacker */
+        readonly entindexAttacker: number;
+        /** EventEntityKilled.EntindexInflictor */
+        readonly entindexInflictor: number;
+        /** EventEntityKilled.EntindexKilled */
+        readonly entindexKilled: number;
+    }
+
+    /** What the `entity_visible` event carries. */
+    interface EntityVisibleEvent {
+        /** EventEntityVisible.Classname */
+        readonly classname: string;
+        /** EventEntityVisible.Entityname */
+        readonly entityname: string;
+        /** EventEntityVisible.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventEntityVisible.Subject */
+        readonly subject: number;
+    }
+
+    /** What the `event_ticket_modified` event carries. */
+    interface EventTicketModifiedEvent {
+    }
+
+    /** What the `exit_bombzone` event carries. */
+    interface ExitBombzoneEvent {
+        /** EventExitBombzone.Hasbomb */
+        readonly hasbomb: boolean;
+        /** EventExitBombzone.Isplanted */
+        readonly isplanted: boolean;
+        /** EventExitBombzone.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `exit_buyzone` event carries. */
+    interface ExitBuyzoneEvent {
+        /** EventExitBuyzone.Canbuy */
+        readonly canbuy: boolean;
+        /** EventExitBuyzone.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `exit_rescue_zone` event carries. */
+    interface ExitRescueZoneEvent {
+        /** EventExitRescueZone.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `finale_start` event carries. */
+    interface FinaleStartEvent {
+        /** EventFinaleStart.Rushes */
+        readonly rushes: number;
+    }
+
+    /** What the `firstbombs_incoming_warning` event carries. */
+    interface FirstbombsIncomingWarningEvent {
+        /** EventFirstbombsIncomingWarning.Global */
+        readonly global: boolean;
+    }
+
+    /** What the `flare_ignite_npc` event carries. */
+    interface FlareIgniteNpcEvent {
+        /** EventFlareIgniteNpc.Entindex */
+        readonly entindex: number;
+    }
+
+    /** What the `flashbang_detonate` event carries. */
+    interface FlashbangDetonateEvent {
+        /** EventFlashbangDetonate.Entityid */
+        readonly entityid: number;
+        /** EventFlashbangDetonate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventFlashbangDetonate.X */
+        readonly x: number;
+        /** EventFlashbangDetonate.Y */
+        readonly y: number;
+        /** EventFlashbangDetonate.Z */
+        readonly z: number;
+    }
+
+    /** What the `game_end` event carries. */
+    interface GameEndEvent {
+        /** EventGameEnd.Winner */
+        readonly winner: number;
+    }
+
+    /** What the `game_init` event carries. */
+    interface GameInitEvent {
+    }
+
+    /** What the `game_message` event carries. */
+    interface GameMessageEvent {
+        /** EventGameMessage.Target */
+        readonly target: number;
+        /** EventGameMessage.Text */
+        readonly text: string;
+    }
+
+    /** What the `game_newmap` event carries. */
+    interface GameNewmapEvent {
+        /** EventGameNewmap.Mapname */
+        readonly mapname: string;
+        /** EventGameNewmap.Transition */
+        readonly transition: boolean;
+    }
+
+    /** What the `game_phase_changed` event carries. */
+    interface GamePhaseChangedEvent {
+        /** EventGamePhaseChanged.NewPhase */
+        readonly newPhase: number;
+    }
+
+    /** What the `game_start` event carries. */
+    interface GameStartEvent {
+        /** EventGameStart.Fraglimit */
+        readonly fraglimit: number;
+        /** EventGameStart.Objective */
+        readonly objective: string;
+        /** EventGameStart.Roundslimit */
+        readonly roundslimit: number;
+        /** EventGameStart.Timelimit */
+        readonly timelimit: number;
+    }
+
+    /** What the `gameinstructor_draw` event carries. */
+    interface GameinstructorDrawEvent {
+    }
+
+    /** What the `gameinstructor_nodraw` event carries. */
+    interface GameinstructorNodrawEvent {
+    }
+
+    /** What the `gameui_hidden` event carries. */
+    interface GameuiHiddenEvent {
+    }
+
+    /** What the `gc_connected` event carries. */
+    interface GcConnectedEvent {
+    }
+
+    /** What the `gg_killed_enemy` event carries. */
+    interface GgKilledEnemyEvent {
+        /** EventGgKilledEnemy.Attackerid */
+        readonly attackerid: Player | null;
+        /** EventGgKilledEnemy.Bonus */
+        readonly bonus: boolean;
+        /** EventGgKilledEnemy.Dominated */
+        readonly dominated: number;
+        /** EventGgKilledEnemy.Revenge */
+        readonly revenge: number;
+        /** EventGgKilledEnemy.Victimid */
+        readonly victimid: Player | null;
+    }
+
+    /** What the `grenade_bounce` event carries. */
+    interface GrenadeBounceEvent {
+        /** EventGrenadeBounce.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `grenade_thrown` event carries. */
+    interface GrenadeThrownEvent {
+        /** EventGrenadeThrown.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventGrenadeThrown.Weapon */
+        readonly weapon: string;
+    }
+
+    /** What the `guardian_wave_restart` event carries. */
+    interface GuardianWaveRestartEvent {
+    }
+
+    /** What the `hegrenade_detonate` event carries. */
+    interface HegrenadeDetonateEvent {
+        /** EventHegrenadeDetonate.Entityid */
+        readonly entityid: number;
+        /** EventHegrenadeDetonate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventHegrenadeDetonate.X */
+        readonly x: number;
+        /** EventHegrenadeDetonate.Y */
+        readonly y: number;
+        /** EventHegrenadeDetonate.Z */
+        readonly z: number;
+    }
+
+    /** What the `helicopter_grenade_punt_miss` event carries. */
+    interface HelicopterGrenadePuntMissEvent {
+    }
+
+    /** What the `hide_deathpanel` event carries. */
+    interface HideDeathpanelEvent {
+    }
+
+    /** What the `hltv_cameraman` event carries. */
+    interface HltvCameramanEvent {
+        /** EventHltvCameraman.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `hltv_changed_mode` event carries. */
+    interface HltvChangedModeEvent {
+        /** EventHltvChangedMode.Newmode */
+        readonly newmode: number;
+        /** EventHltvChangedMode.ObsTarget */
+        readonly obsTarget: number;
+        /** EventHltvChangedMode.Oldmode */
+        readonly oldmode: number;
+    }
+
+    /** What the `hltv_chase` event carries. */
+    interface HltvChaseEvent {
+        /** EventHltvChase.Distance */
+        readonly distance: number;
+        /** EventHltvChase.Inertia */
+        readonly inertia: number;
+        /** EventHltvChase.Ineye */
+        readonly ineye: number;
+        /** EventHltvChase.Phi */
+        readonly phi: number;
+        /** EventHltvChase.Target1 */
+        readonly target1: Player | null;
+        /** EventHltvChase.Target2 */
+        readonly target2: Player | null;
+        /** EventHltvChase.Theta */
+        readonly theta: number;
+    }
+
+    /** What the `hltv_chat` event carries. */
+    interface HltvChatEvent {
+        /** EventHltvChat.Steamid — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly steamid: string;
+        /** EventHltvChat.Text */
+        readonly text: string;
+    }
+
+    /** What the `hltv_fixed` event carries. */
+    interface HltvFixedEvent {
+        /** EventHltvFixed.Fov */
+        readonly fov: number;
+        /** EventHltvFixed.Offset */
+        readonly offset: number;
+        /** EventHltvFixed.Phi */
+        readonly phi: number;
+        /** EventHltvFixed.Posx */
+        readonly posx: number;
+        /** EventHltvFixed.Posy */
+        readonly posy: number;
+        /** EventHltvFixed.Posz */
+        readonly posz: number;
+        /** EventHltvFixed.Target */
+        readonly target: Player | null;
+        /** EventHltvFixed.Theta */
+        readonly theta: number;
+    }
+
+    /** What the `hltv_message` event carries. */
+    interface HltvMessageEvent {
+        /** EventHltvMessage.Text */
+        readonly text: string;
+    }
+
+    /** What the `hltv_rank_camera` event carries. */
+    interface HltvRankCameraEvent {
+        /** EventHltvRankCamera.Index */
+        readonly index: number;
+        /** EventHltvRankCamera.Rank */
+        readonly rank: number;
+        /** EventHltvRankCamera.Target */
+        readonly target: Player | null;
+    }
+
+    /** What the `hltv_rank_entity` event carries. */
+    interface HltvRankEntityEvent {
+        /** EventHltvRankEntity.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventHltvRankEntity.Rank */
+        readonly rank: number;
+        /** EventHltvRankEntity.Target */
+        readonly target: Player | null;
+    }
+
+    /** What the `hltv_replay` event carries. */
+    interface HltvReplayEvent {
+        /** EventHltvReplay.Delay */
+        readonly delay: number;
+        /** EventHltvReplay.Reason */
+        readonly reason: number;
+    }
+
+    /** What the `hltv_replay_status` event carries. */
+    interface HltvReplayStatusEvent {
+        /** EventHltvReplayStatus.Reason */
+        readonly reason: number;
+    }
+
+    /** What the `hltv_status` event carries. */
+    interface HltvStatusEvent {
+        /** EventHltvStatus.Clients */
+        readonly clients: number;
+        /** EventHltvStatus.Master */
+        readonly master: string;
+        /** EventHltvStatus.Proxies */
+        readonly proxies: number;
+        /** EventHltvStatus.Slots */
+        readonly slots: number;
+    }
+
+    /** What the `hltv_title` event carries. */
+    interface HltvTitleEvent {
+        /** EventHltvTitle.Text */
+        readonly text: string;
+    }
+
+    /** What the `hltv_versioninfo` event carries. */
+    interface HltvVersioninfoEvent {
+        /** EventHltvVersioninfo.Version */
+        readonly version: number;
+    }
+
+    /** What the `hostage_call_for_help` event carries. */
+    interface HostageCallForHelpEvent {
+        /** EventHostageCallForHelp.Hostage */
+        readonly hostage: number;
+    }
+
+    /** What the `hostage_follows` event carries. */
+    interface HostageFollowsEvent {
+        /** EventHostageFollows.Hostage */
+        readonly hostage: number;
+        /** EventHostageFollows.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `hostage_hurt` event carries. */
+    interface HostageHurtEvent {
+        /** EventHostageHurt.Hostage */
+        readonly hostage: number;
+        /** EventHostageHurt.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `hostage_killed` event carries. */
+    interface HostageKilledEvent {
+        /** EventHostageKilled.Hostage */
+        readonly hostage: number;
+        /** EventHostageKilled.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `hostage_rescued` event carries. */
+    interface HostageRescuedEvent {
+        /** EventHostageRescued.Hostage */
+        readonly hostage: number;
+        /** EventHostageRescued.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventHostageRescued.Site */
+        readonly site: number;
+    }
+
+    /** What the `hostage_rescued_all` event carries. */
+    interface HostageRescuedAllEvent {
+    }
+
+    /** What the `hostage_stops_following` event carries. */
+    interface HostageStopsFollowingEvent {
+        /** EventHostageStopsFollowing.Hostage */
+        readonly hostage: number;
+        /** EventHostageStopsFollowing.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `hostname_changed` event carries. */
+    interface HostnameChangedEvent {
+        /** EventHostnameChanged.Hostname */
+        readonly hostname: string;
+    }
+
+    /** What the `inferno_expire` event carries. */
+    interface InfernoExpireEvent {
+        /** EventInfernoExpire.Entityid */
+        readonly entityid: number;
+        /** EventInfernoExpire.X */
+        readonly x: number;
+        /** EventInfernoExpire.Y */
+        readonly y: number;
+        /** EventInfernoExpire.Z */
+        readonly z: number;
+    }
+
+    /** What the `inferno_extinguish` event carries. */
+    interface InfernoExtinguishEvent {
+        /** EventInfernoExtinguish.Entityid */
+        readonly entityid: number;
+        /** EventInfernoExtinguish.X */
+        readonly x: number;
+        /** EventInfernoExtinguish.Y */
+        readonly y: number;
+        /** EventInfernoExtinguish.Z */
+        readonly z: number;
+    }
+
+    /** What the `inferno_startburn` event carries. */
+    interface InfernoStartburnEvent {
+        /** EventInfernoStartburn.Entityid */
+        readonly entityid: number;
+        /** EventInfernoStartburn.X */
+        readonly x: number;
+        /** EventInfernoStartburn.Y */
+        readonly y: number;
+        /** EventInfernoStartburn.Z */
+        readonly z: number;
+    }
+
+    /** What the `inspect_weapon` event carries. */
+    interface InspectWeaponEvent {
+        /** EventInspectWeapon.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `instructor_close_lesson` event carries. */
+    interface InstructorCloseLessonEvent {
+        /** EventInstructorCloseLesson.HintName */
+        readonly hintName: string;
+        /** EventInstructorCloseLesson.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `instructor_server_hint_create` event carries. */
+    interface InstructorServerHintCreateEvent {
+        /** EventInstructorServerHintCreate.HintActivatorCaption */
+        readonly hintActivatorCaption: string;
+        /** EventInstructorServerHintCreate.HintActivatorUserid */
+        readonly hintActivatorUserid: Player | null;
+        /** EventInstructorServerHintCreate.HintAllowNodrawTarget */
+        readonly hintAllowNodrawTarget: boolean;
+        /** EventInstructorServerHintCreate.HintBinding */
+        readonly hintBinding: string;
+        /** EventInstructorServerHintCreate.HintCaption */
+        readonly hintCaption: string;
+        /** EventInstructorServerHintCreate.HintColor */
+        readonly hintColor: string;
+        /** EventInstructorServerHintCreate.HintEntindex */
+        readonly hintEntindex: number;
+        /** EventInstructorServerHintCreate.HintFlags */
+        readonly hintFlags: number;
+        /** EventInstructorServerHintCreate.HintForcecaption */
+        readonly hintForcecaption: boolean;
+        /** EventInstructorServerHintCreate.HintGamepadBinding */
+        readonly hintGamepadBinding: string;
+        /** EventInstructorServerHintCreate.HintIconOffscreen */
+        readonly hintIconOffscreen: string;
+        /** EventInstructorServerHintCreate.HintIconOffset */
+        readonly hintIconOffset: number;
+        /** EventInstructorServerHintCreate.HintIconOnscreen */
+        readonly hintIconOnscreen: string;
+        /** EventInstructorServerHintCreate.HintLayoutfile */
+        readonly hintLayoutfile: string;
+        /** EventInstructorServerHintCreate.HintLocalPlayerOnly */
+        readonly hintLocalPlayerOnly: boolean;
+        /** EventInstructorServerHintCreate.HintName */
+        readonly hintName: string;
+        /** EventInstructorServerHintCreate.HintNooffscreen */
+        readonly hintNooffscreen: boolean;
+        /** EventInstructorServerHintCreate.HintRange */
+        readonly hintRange: number;
+        /** EventInstructorServerHintCreate.HintReplaceKey */
+        readonly hintReplaceKey: string;
+        /** EventInstructorServerHintCreate.HintStartSound */
+        readonly hintStartSound: string;
+        /** EventInstructorServerHintCreate.HintTarget */
+        readonly hintTarget: number;
+        /** EventInstructorServerHintCreate.HintTimeout */
+        readonly hintTimeout: number;
+        /** EventInstructorServerHintCreate.HintVrHeightOffset */
+        readonly hintVrHeightOffset: number;
+        /** EventInstructorServerHintCreate.HintVrOffsetX */
+        readonly hintVrOffsetX: number;
+        /** EventInstructorServerHintCreate.HintVrOffsetY */
+        readonly hintVrOffsetY: number;
+        /** EventInstructorServerHintCreate.HintVrOffsetZ */
+        readonly hintVrOffsetZ: number;
+        /** EventInstructorServerHintCreate.HintVrPanelType */
+        readonly hintVrPanelType: number;
+        /** EventInstructorServerHintCreate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `instructor_server_hint_stop` event carries. */
+    interface InstructorServerHintStopEvent {
+        /** EventInstructorServerHintStop.HintEntindex */
+        readonly hintEntindex: number;
+        /** EventInstructorServerHintStop.HintName */
+        readonly hintName: string;
+    }
+
+    /** What the `instructor_start_lesson` event carries. */
+    interface InstructorStartLessonEvent {
+        /** EventInstructorStartLesson.HintName */
+        readonly hintName: string;
+        /** EventInstructorStartLesson.HintTarget */
+        readonly hintTarget: number;
+        /** EventInstructorStartLesson.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventInstructorStartLesson.VrControllerType */
+        readonly vrControllerType: number;
+        /** EventInstructorStartLesson.VrMovementType */
+        readonly vrMovementType: number;
+        /** EventInstructorStartLesson.VrSingleController */
+        readonly vrSingleController: boolean;
+    }
+
+    /** What the `inventory_updated` event carries. */
+    interface InventoryUpdatedEvent {
+        /** EventInventoryUpdated.Itemdef */
+        readonly itemdef: number;
+        /** EventInventoryUpdated.Itemid */
+        readonly itemid: number;
+    }
+
+    /** What the `item_equip` event carries. */
+    interface ItemEquipEvent {
+        /** EventItemEquip.Canzoom */
+        readonly canzoom: boolean;
+        /** EventItemEquip.Defindex */
+        readonly defindex: number;
+        /** EventItemEquip.Hassilencer */
+        readonly hassilencer: boolean;
+        /** EventItemEquip.Hastracers */
+        readonly hastracers: boolean;
+        /** EventItemEquip.Ispainted */
+        readonly ispainted: boolean;
+        /** EventItemEquip.Issilenced */
+        readonly issilenced: boolean;
+        /** EventItemEquip.Item */
+        readonly item: string;
+        /** EventItemEquip.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventItemEquip.Weptype */
+        readonly weptype: number;
+    }
+
+    /** What the `item_pickup` event carries. */
+    interface ItemPickupEvent {
+        /** EventItemPickup.Defindex */
+        readonly defindex: number;
+        /** EventItemPickup.Item */
+        readonly item: string;
+        /** EventItemPickup.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventItemPickup.Silent */
+        readonly silent: boolean;
+    }
+
+    /** What the `item_pickup_failed` event carries. */
+    interface ItemPickupFailedEvent {
+        /** EventItemPickupFailed.Item */
+        readonly item: string;
+        /** EventItemPickupFailed.Limit */
+        readonly limit: number;
+        /** EventItemPickupFailed.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventItemPickupFailed.Reason */
+        readonly reason: number;
+    }
+
+    /** What the `item_pickup_slerp` event carries. */
+    interface ItemPickupSlerpEvent {
+        /** EventItemPickupSlerp.Behavior */
+        readonly behavior: number;
+        /** EventItemPickupSlerp.Index */
+        readonly index: number;
+        /** EventItemPickupSlerp.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `item_purchase` event carries. */
+    interface ItemPurchaseEvent {
+        /** EventItemPurchase.Loadout */
+        readonly loadout: number;
+        /** EventItemPurchase.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventItemPurchase.Team */
+        readonly team: number;
+        /** EventItemPurchase.Weapon */
+        readonly weapon: string;
+    }
+
+    /** What the `item_remove` event carries. */
+    interface ItemRemoveEvent {
+        /** EventItemRemove.Defindex */
+        readonly defindex: number;
+        /** EventItemRemove.Item */
+        readonly item: string;
+        /** EventItemRemove.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `item_schema_initialized` event carries. */
+    interface ItemSchemaInitializedEvent {
+    }
+
+    /** What the `jointeam_failed` event carries. */
+    interface JointeamFailedEvent {
+        /** EventJointeamFailed.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventJointeamFailed.Reason */
+        readonly reason: number;
+    }
+
+    /** What the `local_player_controller_team` event carries. */
+    interface LocalPlayerControllerTeamEvent {
+    }
+
+    /** What the `local_player_pawn_changed` event carries. */
+    interface LocalPlayerPawnChangedEvent {
+    }
+
+    /** What the `local_player_team` event carries. */
+    interface LocalPlayerTeamEvent {
+    }
+
+    /** What the `loot_crate_opened` event carries. */
+    interface LootCrateOpenedEvent {
+        /** EventLootCrateOpened.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventLootCrateOpened.Type */
+        readonly type: string;
+    }
+
+    /** What the `loot_crate_visible` event carries. */
+    interface LootCrateVisibleEvent {
+        /** EventLootCrateVisible.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventLootCrateVisible.Subject */
+        readonly subject: number;
+        /** EventLootCrateVisible.Type */
+        readonly type: string;
+    }
+
+    /** What the `map_shutdown` event carries. */
+    interface MapShutdownEvent {
+    }
+
+    /** What the `map_transition` event carries. */
+    interface MapTransitionEvent {
+    }
+
+    /** What the `match_end_conditions` event carries. */
+    interface MatchEndConditionsEvent {
+        /** EventMatchEndConditions.Frags */
+        readonly frags: number;
+        /** EventMatchEndConditions.MaxRounds */
+        readonly maxRounds: number;
+        /** EventMatchEndConditions.Time */
+        readonly time: number;
+        /** EventMatchEndConditions.WinRounds */
+        readonly winRounds: number;
+    }
+
+    /** What the `material_default_complete` event carries. */
+    interface MaterialDefaultCompleteEvent {
+    }
+
+    /** What the `mb_input_lock_cancel` event carries. */
+    interface MbInputLockCancelEvent {
+    }
+
+    /** What the `mb_input_lock_success` event carries. */
+    interface MbInputLockSuccessEvent {
+    }
+
+    /** What the `molotov_detonate` event carries. */
+    interface MolotovDetonateEvent {
+        /** EventMolotovDetonate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventMolotovDetonate.X */
+        readonly x: number;
+        /** EventMolotovDetonate.Y */
+        readonly y: number;
+        /** EventMolotovDetonate.Z */
+        readonly z: number;
+    }
+
+    /** What the `nav_blocked` event carries. */
+    interface NavBlockedEvent {
+        /** EventNavBlocked.Area */
+        readonly area: number;
+        /** EventNavBlocked.Blocked */
+        readonly blocked: boolean;
+    }
+
+    /** What the `nav_generate` event carries. */
+    interface NavGenerateEvent {
+    }
+
+    /** What the `nextlevel_changed` event carries. */
+    interface NextlevelChangedEvent {
+        /** EventNextlevelChanged.Mapgroup */
+        readonly mapgroup: string;
+        /** EventNextlevelChanged.Nextlevel */
+        readonly nextlevel: string;
+        /** EventNextlevelChanged.Skirmishmode */
+        readonly skirmishmode: string;
+    }
+
+    /** What the `open_crate_instr` event carries. */
+    interface OpenCrateInstrEvent {
+        /** EventOpenCrateInstr.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventOpenCrateInstr.Subject */
+        readonly subject: number;
+        /** EventOpenCrateInstr.Type */
+        readonly type: string;
+    }
+
+    /** What the `other_death` event carries. */
+    interface OtherDeathEvent {
+        /** EventOtherDeath.Attacker */
+        readonly attacker: number;
+        /** EventOtherDeath.Attackerblind */
+        readonly attackerblind: boolean;
+        /** EventOtherDeath.Headshot */
+        readonly headshot: boolean;
+        /** EventOtherDeath.Noscope */
+        readonly noscope: boolean;
+        /** EventOtherDeath.Otherid */
+        readonly otherid: number;
+        /** EventOtherDeath.Othertype */
+        readonly othertype: string;
+        /** EventOtherDeath.Penetrated */
+        readonly penetrated: number;
+        /** EventOtherDeath.Thrusmoke */
+        readonly thrusmoke: boolean;
+        /** EventOtherDeath.Weapon */
+        readonly weapon: string;
+        /** EventOtherDeath.WeaponFauxitemid */
+        readonly weaponFauxitemid: string;
+        /** EventOtherDeath.WeaponItemid */
+        readonly weaponItemid: string;
+        /** EventOtherDeath.WeaponOriginalownerXuid */
+        readonly weaponOriginalownerXuid: string;
+    }
+
+    /** What the `parachute_deploy` event carries. */
+    interface ParachuteDeployEvent {
+        /** EventParachuteDeploy.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `parachute_pickup` event carries. */
+    interface ParachutePickupEvent {
+        /** EventParachutePickup.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `physgun_pickup` event carries. */
+    interface PhysgunPickupEvent {
+    }
+
+    /** What the `player_activate` event carries. */
+    interface PlayerActivateEvent {
+        /** EventPlayerActivate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_avenged_teammate` event carries. */
+    interface PlayerAvengedTeammateEvent {
+        /** EventPlayerAvengedTeammate.AvengedPlayerId */
+        readonly avengedPlayerId: Player | null;
+        /** EventPlayerAvengedTeammate.AvengerId */
+        readonly avengerId: Player | null;
+    }
+
+    /** What the `player_blind` event carries. */
+    interface PlayerBlindEvent {
+        /** EventPlayerBlind.Attacker */
+        readonly attacker: Player | null;
+        /** EventPlayerBlind.BlindDuration */
+        readonly blindDuration: number;
+        /** EventPlayerBlind.Entityid */
+        readonly entityid: number;
+        /** EventPlayerBlind.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_changename` event carries. */
+    interface PlayerChangenameEvent {
+        /** EventPlayerChangename.Newname */
+        readonly newname: string;
+        /** EventPlayerChangename.Oldname */
+        readonly oldname: string;
+        /** EventPlayerChangename.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_chat` event carries. */
+    interface PlayerChatEvent {
+        /** EventPlayerChat.Userid */
+        readonly player: number;
+        /** EventPlayerChat.Teamonly */
+        readonly teamonly: boolean;
+        /** EventPlayerChat.Text */
+        readonly text: string;
+    }
+
+    /** What the `player_connect` event carries. */
+    interface PlayerConnectEvent {
+        /** EventPlayerConnect.Bot */
+        readonly bot: boolean;
+        /** EventPlayerConnect.Name */
+        readonly name: string;
+        /** EventPlayerConnect.Networkid */
+        readonly networkid: string;
+        /** EventPlayerConnect.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerConnect.Xuid — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly xuid: string;
+    }
+
+    /** What the `player_connect_full` event carries. */
+    interface PlayerConnectFullEvent {
+        /** EventPlayerConnectFull.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_death` event carries. */
+    interface PlayerDeathEvent {
+        /** EventPlayerDeath.Assistedflash */
+        readonly assistedflash: boolean;
+        /** EventPlayerDeath.Assister */
+        readonly assister: Player | null;
+        /** EventPlayerDeath.Attacker */
+        readonly attacker: Player | null;
+        /** EventPlayerDeath.Attackerblind */
+        readonly attackerblind: boolean;
+        /** EventPlayerDeath.Attackerinair */
+        readonly attackerinair: boolean;
+        /** EventPlayerDeath.Distance */
+        readonly distance: number;
+        /** EventPlayerDeath.DmgArmor */
+        readonly dmgArmor: number;
+        /** EventPlayerDeath.DmgHealth */
+        readonly dmgHealth: number;
+        /** EventPlayerDeath.Dominated */
+        readonly dominated: number;
+        /** EventPlayerDeath.Headshot */
+        readonly headshot: boolean;
+        /** EventPlayerDeath.Hitgroup */
+        readonly hitgroup: number;
+        /** EventPlayerDeath.Noreplay */
+        readonly noreplay: boolean;
+        /** EventPlayerDeath.Noscope */
+        readonly noscope: boolean;
+        /** EventPlayerDeath.Penetrated */
+        readonly penetrated: number;
+        /** EventPlayerDeath.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerDeath.Revenge */
+        readonly revenge: number;
+        /** EventPlayerDeath.Thrusmoke */
+        readonly thrusmoke: boolean;
+        /** EventPlayerDeath.Weapon */
+        readonly weapon: string;
+        /** EventPlayerDeath.WeaponFauxitemid */
+        readonly weaponFauxitemid: string;
+        /** EventPlayerDeath.WeaponItemid */
+        readonly weaponItemid: string;
+        /** EventPlayerDeath.WeaponOriginalownerXuid */
+        readonly weaponOriginalownerXuid: string;
+        /** EventPlayerDeath.Wipe */
+        readonly wipe: number;
+    }
+
+    /** What the `player_decal` event carries. */
+    interface PlayerDecalEvent {
+        /** EventPlayerDecal.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_disconnect` event carries. */
+    interface PlayerDisconnectEvent {
+        /** EventPlayerDisconnect.EverFullyConnected */
+        readonly everFullyConnected: boolean;
+        /** EventPlayerDisconnect.Name */
+        readonly name: string;
+        /** EventPlayerDisconnect.Networkid */
+        readonly networkid: string;
+        /** EventPlayerDisconnect.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerDisconnect.Playerid */
+        readonly playerid: number;
+        /** EventPlayerDisconnect.Reason */
+        readonly reason: number;
+        /** EventPlayerDisconnect.Xuid — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly xuid: string;
+    }
+
+    /** What the `player_falldamage` event carries. */
+    interface PlayerFalldamageEvent {
+        /** EventPlayerFalldamage.Damage */
+        readonly damage: number;
+        /** EventPlayerFalldamage.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_footstep` event carries. */
+    interface PlayerFootstepEvent {
+        /** EventPlayerFootstep.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_full_update` event carries. */
+    interface PlayerFullUpdateEvent {
+        /** EventPlayerFullUpdate.Count */
+        readonly count: number;
+        /** EventPlayerFullUpdate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_given_c4` event carries. */
+    interface PlayerGivenC4Event {
+        /** EventPlayerGivenC4.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_hintmessage` event carries. */
+    interface PlayerHintmessageEvent {
+        /** EventPlayerHintmessage.Hintmessage */
+        readonly hintmessage: string;
+    }
+
+    /** What the `player_hurt` event carries. */
+    interface PlayerHurtEvent {
+        /** EventPlayerHurt.Armor */
+        readonly armor: number;
+        /** EventPlayerHurt.Attacker */
+        readonly attacker: Player | null;
+        /** EventPlayerHurt.DmgArmor */
+        readonly dmgArmor: number;
+        /** EventPlayerHurt.DmgHealth */
+        readonly dmgHealth: number;
+        /** EventPlayerHurt.Health */
+        readonly health: number;
+        /** EventPlayerHurt.Hitgroup */
+        readonly hitgroup: number;
+        /** EventPlayerHurt.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerHurt.Weapon */
+        readonly weapon: string;
+    }
+
+    /** What the `player_info` event carries. */
+    interface PlayerInfoEvent {
+        /** EventPlayerInfo.Bot */
+        readonly bot: boolean;
+        /** EventPlayerInfo.Name */
+        readonly name: string;
+        /** EventPlayerInfo.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerInfo.Steamid — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly steamid: string;
+    }
+
+    /** What the `player_jump` event carries. */
+    interface PlayerJumpEvent {
+        /** EventPlayerJump.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_ping` event carries. */
+    interface PlayerPingEvent {
+        /** EventPlayerPing.Entityid */
+        readonly entityid: number;
+        /** EventPlayerPing.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerPing.Urgent */
+        readonly urgent: boolean;
+        /** EventPlayerPing.X */
+        readonly x: number;
+        /** EventPlayerPing.Y */
+        readonly y: number;
+        /** EventPlayerPing.Z */
+        readonly z: number;
+    }
+
+    /** What the `player_ping_stop` event carries. */
+    interface PlayerPingStopEvent {
+        /** EventPlayerPingStop.Entityid */
+        readonly entityid: number;
+    }
+
+    /** What the `player_radio` event carries. */
+    interface PlayerRadioEvent {
+        /** EventPlayerRadio.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerRadio.Slot */
+        readonly slot: number;
+    }
+
+    /** What the `player_reset_vote` event carries. */
+    interface PlayerResetVoteEvent {
+        /** EventPlayerResetVote.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerResetVote.Vote */
+        readonly vote: boolean;
+    }
+
+    /** What the `player_score` event carries. */
+    interface PlayerScoreEvent {
+        /** EventPlayerScore.Deaths */
+        readonly deaths: number;
+        /** EventPlayerScore.Kills */
+        readonly kills: number;
+        /** EventPlayerScore.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerScore.Score */
+        readonly score: number;
+    }
+
+    /** What the `player_shoot` event carries. */
+    interface PlayerShootEvent {
+        /** EventPlayerShoot.Mode */
+        readonly mode: number;
+        /** EventPlayerShoot.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerShoot.Weapon */
+        readonly weapon: number;
+    }
+
+    /** What the `player_sound` event carries. */
+    interface PlayerSoundEvent {
+        /** EventPlayerSound.Duration */
+        readonly duration: number;
+        /** EventPlayerSound.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerSound.Radius */
+        readonly radius: number;
+        /** EventPlayerSound.Step */
+        readonly step: boolean;
+    }
+
+    /** What the `player_spawn` event carries. */
+    interface PlayerSpawnEvent {
+        /** EventPlayerSpawn.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_spawned` event carries. */
+    interface PlayerSpawnedEvent {
+        /** EventPlayerSpawned.Inrestart */
+        readonly inrestart: boolean;
+        /** EventPlayerSpawned.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `player_stats_updated` event carries. */
+    interface PlayerStatsUpdatedEvent {
+        /** EventPlayerStatsUpdated.Forceupload */
+        readonly forceupload: boolean;
+    }
+
+    /** What the `player_team` event carries. */
+    interface PlayerTeamEvent {
+        /** EventPlayerTeam.Disconnect */
+        readonly disconnect: boolean;
+        /** EventPlayerTeam.Isbot */
+        readonly isbot: boolean;
+        /** EventPlayerTeam.Name */
+        readonly name: string;
+        /** EventPlayerTeam.Oldteam */
+        readonly oldteam: number;
+        /** EventPlayerTeam.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventPlayerTeam.Silent */
+        readonly silent: boolean;
+        /** EventPlayerTeam.Team */
+        readonly team: number;
+    }
+
+    /** What the `ragdoll_dissolved` event carries. */
+    interface RagdollDissolvedEvent {
+        /** EventRagdollDissolved.Entindex */
+        readonly entindex: number;
+    }
+
+    /** What the `read_game_titledata` event carries. */
+    interface ReadGameTitledataEvent {
+        /** EventReadGameTitledata.Controllerid */
+        readonly controllerid: number;
+    }
+
+    /** What the `repost_xbox_achievements` event carries. */
+    interface RepostXboxAchievementsEvent {
+        /** EventRepostXboxAchievements.Splitscreenplayer */
+        readonly splitscreenplayer: number;
+    }
+
+    /** What the `reset_game_titledata` event carries. */
+    interface ResetGameTitledataEvent {
+        /** EventResetGameTitledata.Controllerid */
+        readonly controllerid: number;
+    }
+
+    /** What the `round_announce_final` event carries. */
+    interface RoundAnnounceFinalEvent {
+    }
+
+    /** What the `round_announce_last_round_half` event carries. */
+    interface RoundAnnounceLastRoundHalfEvent {
+    }
+
+    /** What the `round_announce_match_point` event carries. */
+    interface RoundAnnounceMatchPointEvent {
+    }
+
+    /** What the `round_announce_match_start` event carries. */
+    interface RoundAnnounceMatchStartEvent {
+    }
+
+    /** What the `round_announce_warmup` event carries. */
+    interface RoundAnnounceWarmupEvent {
+    }
+
+    /** What the `round_end` event carries. */
+    interface RoundEndEvent {
+        /** EventRoundEnd.Legacy */
+        readonly legacy: number;
+        /** EventRoundEnd.Message */
+        readonly message: string;
+        /** EventRoundEnd.Nomusic */
+        readonly nomusic: number;
+        /** EventRoundEnd.PlayerCount */
+        readonly playerCount: number;
+        /** EventRoundEnd.Reason */
+        readonly reason: number;
+        /** EventRoundEnd.Time */
+        readonly time: number;
+        /** EventRoundEnd.Winner */
+        readonly winner: number;
+    }
+
+    /** What the `round_end_upload_stats` event carries. */
+    interface RoundEndUploadStatsEvent {
+    }
+
+    /** What the `round_freeze_end` event carries. */
+    interface RoundFreezeEndEvent {
+    }
+
+    /** What the `round_mvp` event carries. */
+    interface RoundMvpEvent {
+        /** EventRoundMvp.Musickitid */
+        readonly musickitid: number;
+        /** EventRoundMvp.Musickitmvps */
+        readonly musickitmvps: number;
+        /** EventRoundMvp.Nomusic */
+        readonly nomusic: number;
+        /** EventRoundMvp.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventRoundMvp.Reason */
+        readonly reason: number;
+        /** EventRoundMvp.Value */
+        readonly value: number;
+    }
+
+    /** What the `round_officially_ended` event carries. */
+    interface RoundOfficiallyEndedEvent {
+    }
+
+    /** What the `round_poststart` event carries. */
+    interface RoundPoststartEvent {
+    }
+
+    /** What the `round_prestart` event carries. */
+    interface RoundPrestartEvent {
+    }
+
+    /** What the `round_start` event carries. */
+    interface RoundStartEvent {
+        /** EventRoundStart.Fraglimit */
+        readonly fraglimit: number;
+        /** EventRoundStart.Objective */
+        readonly objective: string;
+        /** EventRoundStart.Timelimit */
+        readonly timelimit: number;
+    }
+
+    /** What the `round_start_post_nav` event carries. */
+    interface RoundStartPostNavEvent {
+    }
+
+    /** What the `round_start_pre_entity` event carries. */
+    interface RoundStartPreEntityEvent {
+    }
+
+    /** What the `round_time_warning` event carries. */
+    interface RoundTimeWarningEvent {
+    }
+
+    /** What the `seasoncoin_levelup` event carries. */
+    interface SeasoncoinLevelupEvent {
+        /** EventSeasoncoinLevelup.Category */
+        readonly category: number;
+        /** EventSeasoncoinLevelup.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventSeasoncoinLevelup.Rank */
+        readonly rank: number;
+    }
+
+    /** What the `server_cvar` event carries. */
+    interface ServerCvarEvent {
+        /** EventServerCvar.Cvarname */
+        readonly cvarname: string;
+        /** EventServerCvar.Cvarvalue */
+        readonly cvarvalue: string;
+    }
+
+    /** What the `server_message` event carries. */
+    interface ServerMessageEvent {
+        /** EventServerMessage.Text */
+        readonly text: string;
+    }
+
+    /** What the `server_pre_shutdown` event carries. */
+    interface ServerPreShutdownEvent {
+        /** EventServerPreShutdown.Reason */
+        readonly reason: string;
+    }
+
+    /** What the `server_shutdown` event carries. */
+    interface ServerShutdownEvent {
+        /** EventServerShutdown.Reason */
+        readonly reason: string;
+    }
+
+    /** What the `server_spawn` event carries. */
+    interface ServerSpawnEvent {
+        /** EventServerSpawn.Addonname */
+        readonly addonname: string;
+        /** EventServerSpawn.Address */
+        readonly address: string;
+        /** EventServerSpawn.Dedicated */
+        readonly dedicated: boolean;
+        /** EventServerSpawn.Game */
+        readonly game: string;
+        /** EventServerSpawn.Hostname */
+        readonly hostname: string;
+        /** EventServerSpawn.Mapname */
+        readonly mapname: string;
+        /** EventServerSpawn.Maxplayers */
+        readonly maxplayers: number;
+        /** EventServerSpawn.Os */
+        readonly os: string;
+        /** EventServerSpawn.Password */
+        readonly password: boolean;
+        /** EventServerSpawn.Port */
+        readonly port: number;
+    }
+
+    /** What the `set_instructor_group_enabled` event carries. */
+    interface SetInstructorGroupEnabledEvent {
+        /** EventSetInstructorGroupEnabled.Enabled */
+        readonly enabled: number;
+        /** EventSetInstructorGroupEnabled.Group */
+        readonly group: string;
+    }
+
+    /** What the `sfuievent` event carries. */
+    interface SfuieventEvent {
+        /** EventSfuievent.Action */
+        readonly action: string;
+        /** EventSfuievent.Data */
+        readonly data: string;
+        /** EventSfuievent.Slot */
+        readonly slot: number;
+    }
+
+    /** What the `show_deathpanel` event carries. */
+    interface ShowDeathpanelEvent {
+        /** EventShowDeathpanel.DamageGiven */
+        readonly damageGiven: number;
+        /** EventShowDeathpanel.DamageTaken */
+        readonly damageTaken: number;
+        /** EventShowDeathpanel.HitsGiven */
+        readonly hitsGiven: number;
+        /** EventShowDeathpanel.HitsTaken */
+        readonly hitsTaken: number;
+        /** EventShowDeathpanel.KillerController */
+        readonly killerController: Player | null;
+        /** EventShowDeathpanel.Victim */
+        readonly victim: Player | null;
+    }
+
+    /** What the `show_survival_respawn_status` event carries. */
+    interface ShowSurvivalRespawnStatusEvent {
+        /** EventShowSurvivalRespawnStatus.Duration */
+        readonly duration: number;
+        /** EventShowSurvivalRespawnStatus.LocToken */
+        readonly locToken: string;
+        /** EventShowSurvivalRespawnStatus.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `silencer_detach` event carries. */
+    interface SilencerDetachEvent {
+        /** EventSilencerDetach.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `silencer_off` event carries. */
+    interface SilencerOffEvent {
+        /** EventSilencerOff.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `silencer_on` event carries. */
+    interface SilencerOnEvent {
+        /** EventSilencerOn.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `smoke_beacon_paradrop` event carries. */
+    interface SmokeBeaconParadropEvent {
+        /** EventSmokeBeaconParadrop.Paradrop */
+        readonly paradrop: number;
+        /** EventSmokeBeaconParadrop.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `smokegrenade_detonate` event carries. */
+    interface SmokegrenadeDetonateEvent {
+        /** EventSmokegrenadeDetonate.Entityid */
+        readonly entityid: number;
+        /** EventSmokegrenadeDetonate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventSmokegrenadeDetonate.X */
+        readonly x: number;
+        /** EventSmokegrenadeDetonate.Y */
+        readonly y: number;
+        /** EventSmokegrenadeDetonate.Z */
+        readonly z: number;
+    }
+
+    /** What the `smokegrenade_expired` event carries. */
+    interface SmokegrenadeExpiredEvent {
+        /** EventSmokegrenadeExpired.Entityid */
+        readonly entityid: number;
+        /** EventSmokegrenadeExpired.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventSmokegrenadeExpired.X */
+        readonly x: number;
+        /** EventSmokegrenadeExpired.Y */
+        readonly y: number;
+        /** EventSmokegrenadeExpired.Z */
+        readonly z: number;
+    }
+
+    /** What the `spec_mode_updated` event carries. */
+    interface SpecModeUpdatedEvent {
+        /** EventSpecModeUpdated.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `spec_target_updated` event carries. */
+    interface SpecTargetUpdatedEvent {
+        /** EventSpecTargetUpdated.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `start_halftime` event carries. */
+    interface StartHalftimeEvent {
+    }
+
+    /** What the `start_vote` event carries. */
+    interface StartVoteEvent {
+        /** EventStartVote.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventStartVote.Type */
+        readonly type: number;
+        /** EventStartVote.VoteParameter */
+        readonly voteParameter: number;
+    }
+
+    /** What the `store_pricesheet_updated` event carries. */
+    interface StorePricesheetUpdatedEvent {
+    }
+
+    /** What the `survival_announce_phase` event carries. */
+    interface SurvivalAnnouncePhaseEvent {
+        /** EventSurvivalAnnouncePhase.Phase */
+        readonly phase: number;
+    }
+
+    /** What the `survival_no_respawns_final` event carries. */
+    interface SurvivalNoRespawnsFinalEvent {
+        /** EventSurvivalNoRespawnsFinal.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `survival_no_respawns_warning` event carries. */
+    interface SurvivalNoRespawnsWarningEvent {
+        /** EventSurvivalNoRespawnsWarning.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `survival_paradrop_break` event carries. */
+    interface SurvivalParadropBreakEvent {
+        /** EventSurvivalParadropBreak.Entityid */
+        readonly entityid: number;
+    }
+
+    /** What the `survival_paradrop_spawn` event carries. */
+    interface SurvivalParadropSpawnEvent {
+        /** EventSurvivalParadropSpawn.Entityid */
+        readonly entityid: number;
+    }
+
+    /** What the `survival_teammate_respawn` event carries. */
+    interface SurvivalTeammateRespawnEvent {
+        /** EventSurvivalTeammateRespawn.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `switch_team` event carries. */
+    interface SwitchTeamEvent {
+        /** EventSwitchTeam.AvgRank */
+        readonly avgRank: number;
+        /** EventSwitchTeam.Numctslotsfree */
+        readonly numctslotsfree: number;
+        /** EventSwitchTeam.Numplayers */
+        readonly numplayers: number;
+        /** EventSwitchTeam.Numspectators */
+        readonly numspectators: number;
+        /** EventSwitchTeam.Numtslotsfree */
+        readonly numtslotsfree: number;
+    }
+
+    /** What the `tagrenade_detonate` event carries. */
+    interface TagrenadeDetonateEvent {
+        /** EventTagrenadeDetonate.Entityid */
+        readonly entityid: number;
+        /** EventTagrenadeDetonate.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventTagrenadeDetonate.X */
+        readonly x: number;
+        /** EventTagrenadeDetonate.Y */
+        readonly y: number;
+        /** EventTagrenadeDetonate.Z */
+        readonly z: number;
+    }
+
+    /** What the `team_info` event carries. */
+    interface TeamInfoEvent {
+        /** EventTeamInfo.Teamid */
+        readonly teamid: number;
+        /** EventTeamInfo.Teamname */
+        readonly teamname: string;
+    }
+
+    /** What the `team_intro_end` event carries. */
+    interface TeamIntroEndEvent {
+    }
+
+    /** What the `team_intro_start` event carries. */
+    interface TeamIntroStartEvent {
+    }
+
+    /** What the `team_score` event carries. */
+    interface TeamScoreEvent {
+        /** EventTeamScore.Score */
+        readonly score: number;
+        /** EventTeamScore.Teamid */
+        readonly teamid: number;
+    }
+
+    /** What the `teamchange_pending` event carries. */
+    interface TeamchangePendingEvent {
+        /** EventTeamchangePending.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventTeamchangePending.Toteam */
+        readonly toteam: number;
+    }
+
+    /** What the `teamplay_broadcast_audio` event carries. */
+    interface TeamplayBroadcastAudioEvent {
+        /** EventTeamplayBroadcastAudio.Sound */
+        readonly sound: string;
+        /** EventTeamplayBroadcastAudio.Team */
+        readonly team: number;
+    }
+
+    /** What the `teamplay_round_start` event carries. */
+    interface TeamplayRoundStartEvent {
+        /** EventTeamplayRoundStart.FullReset */
+        readonly fullReset: boolean;
+    }
+
+    /** What the `tournament_reward` event carries. */
+    interface TournamentRewardEvent {
+        /** EventTournamentReward.Accountid */
+        readonly accountid: number;
+        /** EventTournamentReward.Defindex */
+        readonly defindex: number;
+        /** EventTournamentReward.Totalrewards */
+        readonly totalrewards: number;
+    }
+
+    /** What the `trial_time_expired` event carries. */
+    interface TrialTimeExpiredEvent {
+        /** EventTrialTimeExpired.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `ugc_file_download_finished` event carries. */
+    interface UgcFileDownloadFinishedEvent {
+        /** EventUgcFileDownloadFinished.Hcontent — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly hcontent: string;
+    }
+
+    /** What the `ugc_file_download_start` event carries. */
+    interface UgcFileDownloadStartEvent {
+        /** EventUgcFileDownloadStart.Hcontent — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly hcontent: string;
+        /** EventUgcFileDownloadStart.PublishedFileId — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly publishedFileId: string;
+    }
+
+    /** What the `ugc_map_download_error` event carries. */
+    interface UgcMapDownloadErrorEvent {
+        /** EventUgcMapDownloadError.ErrorCode */
+        readonly errorCode: number;
+        /** EventUgcMapDownloadError.PublishedFileId — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly publishedFileId: string;
+    }
+
+    /** What the `ugc_map_info_received` event carries. */
+    interface UgcMapInfoReceivedEvent {
+        /** EventUgcMapInfoReceived.PublishedFileId — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly publishedFileId: string;
+    }
+
+    /** What the `ugc_map_unsubscribed` event carries. */
+    interface UgcMapUnsubscribedEvent {
+        /** EventUgcMapUnsubscribed.PublishedFileId — A 64-bit id, as a string: it does not survive a JavaScript number. */
+        readonly publishedFileId: string;
+    }
+
+    /** What the `update_matchmaking_stats` event carries. */
+    interface UpdateMatchmakingStatsEvent {
+    }
+
+    /** What the `user_data_downloaded` event carries. */
+    interface UserDataDownloadedEvent {
+    }
+
+    /** What the `vip_escaped` event carries. */
+    interface VipEscapedEvent {
+        /** EventVipEscaped.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `vip_killed` event carries. */
+    interface VipKilledEvent {
+        /** EventVipKilled.Attacker */
+        readonly attacker: Player | null;
+        /** EventVipKilled.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `vote_cast` event carries. */
+    interface VoteCastEvent {
+        /** EventVoteCast.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventVoteCast.Team */
+        readonly team: number;
+        /** EventVoteCast.VoteOption */
+        readonly voteOption: number;
+    }
+
+    /** What the `vote_cast_no` event carries. */
+    interface VoteCastNoEvent {
+        /** EventVoteCastNo.Entityid */
+        readonly entityid: number;
+        /** EventVoteCastNo.Team */
+        readonly team: number;
+    }
+
+    /** What the `vote_cast_yes` event carries. */
+    interface VoteCastYesEvent {
+        /** EventVoteCastYes.Entityid */
+        readonly entityid: number;
+        /** EventVoteCastYes.Team */
+        readonly team: number;
+    }
+
+    /** What the `vote_changed` event carries. */
+    interface VoteChangedEvent {
+        /** EventVoteChanged.Novotes */
+        readonly novotes: number;
+        /** EventVoteChanged.Potentialvotes */
+        readonly potentialvotes: number;
+        /** EventVoteChanged.VoteOption1 */
+        readonly voteOption1: number;
+        /** EventVoteChanged.VoteOption2 */
+        readonly voteOption2: number;
+        /** EventVoteChanged.VoteOption3 */
+        readonly voteOption3: number;
+        /** EventVoteChanged.VoteOption4 */
+        readonly voteOption4: number;
+        /** EventVoteChanged.VoteOption5 */
+        readonly voteOption5: number;
+        /** EventVoteChanged.Yesvotes */
+        readonly yesvotes: number;
+    }
+
+    /** What the `vote_ended` event carries. */
+    interface VoteEndedEvent {
+    }
+
+    /** What the `vote_failed` event carries. */
+    interface VoteFailedEvent {
+        /** EventVoteFailed.Reliable */
+        readonly reliable: number;
+        /** EventVoteFailed.Team */
+        readonly team: number;
+    }
+
+    /** What the `vote_options` event carries. */
+    interface VoteOptionsEvent {
+        /** EventVoteOptions.Count */
+        readonly count: number;
+        /** EventVoteOptions.Option1 */
+        readonly option1: string;
+        /** EventVoteOptions.Option2 */
+        readonly option2: string;
+        /** EventVoteOptions.Option3 */
+        readonly option3: string;
+        /** EventVoteOptions.Option4 */
+        readonly option4: string;
+        /** EventVoteOptions.Option5 */
+        readonly option5: string;
+    }
+
+    /** What the `vote_passed` event carries. */
+    interface VotePassedEvent {
+        /** EventVotePassed.Details */
+        readonly details: string;
+        /** EventVotePassed.Param1 */
+        readonly param1: string;
+        /** EventVotePassed.Reliable */
+        readonly reliable: number;
+        /** EventVotePassed.Team */
+        readonly team: number;
+    }
+
+    /** What the `vote_started` event carries. */
+    interface VoteStartedEvent {
+        /** EventVoteStarted.Initiator */
+        readonly initiator: number;
+        /** EventVoteStarted.Issue */
+        readonly issue: string;
+        /** EventVoteStarted.Param1 */
+        readonly param1: string;
+        /** EventVoteStarted.Reliable */
+        readonly reliable: number;
+        /** EventVoteStarted.Team */
+        readonly team: number;
+        /** EventVoteStarted.Votedata */
+        readonly votedata: string;
+    }
+
+    /** What the `warmup_end` event carries. */
+    interface WarmupEndEvent {
+    }
+
+    /** What the `weapon_fire` event carries. */
+    interface WeaponFireEvent {
+        /** EventWeaponFire.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventWeaponFire.Silenced */
+        readonly silenced: boolean;
+        /** EventWeaponFire.Weapon */
+        readonly weapon: string;
+    }
+
+    /** What the `weapon_fire_on_empty` event carries. */
+    interface WeaponFireOnEmptyEvent {
+        /** EventWeaponFireOnEmpty.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+        /** EventWeaponFireOnEmpty.Weapon */
+        readonly weapon: string;
+    }
+
+    /** What the `weapon_reload` event carries. */
+    interface WeaponReloadEvent {
+        /** EventWeaponReload.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `weapon_zoom` event carries. */
+    interface WeaponZoomEvent {
+        /** EventWeaponZoom.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `weapon_zoom_rifle` event carries. */
+    interface WeaponZoomRifleEvent {
+        /** EventWeaponZoomRifle.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `weaponhud_selection` event carries. */
+    interface WeaponhudSelectionEvent {
+        /** EventWeaponhudSelection.Entindex */
+        readonly entindex: number;
+        /** EventWeaponhudSelection.Mode */
+        readonly mode: number;
+        /** EventWeaponhudSelection.Userid — Renamed: the event calls this userid, and it is a player. */
+        readonly player: Player | null;
+    }
+
+    /** What the `write_game_titledata` event carries. */
+    interface WriteGameTitledataEvent {
+        /** EventWriteGameTitledata.Controllerid */
+        readonly controllerid: number;
+    }
+
+    /** What the `write_profile_data` event carries. */
+    interface WriteProfileDataEvent {
+    }
+
+    interface Cs2TsEvents {
+        achievement_earned: (event: AchievementEarnedEvent) => void;
+        achievement_earned_local: (event: AchievementEarnedLocalEvent) => void;
+        achievement_event: (event: AchievementEventEvent) => void;
+        achievement_info_loaded: (event: AchievementInfoLoadedEvent) => void;
+        achievement_write_failed: (event: AchievementWriteFailedEvent) => void;
+        add_bullet_hit_marker: (event: AddBulletHitMarkerEvent) => void;
+        add_player_sonar_icon: (event: AddPlayerSonarIconEvent) => void;
+        ammo_pickup: (event: AmmoPickupEvent) => void;
+        ammo_refill: (event: AmmoRefillEvent) => void;
+        announce_phase_end: (event: AnnouncePhaseEndEvent) => void;
+        begin_new_match: (event: BeginNewMatchEvent) => void;
+        bomb_abortdefuse: (event: BombAbortdefuseEvent) => void;
+        bomb_abortplant: (event: BombAbortplantEvent) => void;
+        bomb_beep: (event: BombBeepEvent) => void;
+        bomb_begindefuse: (event: BombBegindefuseEvent) => void;
+        bomb_beginplant: (event: BombBeginplantEvent) => void;
+        bomb_defused: (event: BombDefusedEvent) => void;
+        bomb_dropped: (event: BombDroppedEvent) => void;
+        bomb_exploded: (event: BombExplodedEvent) => void;
+        bomb_pickup: (event: BombPickupEvent) => void;
+        bomb_planted: (event: BombPlantedEvent) => void;
+        bonus_updated: (event: BonusUpdatedEvent) => void;
+        bot_takeover: (event: BotTakeoverEvent) => void;
+        break_breakable: (event: BreakBreakableEvent) => void;
+        break_prop: (event: BreakPropEvent) => void;
+        broken_breakable: (event: BrokenBreakableEvent) => void;
+        bullet_damage: (event: BulletDamageEvent) => void;
+        bullet_impact: (event: BulletImpactEvent) => void;
+        buymenu_close: (event: BuymenuCloseEvent) => void;
+        buymenu_open: (event: BuymenuOpenEvent) => void;
+        buytime_ended: (event: BuytimeEndedEvent) => void;
+        cart_updated: (event: CartUpdatedEvent) => void;
+        choppers_incoming_warning: (event: ChoppersIncomingWarningEvent) => void;
+        client_disconnect: (event: ClientDisconnectEvent) => void;
+        client_loadout_changed: (event: ClientLoadoutChangedEvent) => void;
+        clientside_lesson_closed: (event: ClientsideLessonClosedEvent) => void;
+        clientside_reload_custom_econ: (event: ClientsideReloadCustomEconEvent) => void;
+        cs_game_disconnected: (event: CsGameDisconnectedEvent) => void;
+        cs_intermission: (event: CsIntermissionEvent) => void;
+        cs_match_end_restart: (event: CsMatchEndRestartEvent) => void;
+        cs_pre_restart: (event: CsPreRestartEvent) => void;
+        cs_prev_next_spectator: (event: CsPrevNextSpectatorEvent) => void;
+        cs_round_final_beep: (event: CsRoundFinalBeepEvent) => void;
+        cs_round_start_beep: (event: CsRoundStartBeepEvent) => void;
+        cs_win_panel_match: (event: CsWinPanelMatchEvent) => void;
+        cs_win_panel_round: (event: CsWinPanelRoundEvent) => void;
+        decoy_detonate: (event: DecoyDetonateEvent) => void;
+        decoy_firing: (event: DecoyFiringEvent) => void;
+        decoy_started: (event: DecoyStartedEvent) => void;
+        defuser_dropped: (event: DefuserDroppedEvent) => void;
+        defuser_pickup: (event: DefuserPickupEvent) => void;
+        demo_skip: (event: DemoSkipEvent) => void;
+        demo_start: (event: DemoStartEvent) => void;
+        demo_stop: (event: DemoStopEvent) => void;
+        difficulty_changed: (event: DifficultyChangedEvent) => void;
+        dm_bonus_weapon_start: (event: DmBonusWeaponStartEvent) => void;
+        door_break: (event: DoorBreakEvent) => void;
+        door_close: (event: DoorCloseEvent) => void;
+        door_closed: (event: DoorClosedEvent) => void;
+        door_moving: (event: DoorMovingEvent) => void;
+        door_open: (event: DoorOpenEvent) => void;
+        drone_above_roof: (event: DroneAboveRoofEvent) => void;
+        drone_cargo_detached: (event: DroneCargoDetachedEvent) => void;
+        drone_dispatched: (event: DroneDispatchedEvent) => void;
+        dronegun_attack: (event: DronegunAttackEvent) => void;
+        drop_rate_modified: (event: DropRateModifiedEvent) => void;
+        dynamic_shadow_light_changed: (event: DynamicShadowLightChangedEvent) => void;
+        dz_item_interaction: (event: DzItemInteractionEvent) => void;
+        enable_restart_voting: (event: EnableRestartVotingEvent) => void;
+        endmatch_cmm_start_reveal_items: (event: EndmatchCmmStartRevealItemsEvent) => void;
+        endmatch_mapvote_selecting_map: (event: EndmatchMapvoteSelectingMapEvent) => void;
+        enter_bombzone: (event: EnterBombzoneEvent) => void;
+        enter_buyzone: (event: EnterBuyzoneEvent) => void;
+        enter_rescue_zone: (event: EnterRescueZoneEvent) => void;
+        entity_killed: (event: EntityKilledEvent) => void;
+        entity_visible: (event: EntityVisibleEvent) => void;
+        event_ticket_modified: (event: EventTicketModifiedEvent) => void;
+        exit_bombzone: (event: ExitBombzoneEvent) => void;
+        exit_buyzone: (event: ExitBuyzoneEvent) => void;
+        exit_rescue_zone: (event: ExitRescueZoneEvent) => void;
+        finale_start: (event: FinaleStartEvent) => void;
+        firstbombs_incoming_warning: (event: FirstbombsIncomingWarningEvent) => void;
+        flare_ignite_npc: (event: FlareIgniteNpcEvent) => void;
+        flashbang_detonate: (event: FlashbangDetonateEvent) => void;
+        game_end: (event: GameEndEvent) => void;
+        game_init: (event: GameInitEvent) => void;
+        game_message: (event: GameMessageEvent) => void;
+        game_newmap: (event: GameNewmapEvent) => void;
+        game_phase_changed: (event: GamePhaseChangedEvent) => void;
+        game_start: (event: GameStartEvent) => void;
+        gameinstructor_draw: (event: GameinstructorDrawEvent) => void;
+        gameinstructor_nodraw: (event: GameinstructorNodrawEvent) => void;
+        gameui_hidden: (event: GameuiHiddenEvent) => void;
+        gc_connected: (event: GcConnectedEvent) => void;
+        gg_killed_enemy: (event: GgKilledEnemyEvent) => void;
+        grenade_bounce: (event: GrenadeBounceEvent) => void;
+        grenade_thrown: (event: GrenadeThrownEvent) => void;
+        guardian_wave_restart: (event: GuardianWaveRestartEvent) => void;
+        hegrenade_detonate: (event: HegrenadeDetonateEvent) => void;
+        helicopter_grenade_punt_miss: (event: HelicopterGrenadePuntMissEvent) => void;
+        hide_deathpanel: (event: HideDeathpanelEvent) => void;
+        hltv_cameraman: (event: HltvCameramanEvent) => void;
+        hltv_changed_mode: (event: HltvChangedModeEvent) => void;
+        hltv_chase: (event: HltvChaseEvent) => void;
+        hltv_chat: (event: HltvChatEvent) => void;
+        hltv_fixed: (event: HltvFixedEvent) => void;
+        hltv_message: (event: HltvMessageEvent) => void;
+        hltv_rank_camera: (event: HltvRankCameraEvent) => void;
+        hltv_rank_entity: (event: HltvRankEntityEvent) => void;
+        hltv_replay: (event: HltvReplayEvent) => void;
+        hltv_replay_status: (event: HltvReplayStatusEvent) => void;
+        hltv_status: (event: HltvStatusEvent) => void;
+        hltv_title: (event: HltvTitleEvent) => void;
+        hltv_versioninfo: (event: HltvVersioninfoEvent) => void;
+        hostage_call_for_help: (event: HostageCallForHelpEvent) => void;
+        hostage_follows: (event: HostageFollowsEvent) => void;
+        hostage_hurt: (event: HostageHurtEvent) => void;
+        hostage_killed: (event: HostageKilledEvent) => void;
+        hostage_rescued: (event: HostageRescuedEvent) => void;
+        hostage_rescued_all: (event: HostageRescuedAllEvent) => void;
+        hostage_stops_following: (event: HostageStopsFollowingEvent) => void;
+        hostname_changed: (event: HostnameChangedEvent) => void;
+        inferno_expire: (event: InfernoExpireEvent) => void;
+        inferno_extinguish: (event: InfernoExtinguishEvent) => void;
+        inferno_startburn: (event: InfernoStartburnEvent) => void;
+        inspect_weapon: (event: InspectWeaponEvent) => void;
+        instructor_close_lesson: (event: InstructorCloseLessonEvent) => void;
+        instructor_server_hint_create: (event: InstructorServerHintCreateEvent) => void;
+        instructor_server_hint_stop: (event: InstructorServerHintStopEvent) => void;
+        instructor_start_lesson: (event: InstructorStartLessonEvent) => void;
+        inventory_updated: (event: InventoryUpdatedEvent) => void;
+        item_equip: (event: ItemEquipEvent) => void;
+        item_pickup: (event: ItemPickupEvent) => void;
+        item_pickup_failed: (event: ItemPickupFailedEvent) => void;
+        item_pickup_slerp: (event: ItemPickupSlerpEvent) => void;
+        item_purchase: (event: ItemPurchaseEvent) => void;
+        item_remove: (event: ItemRemoveEvent) => void;
+        item_schema_initialized: (event: ItemSchemaInitializedEvent) => void;
+        jointeam_failed: (event: JointeamFailedEvent) => void;
+        local_player_controller_team: (event: LocalPlayerControllerTeamEvent) => void;
+        local_player_pawn_changed: (event: LocalPlayerPawnChangedEvent) => void;
+        local_player_team: (event: LocalPlayerTeamEvent) => void;
+        loot_crate_opened: (event: LootCrateOpenedEvent) => void;
+        loot_crate_visible: (event: LootCrateVisibleEvent) => void;
+        map_shutdown: (event: MapShutdownEvent) => void;
+        map_transition: (event: MapTransitionEvent) => void;
+        match_end_conditions: (event: MatchEndConditionsEvent) => void;
+        material_default_complete: (event: MaterialDefaultCompleteEvent) => void;
+        mb_input_lock_cancel: (event: MbInputLockCancelEvent) => void;
+        mb_input_lock_success: (event: MbInputLockSuccessEvent) => void;
+        molotov_detonate: (event: MolotovDetonateEvent) => void;
+        nav_blocked: (event: NavBlockedEvent) => void;
+        nav_generate: (event: NavGenerateEvent) => void;
+        nextlevel_changed: (event: NextlevelChangedEvent) => void;
+        open_crate_instr: (event: OpenCrateInstrEvent) => void;
+        other_death: (event: OtherDeathEvent) => void;
+        parachute_deploy: (event: ParachuteDeployEvent) => void;
+        parachute_pickup: (event: ParachutePickupEvent) => void;
+        physgun_pickup: (event: PhysgunPickupEvent) => void;
+        player_activate: (event: PlayerActivateEvent) => void;
+        player_avenged_teammate: (event: PlayerAvengedTeammateEvent) => void;
+        player_blind: (event: PlayerBlindEvent) => void;
+        player_changename: (event: PlayerChangenameEvent) => void;
+        player_chat: (event: PlayerChatEvent) => void;
+        player_connect: (event: PlayerConnectEvent) => void;
+        player_connect_full: (event: PlayerConnectFullEvent) => void;
+        player_death: (event: PlayerDeathEvent) => void;
+        player_decal: (event: PlayerDecalEvent) => void;
+        player_disconnect: (event: PlayerDisconnectEvent) => void;
+        player_falldamage: (event: PlayerFalldamageEvent) => void;
+        player_footstep: (event: PlayerFootstepEvent) => void;
+        player_full_update: (event: PlayerFullUpdateEvent) => void;
+        player_given_c4: (event: PlayerGivenC4Event) => void;
+        player_hintmessage: (event: PlayerHintmessageEvent) => void;
+        player_hurt: (event: PlayerHurtEvent) => void;
+        player_info: (event: PlayerInfoEvent) => void;
+        player_jump: (event: PlayerJumpEvent) => void;
+        player_ping: (event: PlayerPingEvent) => void;
+        player_ping_stop: (event: PlayerPingStopEvent) => void;
+        player_radio: (event: PlayerRadioEvent) => void;
+        player_reset_vote: (event: PlayerResetVoteEvent) => void;
+        player_score: (event: PlayerScoreEvent) => void;
+        player_shoot: (event: PlayerShootEvent) => void;
+        player_sound: (event: PlayerSoundEvent) => void;
+        player_spawn: (event: PlayerSpawnEvent) => void;
+        player_spawned: (event: PlayerSpawnedEvent) => void;
+        player_stats_updated: (event: PlayerStatsUpdatedEvent) => void;
+        player_team: (event: PlayerTeamEvent) => void;
+        ragdoll_dissolved: (event: RagdollDissolvedEvent) => void;
+        read_game_titledata: (event: ReadGameTitledataEvent) => void;
+        repost_xbox_achievements: (event: RepostXboxAchievementsEvent) => void;
+        reset_game_titledata: (event: ResetGameTitledataEvent) => void;
+        round_announce_final: (event: RoundAnnounceFinalEvent) => void;
+        round_announce_last_round_half: (event: RoundAnnounceLastRoundHalfEvent) => void;
+        round_announce_match_point: (event: RoundAnnounceMatchPointEvent) => void;
+        round_announce_match_start: (event: RoundAnnounceMatchStartEvent) => void;
+        round_announce_warmup: (event: RoundAnnounceWarmupEvent) => void;
+        round_end: (event: RoundEndEvent) => void;
+        round_end_upload_stats: (event: RoundEndUploadStatsEvent) => void;
+        round_freeze_end: (event: RoundFreezeEndEvent) => void;
+        round_mvp: (event: RoundMvpEvent) => void;
+        round_officially_ended: (event: RoundOfficiallyEndedEvent) => void;
+        round_poststart: (event: RoundPoststartEvent) => void;
+        round_prestart: (event: RoundPrestartEvent) => void;
+        round_start: (event: RoundStartEvent) => void;
+        round_start_post_nav: (event: RoundStartPostNavEvent) => void;
+        round_start_pre_entity: (event: RoundStartPreEntityEvent) => void;
+        round_time_warning: (event: RoundTimeWarningEvent) => void;
+        seasoncoin_levelup: (event: SeasoncoinLevelupEvent) => void;
+        server_cvar: (event: ServerCvarEvent) => void;
+        server_message: (event: ServerMessageEvent) => void;
+        server_pre_shutdown: (event: ServerPreShutdownEvent) => void;
+        server_shutdown: (event: ServerShutdownEvent) => void;
+        server_spawn: (event: ServerSpawnEvent) => void;
+        set_instructor_group_enabled: (event: SetInstructorGroupEnabledEvent) => void;
+        sfuievent: (event: SfuieventEvent) => void;
+        show_deathpanel: (event: ShowDeathpanelEvent) => void;
+        show_survival_respawn_status: (event: ShowSurvivalRespawnStatusEvent) => void;
+        silencer_detach: (event: SilencerDetachEvent) => void;
+        silencer_off: (event: SilencerOffEvent) => void;
+        silencer_on: (event: SilencerOnEvent) => void;
+        smoke_beacon_paradrop: (event: SmokeBeaconParadropEvent) => void;
+        smokegrenade_detonate: (event: SmokegrenadeDetonateEvent) => void;
+        smokegrenade_expired: (event: SmokegrenadeExpiredEvent) => void;
+        spec_mode_updated: (event: SpecModeUpdatedEvent) => void;
+        spec_target_updated: (event: SpecTargetUpdatedEvent) => void;
+        start_halftime: (event: StartHalftimeEvent) => void;
+        start_vote: (event: StartVoteEvent) => void;
+        store_pricesheet_updated: (event: StorePricesheetUpdatedEvent) => void;
+        survival_announce_phase: (event: SurvivalAnnouncePhaseEvent) => void;
+        survival_no_respawns_final: (event: SurvivalNoRespawnsFinalEvent) => void;
+        survival_no_respawns_warning: (event: SurvivalNoRespawnsWarningEvent) => void;
+        survival_paradrop_break: (event: SurvivalParadropBreakEvent) => void;
+        survival_paradrop_spawn: (event: SurvivalParadropSpawnEvent) => void;
+        survival_teammate_respawn: (event: SurvivalTeammateRespawnEvent) => void;
+        switch_team: (event: SwitchTeamEvent) => void;
+        tagrenade_detonate: (event: TagrenadeDetonateEvent) => void;
+        team_info: (event: TeamInfoEvent) => void;
+        team_intro_end: (event: TeamIntroEndEvent) => void;
+        team_intro_start: (event: TeamIntroStartEvent) => void;
+        team_score: (event: TeamScoreEvent) => void;
+        teamchange_pending: (event: TeamchangePendingEvent) => void;
+        teamplay_broadcast_audio: (event: TeamplayBroadcastAudioEvent) => void;
+        teamplay_round_start: (event: TeamplayRoundStartEvent) => void;
+        tournament_reward: (event: TournamentRewardEvent) => void;
+        trial_time_expired: (event: TrialTimeExpiredEvent) => void;
+        ugc_file_download_finished: (event: UgcFileDownloadFinishedEvent) => void;
+        ugc_file_download_start: (event: UgcFileDownloadStartEvent) => void;
+        ugc_map_download_error: (event: UgcMapDownloadErrorEvent) => void;
+        ugc_map_info_received: (event: UgcMapInfoReceivedEvent) => void;
+        ugc_map_unsubscribed: (event: UgcMapUnsubscribedEvent) => void;
+        update_matchmaking_stats: (event: UpdateMatchmakingStatsEvent) => void;
+        user_data_downloaded: (event: UserDataDownloadedEvent) => void;
+        vip_escaped: (event: VipEscapedEvent) => void;
+        vip_killed: (event: VipKilledEvent) => void;
+        vote_cast: (event: VoteCastEvent) => void;
+        vote_cast_no: (event: VoteCastNoEvent) => void;
+        vote_cast_yes: (event: VoteCastYesEvent) => void;
+        vote_changed: (event: VoteChangedEvent) => void;
+        vote_ended: (event: VoteEndedEvent) => void;
+        vote_failed: (event: VoteFailedEvent) => void;
+        vote_options: (event: VoteOptionsEvent) => void;
+        vote_passed: (event: VotePassedEvent) => void;
+        vote_started: (event: VoteStartedEvent) => void;
+        warmup_end: (event: WarmupEndEvent) => void;
+        weapon_fire: (event: WeaponFireEvent) => void;
+        weapon_fire_on_empty: (event: WeaponFireOnEmptyEvent) => void;
+        weapon_reload: (event: WeaponReloadEvent) => void;
+        weapon_zoom: (event: WeaponZoomEvent) => void;
+        weapon_zoom_rifle: (event: WeaponZoomRifleEvent) => void;
+        weaponhud_selection: (event: WeaponhudSelectionEvent) => void;
+        write_game_titledata: (event: WriteGameTitledataEvent) => void;
+        write_profile_data: (event: WriteProfileDataEvent) => void;
     }
     // END GENERATED
 
@@ -932,7 +3598,17 @@ declare global {
         readonly controller: Entity<ControllerRaw>;
     }
 
-    /** Handler signatures for the events the runtime dispatches. */
+    /**
+     * The one event the runtime raises itself. Everything else `on` accepts is a game
+     * event, generated above from CounterStrikeSharp's own event classes and merged
+     * into this interface — so `on` knows all of them by name and gives each handler
+     * the right argument.
+     *
+     * Each game event hands the handler one object, and that object is a snapshot taken
+     * while the event was still live. Keeping it is safe: numbers and strings were
+     * copied out, and every player on it is a `Player`, which is an identity rather
+     * than a pointer.
+     */
     interface Cs2TsEvents {
         /**
          * Every game tick — 64 times a second on a standard server.
@@ -957,13 +3633,6 @@ declare global {
          * sixty-four times a second, forever.
          */
         tick: () => void;
-
-        round_start: (timeLimit: number) => void;
-        round_end: (winner: number) => void;
-        player_connect: (player: Player) => void;
-        player_disconnect: (player: Player) => void;
-        player_death: (player: Player) => void;
-        player_spawn: (player: Player) => void;
     }
 
     /**

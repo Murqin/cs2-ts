@@ -33,7 +33,7 @@ public sealed class EntityFacade
     /// <param name="description">What <c>toString</c> answers.</param>
     /// <param name="raw">The wide surface, made by the layer that knows the game.</param>
     /// <param name="isValid">Whether the entity is still there. Must not throw.</param>
-    internal EntityFacade(string kind, string description, RawSurface raw, Func<bool> isValid)
+    internal EntityFacade(string kind, string description, ScriptSurface raw, Func<bool> isValid)
     {
         Kind = kind;
         Raw = raw;
@@ -56,19 +56,19 @@ public sealed class EntityFacade
     /// <summary>
     /// Every field the entity has, by name.
     ///
-    /// Typed as <see cref="RawSurface"/> because this assembly does not know the game:
+    /// Typed as <see cref="ScriptSurface"/> because this assembly does not know the game:
     /// the surface is made by the plugin, which does, and the base type is only there to
     /// keep <see cref="object"/>'s members off it.
     ///
     /// <see cref="ScriptMemberFlags.ExposeRuntimeType"/> is what makes that work and is
     /// not optional — ClearScript binds a member's value against its <em>declared</em>
     /// type by default, so without it a script would get the members of
-    /// <see cref="RawSurface"/>, which is none of them: every field would read as
+    /// <see cref="ScriptSurface"/>, which is none of them: every field would read as
     /// undefined and every write would be dropped, with nothing thrown and nothing
     /// logged.
     /// </summary>
     [ScriptMember("raw", ScriptMemberFlags.ExposeRuntimeType)]
-    public RawSurface Raw { get; }
+    public ScriptSurface Raw { get; }
 
     /// <summary>"pawn of player:7". Also what string interpolation gives a script.</summary>
     [ScriptMember("toString")]

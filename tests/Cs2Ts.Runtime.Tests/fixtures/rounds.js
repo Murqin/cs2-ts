@@ -7,13 +7,18 @@
 
 let rounds = 0;
 
-on("round_start", (timeLimit) => {
+on("round_start", (event) => {
     rounds++;
-    console.log(`round ${rounds} started, ${timeLimit}s limit, on ${server.mapName}`);
+    console.log(`round ${rounds} started, ${event.timelimit}s limit, on ${server.mapName}`);
 });
 
-/** @param {Player} player */
-function greet(player) {
+/** @param {PlayerConnectFullEvent} event */
+function greet(event) {
+    const player = event.player;
+    if (player === null) {
+        return;
+    }
+
     player.sendChat(`welcome, ${player.name}`);
 
     // A player object keeps an identity, not a pointer. Holding it across a frame is
@@ -27,7 +32,7 @@ function greet(player) {
     });
 }
 
-on("player_connect", greet);
+on("player_connect_full", greet);
 
 // Commands work the same in JavaScript; JSDoc carries the types.
 /**

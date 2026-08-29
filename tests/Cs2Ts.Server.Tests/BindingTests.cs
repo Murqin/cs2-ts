@@ -205,6 +205,71 @@ public sealed class BindingTests(ServerFixture fixture)
     }
 
     [Fact]
+    public async Task AGameEventArrivesWithTheFieldsTheGeneratorPromised()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        try
+        {
+            server.ClearTranscript();
+
+            // bot_kill is a cheat command; without this it is refused and the test would
+            // read as "the event never arrived" rather than "nothing died".
+            server.Command("sv_cheats 1");
+            server.Command("bot_kill");
+            await Task.Delay(TimeSpan.FromSeconds(2));
+
+            server.Command("css_hdeath");
+            var line = await server.WaitForAsync(
+                l => l.Contains("HARNESS death ", StringComparison.Ordinal), Answer);
+
+            // The event was hooked because a script asked for it, and only then: nothing
+            // in this plugin registers player_death in advance.
+            Assert.DoesNotContain("none", line, StringComparison.Ordinal);
+            Assert.Contains("player=true", line, StringComparison.Ordinal);
+
+            // bot_kill reads as a suicide rather than as a kill by the world, which was
+            // measured rather than assumed. That makes it the better test: one player in
+            // two fields of one event has to arrive as one object, or `===` stops meaning
+            // anything for the thing scripts are told to keep.
+            Assert.Contains("attacker=player", line, StringComparison.Ordinal);
+            Assert.Contains("same=true", line, StringComparison.Ordinal);
+
+            // And the three kinds arrive as themselves rather than as the empty object a
+            // schema field turns into on the way across.
+            Assert.Contains("headshot=boolean", line, StringComparison.Ordinal);
+            Assert.Contains("weapon=string", line, StringComparison.Ordinal);
+            Assert.Contains("dmg=number", line, StringComparison.Ordinal);
+        }
+        finally
+        {
+            // Put the bots back on their feet, and the server back as it was. Nothing
+            // here waits for a round to end on its own, and the next test to ask for
+            // players would otherwise wait a minute and then fail.
+            server.Command("sv_cheats 0");
+            server.Command("mp_restartgame 1");
+        }
+    }
+
+    [Fact]
+    public async Task AnEventNameNoGameEventHasIsReported()
+    {
+        var server = fixture.Require();
+
+        server.ClearTranscript();
+        server.Command("css_hbadevent");
+
+        // The declarations would have stopped a TypeScript author. This is what a
+        // JavaScript author gets instead of a handler that is registered and can never
+        // fire — and the plugin can only say it because the generated switch is the
+        // list of every event the game has.
+        var warning = await server.WaitForAsync(
+            line => line.Contains("no game event is called", StringComparison.Ordinal), Answer);
+
+        Assert.Contains("player_hrut", warning, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task AHandleStopsResolvingWhenThePlayerLeaves()
     {
         var server = await fixture.RequireWithPlayersAsync();

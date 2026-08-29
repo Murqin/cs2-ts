@@ -9,9 +9,9 @@ type Team = (typeof Team)[keyof typeof Team];
 
 let roundsPlayed = 0;
 
-on("round_start", (timeLimit: number): void => {
+on("round_start", (event: RoundStartEvent): void => {
     roundsPlayed++;
-    console.log(`round ${roundsPlayed} started, ${timeLimit}s limit, on ${server.mapName}`);
+    console.log(`round ${roundsPlayed} started, ${event.timelimit}s limit, on ${server.mapName}`);
 
     // Writing health here is one statement. Through CounterStrikeSharp it is two — set
     // the field, then mark it changed — and leaving the second one out gives every
@@ -26,7 +26,18 @@ on("round_start", (timeLimit: number): void => {
     }
 });
 
-on("player_connect", (player: Player): void => {
+// player_connect_full, not player_connect: both are real events and they are not the
+// same moment. The first fires while the player is still arriving; this one fires when
+// they are actually in, which is when there is something to greet.
+on("player_connect_full", (event: PlayerConnectFullEvent): void => {
+    // Every player on an event is nullable, and that is not paperwork. The game raises
+    // events with nobody attached — a round ending, damage from the world — and the
+    // compiler asking here is cheaper than finding out at runtime.
+    const player = event.player;
+    if (player === null) {
+        return;
+    }
+
     player.sendChat(`welcome, ${player.name}`);
 
     // The player object keeps an identity, not a pointer, so holding it across a delay
@@ -41,7 +52,12 @@ on("player_connect", (player: Player): void => {
     });
 });
 
-on("player_spawn", (player: Player): void => {
+on("player_spawn", (event: PlayerSpawnEvent): void => {
+    const player = event.player;
+    if (player === null) {
+        return;
+    }
+
     // isAlive is the guard for everything that lives on the pawn, and player_spawn is
     // where it earns its keep: the first spawn after a map change arrives before the
     // pawn does — measured on a live server, team 0 and no pawn at all — while every
@@ -55,12 +71,19 @@ on("player_spawn", (player: Player): void => {
     console.log(`${player.name} spawned at ${x}, ${y}, ${z} with $${player.money}`);
 });
 
-on("player_death", (player: Player): void => {
-    if (!player.isValid) {
+on("player_death", (event: PlayerDeathEvent): void => {
+    const player = event.player;
+    if (player === null || !player.isValid) {
         return;
     }
 
-    console.log(`${player.name} died; ${players.all().length} still connected`);
+    // What the generated events are for. None of this was reachable while the event
+    // signatures were written by hand: who did it, with what, and how — and the
+    // attacker is null when the world did the killing, which is a real case rather
+    // than a defensive check.
+    const killer = event.attacker === null ? "the world" : event.attacker.name;
+    const how = event.headshot ? "headshot" : event.weapon;
+    console.log(`${player.name} died to ${killer} (${how}); ${players.all().length} still connected`);
 });
 
 // A command. Players type !whereami; the server console runs css_whereami, which is

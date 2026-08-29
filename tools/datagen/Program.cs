@@ -15,6 +15,8 @@ var surfaces = new[]
     Surfaces.Read("ControllerRaw", typeof(CCSPlayerController)),
 };
 
+var events = Events.Read(typeof(CCSPlayerPawn).Assembly);
+
 var files = new Dictionary<string, string>(StringComparer.Ordinal);
 
 foreach (var surface in surfaces)
@@ -22,10 +24,12 @@ foreach (var surface in surfaces)
     files[Path.Combine("src", "Cs2Ts.Plugin", "Generated", $"{surface.Name}.g.cs")] = Emit.CSharp(surface);
 }
 
+files[Path.Combine("src", "Cs2Ts.Plugin", "Generated", "GameEvents.g.cs")] = Emit.CSharpEvents(events);
+
 var declarations = Path.Combine("templates", "cs2ts.d.ts");
 files[declarations] = Region.Replace(
     File.ReadAllText(Path.Combine(root, declarations)),
-    string.Join("\n", surfaces.Select(Emit.TypeScript)));
+    string.Join("\n", [.. surfaces.Select(Emit.TypeScript), Emit.TypeScriptEvents(events)]));
 
 var stale = new List<string>();
 
@@ -56,6 +60,14 @@ foreach (var surface in surfaces)
     Console.WriteLine(
         $"{surface.Name}: {surface.Fields.Count} fields, not yet carried: {string.Join(", ", left)}");
 }
+
+var eventFields = events.Sum(surface => surface.Fields.Count);
+var eventSkipped = events.SelectMany(surface => surface.Skipped)
+    .GroupBy(kind => kind.Key, StringComparer.Ordinal)
+    .Select(kind => $"{kind.Sum(entry => entry.Value)} {kind.Key}");
+
+Console.WriteLine(
+    $"events: {events.Count} events, {eventFields} fields, not carried: {string.Join(", ", eventSkipped)}");
 
 if (stale.Count == 0)
 {

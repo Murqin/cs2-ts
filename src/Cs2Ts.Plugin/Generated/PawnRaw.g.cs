@@ -3,6 +3,8 @@
 //     Regenerate with: dotnet run --project tools/datagen
 // </auto-generated>
 
+#nullable enable
+
 using System.Globalization;
 using Cs2Ts.Runtime;
 using Microsoft.ClearScript;
@@ -22,7 +24,7 @@ namespace Cs2Ts.Plugin;
 /// returning something stale once the entity is gone.
 /// </param>
 [DefaultScriptUsage(ScriptAccess.None)]
-public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPawn> resolve) : RawSurface
+public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPawn> resolve) : ScriptSurface
 {
     /// <summary>CBaseEntity/m_flActualGravityScale</summary>
     [ScriptMember("actualGravityScale")]

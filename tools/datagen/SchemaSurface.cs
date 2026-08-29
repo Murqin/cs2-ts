@@ -187,16 +187,29 @@ internal static class Surfaces
                     WriteFormat = writable ? "value" : null,
                 },
 
-            // A 64-bit value does not fit in a JavaScript number: above 2^53 it rounds,
-            // and the value it rounds to is a different one. It is given as a string, and
-            // there is no write because there would be no honest round trip back.
-            TypeCode.Int64 or TypeCode.UInt64 => blank with
+            // Widened rather than passed through. ClearScript marshals a 64-bit integer
+            // to script as a host object rather than a number, so a long that crossed
+            // untouched would be something a script cannot compare or do arithmetic on.
+            // A signed 64-bit field here is a count or an index, nowhere near the 2^53
+            // where a double stops being exact.
+            TypeCode.Int64 => blank with
+            {
+                CSharpType = "double",
+                TypeScriptType = "number",
+                ReadFormat = "(double){0}",
+                WriteFormat = writable ? "(long)value" : null,
+            },
+
+            // Unsigned means an identifier or a bitmask, where every bit means something
+            // and a JavaScript number would round the top of it away. It is given as a
+            // string, and there is no write because there would be no honest round trip.
+            TypeCode.UInt64 => blank with
             {
                 CSharpType = "string",
                 TypeScriptType = "string",
                 ReadFormat = "{0}.ToString(CultureInfo.InvariantCulture)",
                 WriteFormat = null,
-                Note = "A 64-bit value, as a string: it does not survive a JavaScript number.",
+                Note = "A 64-bit id, as a string: it does not survive a JavaScript number.",
             },
 
             // Read-only, and every string field is. CounterStrikeSharp's two halves
