@@ -64,7 +64,31 @@ public sealed class SampleScriptTests : IDisposable
             world.Connected.Select(table.For).ToArray();
     }
 
+    /// <summary>
+    /// The <c>entities</c> global, faked. The plugin's own is the same four questions
+    /// asked of a live server; what a script sees is this shape either way.
+    /// </summary>
+    [DefaultScriptUsage(ScriptAccess.None)]
+    public sealed class FakeEntities(FakeEntityWorld world)
+    {
+        [ScriptMember("byIndex")]
+        public EntityFacade? ByIndex(int index) => world.ByIndex(index);
+
+        [ScriptMember("find")]
+        public EntityFacade[] Find(string designerName) => world.Find(designerName);
+
+        [ScriptMember("first")]
+        public EntityFacade? First(string designerName) => world.Find(designerName).FirstOrDefault();
+
+        [ScriptMember("all")]
+        public EntityFacade[] All() => world.All();
+
+        [ScriptMember("create")]
+        public EntityFacade Create(string designerName) => world.Make(designerName);
+    }
+
     private readonly FakeWorld _world = new();
+    private readonly FakeEntityWorld _entities = new();
     private readonly PlayerFacadeTable<FakeController, FakePawn> _table;
     private readonly FakeConsole _console = new();
     private readonly List<ScriptError> _errors = [];
@@ -84,6 +108,7 @@ public sealed class SampleScriptTests : IDisposable
             _server = new FakeServer(plugin, _host!.Frames);
             engine.AddHostObject("server", _server);
             engine.AddHostObject("players", new FakePlayers(_table, _world));
+            engine.AddHostObject("entities", new FakeEntities(_entities));
         };
     }
 
@@ -99,6 +124,12 @@ public sealed class SampleScriptTests : IDisposable
     {
         var path = Path.Combine(AppContext.BaseDirectory, "timers.ts");
         return _host.Load("timers", "timers.ts", File.ReadAllText(path));
+    }
+
+    private PluginLoadResult LoadEntityExample()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "entities.ts");
+        return _host.Load("entities", "entities.ts", File.ReadAllText(path));
     }
 
     /// <summary>Moves the clock and runs the tick, the way the game loop would.</summary>
@@ -336,6 +367,76 @@ public sealed class SampleScriptTests : IDisposable
         Assert.Equal(1, _host.DispatchCommand("ping", _table.For(7), []).Taken);
         Assert.Contains("pong (0 arguments)", controller.Chat);
 
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// The entity example, run rather than merely compiled: it searches the world, makes
+    /// something, puts it somewhere, and takes it away again on a timer.
+    /// </summary>
+    [Fact]
+    public void TheEntityExampleFindsAndMakesThings()
+    {
+        Assert.True(LoadEntityExample().Succeeded);
+
+        _entities.Spawn(20, "weapon_ak47");
+        _entities.Spawn(21, "weapon_ak47");
+        _entities.Spawn(22, "planted_c4").Origin = new ScriptVector(700, -200, 64);
+
+        Assert.Equal(1, _host.Dispatch("round_start", new FakeRoundStartEvent(115)));
+        Assert.Contains("2 rifle(s) lying around", _console.Lines);
+        Assert.Contains("the bomb is down at 700", _console.Lines);
+
+        var controller = _world.Add(7, "murqin");
+        controller.Pawn!.Origin = new ScriptVector(10, 20, 30);
+
+        Assert.Equal(1, _host.DispatchCommand("crate", _table.For(7), []).Taken);
+
+        var crate = Assert.Single(_entities.Find("prop_physics_override"));
+        Assert.Equal(3, ((FakeEntityRaw)crate.Raw).TeamNum);
+        Assert.Equal(62, crate.Position!.Z);
+        Assert.Contains($"prop_physics_override {crate.Index} dropped for murqin", _console.Lines);
+
+        // The crate outlives the command that made it and is taken away by a timer that
+        // checks first. Nothing here is about the timer; it is about a reference held
+        // across ten seconds still meaning what it meant.
+        Advance(9);
+        Assert.True(crate.IsValid);
+
+        Advance(2);
+        Assert.False(crate.IsValid);
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// The same script, with the entity gone before the timer fires. This is the case a
+    /// cached pointer turns into a crash: the round ended, the game cleaned up, and the
+    /// callback is holding a reference to a slot somebody else now owns.
+    /// </summary>
+    [Fact]
+    public void TheEntityExampleSurvivesTheCrateBeingCleanedUpFirst()
+    {
+        Assert.True(LoadEntityExample().Succeeded);
+
+        var controller = _world.Add(7, "murqin");
+        controller.Pawn!.Origin = new ScriptVector(0, 0, 0);
+        Assert.Equal(1, _host.DispatchCommand("crate", _table.For(7), []).Taken);
+
+        var crate = Assert.Single(_entities.Find("prop_physics_override"));
+
+        // Read before the entity goes: index answers -1 once it has, which is the point
+        // of it not being an identity.
+        var slot = crate.Index;
+        _entities.Destroy(slot);
+
+        // The slot is taken by something else before the timer runs, which is what makes
+        // this different from the entity merely being gone.
+        _entities.Spawn(slot, "weapon_deagle");
+
+        Advance(11);
+
+        Assert.False(crate.IsValid);
+        Assert.Single(_entities.Find("weapon_deagle"));
         Assert.Empty(_errors);
     }
 

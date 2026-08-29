@@ -92,6 +92,130 @@ command("!hentity", () => {
         `wide=${typeof target.controller.raw.playerDominated}`);
 });
 
+// Entities: the world that is not players. None of this has a fake that can fail the
+// same way. The identity is the game's own handle, the lookup is the game's own entity
+// list, and creating something calls into the engine — a server is the only thing that
+// can say whether any of it works.
+command("!hentworld", () => {
+    const everything = entities.all();
+    const one = everything[0];
+    if (one === undefined) {
+        console.log("HARNESS entworld empty");
+        return;
+    }
+
+    // Round trip through the index: two lookups of one entity have to be one object, or
+    // `===` stops meaning anything for the thing scripts keep.
+    const again = entities.byIndex(one.index);
+    const byName = entities.find(one.designerName);
+
+    console.log(
+        `HARNESS entworld count=${everything.length} same=${again === one} ` +
+        `named=${byName.length > 0} exact=${byName.every((e) => e.designerName === one.designerName)} ` +
+        `valid=${one.isValid} index=${typeof one.index}`);
+});
+
+// A player's pawn reached the other way round: through the entity list rather than
+// through the player. The health has to match, or one of the two is reading a different
+// object — and the wide surface here is CBaseEntity's, reached by schema names the
+// generator wrote out.
+command("!hentpawn", () => {
+    const target = alivePlayer();
+    if (target === undefined) {
+        console.log("HARNESS entpawn nobody-alive");
+        return;
+    }
+
+    const pawn = target.pawn;
+    if (pawn === null) {
+        console.log("HARNESS entpawn no-pawn");
+        return;
+    }
+
+    const viaIndex = entities.byIndex(pawn.index);
+    console.log(
+        `HARNESS entpawn kind=${pawn.kind} name=${pawn.designerName} ` +
+        `found=${viaIndex !== null} health=${viaIndex?.raw.health}/${target.health} ` +
+        `team=${viaIndex?.raw.teamNum}/${target.team}`);
+});
+
+// The escape hatch, reached from an entity rather than from a player. This is what
+// makes every field of every entity readable today: `raw` is the fields every entity
+// has, and `unsafe` is the rest, by name.
+command("!hentunsafe", () => {
+    const target = alivePlayer();
+    if (target === undefined || target.pawn === null) {
+        console.log("HARNESS entunsafe nobody-alive");
+        return;
+    }
+
+    const entity = entities.byIndex(target.pawn.index);
+    if (entity === null) {
+        console.log("HARNESS entunsafe not-found");
+        return;
+    }
+
+    unsafe.setInt(entity.resolve(), "CBaseEntity", "m_iHealth", 41);
+    console.log(
+        `HARNESS entunsafe host=${unsafe.getInt(entity.resolve(), "CBaseEntity", "m_iHealth")} ` +
+        `raw=${entity.raw.health} facade=${target.health}`);
+});
+
+// Making one. Created, written to, spawned, moved, and read back — every step of it a
+// call into the engine.
+let made: Entity<EntityRaw> | null = null;
+
+command("!hentmake", () => {
+    const marker = entities.create("info_target");
+    const beforeSpawn = marker.position;
+
+    marker.raw.teamNum = 2;
+    marker.spawn();
+    marker.teleport(128, -256, 64);
+    made = marker;
+
+    console.log(
+        `HARNESS entmake name=${marker.designerName} valid=${marker.isValid} ` +
+        `index=${typeof marker.index} placed=${beforeSpawn === null ? "null" : "yes"} ` +
+        `x=${marker.position?.x ?? "none"} team=${marker.raw.teamNum} ` +
+        `health=${typeof marker.raw.health} flags=${typeof marker.raw.spawnflags}`);
+});
+
+command("!hentbadname", () => {
+    try {
+        entities.create("no_such_entity_class");
+        console.log("HARNESS entbadname not-refused");
+    } catch (error) {
+        console.log(`HARNESS entbadname refused ${(error as Error).message}`);
+    }
+});
+
+// Removal, and the claim underneath the whole table: a slot comes back and a reference
+// to what used to be in it must not follow it there. Read a tick later, because
+// removal is queued rather than immediate.
+command("!hentgone", () => {
+    const marker = made;
+    if (marker === null) {
+        console.log("HARNESS entgone nothing");
+        return;
+    }
+
+    const slot = marker.index;
+    marker.remove();
+
+    setTimeout(() => {
+        const second = entities.create("info_target");
+        second.spawn();
+
+        console.log(
+            `HARNESS entgone valid=${marker.isValid} name=${marker.designerName} ` +
+            `index=${marker.index} reused=${second.index === slot} same=${second === marker}`);
+
+        second.remove();
+        made = null;
+    }, 500);
+});
+
 // A player who has left has to stop resolving rather than hand back a stale pointer.
 let held: Player | null = null;
 

@@ -91,3 +91,38 @@ public sealed class PlayersApi(PlayerFacadeTable<CCSPlayerController, CCSPlayerP
             .Select(p => table.For(p.UserId!.Value))
             .ToArray();
 }
+
+/// <summary>
+/// The <c>entities</c> global: everything in the world that is not a player.
+///
+/// Players get their own global because they are the thing a gamemode is mostly about
+/// and because a userid outlives every entity a player has. Everything else — the
+/// planted bomb, a dropped weapon, a door, a prop a script made a second ago — is
+/// reached from here, and what comes back is the same kind of object a player's pawn is.
+/// </summary>
+[DefaultScriptUsage(ScriptAccess.None)]
+public sealed class EntitiesApi(CssEntities entities)
+{
+    /// <summary>The entity in a slot, or null when the slot is empty.</summary>
+    [ScriptMember("byIndex")]
+    public EntityFacade? ByIndex(int index) => entities.ByIndex(index);
+
+    /// <summary>Every entity whose classname is exactly this. Empty when there are none.</summary>
+    [ScriptMember("find")]
+    public EntityFacade[] Find(string designerName) => entities.Find(designerName);
+
+    /// <summary>The first entity with this classname, or null.</summary>
+    [ScriptMember("first")]
+    public EntityFacade? First(string designerName) => entities.Find(designerName).FirstOrDefault();
+
+    /// <summary>Everything in the world right now. A long list; see the declarations.</summary>
+    [ScriptMember("all")]
+    public EntityFacade[] All() => entities.All();
+
+    /// <summary>
+    /// Makes an entity, not yet in the world. Throws if the game will not make one of
+    /// those, because the alternative is a script that quietly does nothing.
+    /// </summary>
+    [ScriptMember("create")]
+    public EntityFacade Create(string designerName) => entities.Create(designerName);
+}

@@ -28,14 +28,13 @@ public interface IPlayerOperations<TController, TPawn>
     TPawn? FindPawn(TController controller);
 
     /// <summary>
-    /// The wide surface for a controller: an object whose members are the entity's own
-    /// fields, one per schema field, named as the game names them.
+    /// The game side of a controller: the wide surface — an object whose members are
+    /// the entity's own fields, one per schema field, named as the game names them —
+    /// together with the verbs that apply to any entity.
     ///
     /// It is made out here rather than in <see cref="EntityFacade"/> because the members
     /// are the game's, and this assembly is the one that is not allowed to know the
-    /// game. What comes back is opaque to the runtime beyond <see cref="ScriptSurface"/>,
-    /// which is there to keep <see cref="object"/>'s members off it; script sees it
-    /// through <c>entity.raw</c>.
+    /// game. What comes back is opaque to the runtime beyond <see cref="IEntityAccess"/>.
     ///
     /// <paramref name="resolve"/> hands back the live controller and throws once the
     /// player has left. It has to be called on every member access — the object being
@@ -45,14 +44,14 @@ public interface IPlayerOperations<TController, TPawn>
     /// Called once per player and the result kept, so the cost per access is the lookup
     /// and not this.
     /// </summary>
-    ScriptSurface CreateControllerRaw(Func<TController> resolve);
+    IEntityAccess AccessController(Func<TController> resolve);
 
     /// <summary>
     /// The same for a pawn. <paramref name="resolve"/> throws for a player who has left
     /// and for one who is not in the world, which is what makes a stored pawn safe to
     /// read across a respawn: it finds the new body, or it refuses.
     /// </summary>
-    ScriptSurface CreatePawnRaw(Func<TPawn> resolve);
+    IEntityAccess AccessPawn(Func<TPawn> resolve);
 
     /// <summary>The name the player is showing right now.</summary>
     string GetName(TController controller);

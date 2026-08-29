@@ -9,11 +9,7 @@ using Cs2Ts.DataGen;
 var check = args.Contains("--check", StringComparer.Ordinal);
 var root = Repository.Root();
 
-var surfaces = new[]
-{
-    Surfaces.Read("PawnRaw", typeof(CCSPlayerPawn)),
-    Surfaces.Read("ControllerRaw", typeof(CCSPlayerController)),
-};
+var surfaces = Surfaces.All();
 
 var events = Events.Read(typeof(CCSPlayerPawn).Assembly);
 
