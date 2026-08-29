@@ -456,6 +456,39 @@ public sealed class BindingTests(ServerFixture fixture)
         Assert.Equal("true", fields["empty"]);
     }
 
+    /// <summary>
+    /// A plugin split across two files, on a real server.
+    ///
+    /// Every part of this only exists inside the running process: discovery walks the
+    /// operator's own scripts folder, the import is resolved against the plugin's folder,
+    /// and the imported file is stripped by the TypeScript parser running inside CS2 on
+    /// the game thread. Until this step the shipped tsconfig accepted the import and the
+    /// server answered "Cannot use import statement outside a module".
+    /// </summary>
+    [Fact]
+    public async Task AFolderPluginImportsItsOwnModule()
+    {
+        var server = fixture.Require();
+
+        // Named by its folder, and the entry file named with it: five folder plugins
+        // would otherwise report five identical "index.ts".
+        Assert.Contains(server.Transcript,
+            line => line.Contains("loaded hmodule/index.ts", StringComparison.Ordinal));
+
+        server.Command("css_hmodule");
+        var fields = Fields(await server.WaitForAsync(
+            l => l.Contains("HARNESS module ", StringComparison.Ordinal), Answer), "module ");
+
+        // Both a constant and a function from the imported file, so a module that was
+        // found but not evaluated would fail here rather than pass quietly.
+        Assert.Equal("7", fields["factor"]);
+        Assert.Equal("42", fields["times"]);
+
+        // Its own top-level name, which harness.ts also has. Running every plugin as a
+        // module is what makes that a non-question.
+        Assert.Equal("module-scoped", fields["scope"]);
+    }
+
     /// <summary>Splits a "key=value key=value" tail into a dictionary.</summary>
     private static Dictionary<string, string> Fields(string line, string after) =>
         line[(line.IndexOf(after, StringComparison.Ordinal) + after.Length)..]

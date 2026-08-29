@@ -40,6 +40,12 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     public Cs2TsPlugin() => _operations = new CssPlayerOperations(_entities);
 
     private FileSystemWatcher? _watcher;
+
+    // What discovery last found. The watcher needs it to answer "which plugin was this
+    // file part of?" — and it has to be the answer from before the change, because a
+    // deleted file is not on disk to be asked.
+    private IReadOnlyList<PluginSource> _known = [];
+
     private bool _scriptsLoaded;
     private bool _engineChecked;
     private bool _engineIsOurs;
@@ -76,13 +82,6 @@ public sealed partial class Cs2TsPlugin : BasePlugin
             return configured;
         }
     }
-
-    /// <summary>
-    /// Both are first-class. A .js file has nothing to strip, so accepting one costs the
-    /// runtime nothing — and the audience this is aimed at, people who already write
-    /// Valve's cs_script, write JavaScript.
-    /// </summary>
-    private static readonly string[] ScriptExtensions = ["*.ts", "*.js"];
 
     public override void Load(bool hotReload)
     {
@@ -360,17 +359,18 @@ public sealed partial class Cs2TsPlugin : BasePlugin
                 return;
             }
 
-            var path = new[] { ".ts", ".js" }
-                .Select(extension => Path.Combine(ScriptDirectory, requested + extension))
-                .FirstOrDefault(File.Exists);
+            // Looked up in what is on disk now rather than in what is loaded: reloading
+            // a plugin that failed to load last time is the main reason to type this.
+            _known = PluginDiscovery.Find(ScriptDirectory, message => Console.WriteLine($"[CS2-TS] {message}"));
+            var source = _known.FirstOrDefault(plugin => plugin.Name == requested);
 
-            if (path is null)
+            if (source is null)
             {
                 Console.WriteLine($"[CS2-TS] no such script: {requested}");
                 return;
             }
 
-            LoadFile(path);
+            LoadPlugin(source);
         });
 
         AddCommand("cs2ts_status", "Lists loaded CS2-TS scripts.", (_, _) =>
@@ -402,83 +402,99 @@ public sealed partial class Cs2TsPlugin : BasePlugin
             return;
         }
 
-        string[] found = Directory.Exists(ScriptDirectory)
-            ? ScriptExtensions
-                .SelectMany(pattern => Directory.GetFiles(ScriptDirectory, pattern, SearchOption.TopDirectoryOnly))
-                .Where(ScriptFile.IsScript)
-                .OrderBy(path => path, StringComparer.Ordinal)
-                .ToArray()
-            : [];
+        var found = PluginDiscovery.Find(ScriptDirectory, message => Console.WriteLine($"[CS2-TS] {message}"));
+        _known = found;
 
-        // vip.ts and vip.js would both want to be "vip". Rather than let the second one
-        // silently replace the first, both are refused: which one won would depend on
-        // directory order, which is not something an operator can reason about.
-        foreach (var clash in found
-                     .GroupBy(Path.GetFileNameWithoutExtension, StringComparer.Ordinal)
-                     .Where(group => group.Count() > 1)
-                     .ToArray())
-        {
-            Console.WriteLine(
-                $"[CS2-TS] '{clash.Key}' matches more than one file " +
-                $"({string.Join(", ", clash.Select(Path.GetFileName))}); rename one. Neither was loaded.");
-            found = found.Where(path => Path.GetFileNameWithoutExtension(path) != clash.Key).ToArray();
-        }
+        var onDisk = found.Select(plugin => plugin.Name).ToHashSet(StringComparer.Ordinal);
 
-        var onDisk = found.Select(path => Path.GetFileNameWithoutExtension(path)).ToHashSet(StringComparer.Ordinal);
-
-        // A script whose file was deleted while the server ran is still loaded until
+        // A plugin whose files were deleted while the server ran is still loaded until
         // someone says otherwise, so reloading everything has to mean removals too.
         foreach (var name in _host.Loaded.Where(name => !onDisk.Contains(name)).ToArray())
         {
             _host.Unload(name);
-            Console.WriteLine($"[CS2-TS] unloaded {name} (file is gone)");
+            Console.WriteLine($"[CS2-TS] unloaded {name} (it is gone)");
         }
 
-        foreach (var path in found)
+        foreach (var plugin in found)
         {
-            LoadFile(path);
+            LoadPlugin(plugin);
         }
     }
 
-    private void LoadFile(string path)
+    private void LoadPlugin(PluginSource source)
     {
         if (_host is null)
         {
             return;
         }
 
-        var name = Path.GetFileNameWithoutExtension(path);
-        string source;
+        string text;
         try
         {
-            source = File.ReadAllText(path);
+            text = File.ReadAllText(source.EntryPath);
         }
         catch (IOException exception)
         {
             // A save in progress is the usual reason. The watcher will fire again.
-            Console.WriteLine($"[CS2-TS] could not read {Path.GetFileName(path)}: {exception.Message}");
+            Console.WriteLine($"[CS2-TS] could not read {source.DisplayName}: {exception.Message}");
             return;
         }
 
         // Timed because it is the one thing a script author pays for that they cannot
         // see: stripping runs the TypeScript parser inside the CS2 process, on the game
         // thread, while the server is up. Phase 0 measured it outside that process and
-        // outside DEEPBIND, so the number here is the one that counts.
+        // outside DEEPBIND, so the number here is the one that counts. A folder plugin
+        // pays for its modules too, and they are stripped from inside this call.
         var started = Stopwatch.GetTimestamp();
-        var result = _host.Load(name, Path.GetFileName(path), source);
+        var result = _host.Load(source, text);
         var elapsed = Stopwatch.GetElapsedTime(started);
 
         if (result.Succeeded)
         {
             Console.WriteLine(
-                $"[CS2-TS] loaded {Path.GetFileName(path)} " +
-                $"({source.Length / 1024.0:F1} KB in {elapsed.TotalMilliseconds:F1} ms)");
+                $"[CS2-TS] loaded {source.DisplayName} " +
+                $"({text.Length / 1024.0:F1} KB in {elapsed.TotalMilliseconds:F1} ms)");
             return;
         }
 
         foreach (var line in result.Report())
         {
             Console.WriteLine($"[CS2-TS] {line}");
+        }
+    }
+
+    /// <summary>
+    /// Reloads whatever plugin a changed path belongs to.
+    ///
+    /// Discovery runs again first, because the change may have made a plugin, unmade
+    /// one, or settled a name clash that was refusing two. Ownership is then asked
+    /// twice: of what was there before the change, so that a deleted file still names
+    /// the plugin it was part of, and of what is there now.
+    /// </summary>
+    private void Reload(string path)
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        var owned = PluginDiscovery.Owning(_known, path);
+
+        _known = PluginDiscovery.Find(ScriptDirectory, message => Console.WriteLine($"[CS2-TS] {message}"));
+        var owner = PluginDiscovery.Owning(_known, path);
+
+        if (owner is not null)
+        {
+            LoadPlugin(owner);
+            return;
+        }
+
+        // Nothing owns it now. Either it was a plugin and is gone, or it was never one
+        // — an editor's scratch file two folders down, which is why this says nothing
+        // when there was nothing to unload.
+        if (owned is not null && _host.Unload(owned.Name))
+        {
+            Console.WriteLine($"[CS2-TS] unloaded {owned.Name} (it is gone)");
         }
     }
 
@@ -498,6 +514,11 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         _watcher = new FileSystemWatcher(ScriptDirectory)
         {
             NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
+
+            // A plugin is a folder, so a save two levels down is a change to that
+            // plugin. Without this the whole point of folders — split your plugin up —
+            // would come with "and restart the server to see it".
+            IncludeSubdirectories = true,
             EnableRaisingEvents = true,
         };
 
@@ -527,21 +548,20 @@ public sealed partial class Cs2TsPlugin : BasePlugin
                     return;
                 }
 
-                if (File.Exists(path))
-                {
-                    LoadFile(path);
-                }
-                else if (_host is not null && _host.Unload(Path.GetFileNameWithoutExtension(path)))
-                {
-                    Console.WriteLine($"[CS2-TS] unloaded {Path.GetFileNameWithoutExtension(path)} (file is gone)");
-                }
+                Reload(path);
             });
         }
+
+        // A script, or something with no extension — which is what a folder looks like,
+        // including one that has just been deleted and cannot be asked what it was.
+        // Everything else in a plugin folder is the author's own business.
+        static bool Interesting(string path) =>
+            ScriptFile.IsScript(path) || !Path.HasExtension(path);
 
         // AddTimer must be called from the game thread, so the hop happens first.
         void OnChanged(object _, FileSystemEventArgs e)
         {
-            if (ScriptFile.IsScript(e.FullPath))
+            if (Interesting(e.FullPath))
             {
                 Server.NextFrame(() => Schedule(e.FullPath));
             }
@@ -552,12 +572,12 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         _watcher.Deleted += OnChanged;
         _watcher.Renamed += (_, e) => Server.NextFrame(() =>
         {
-            if (ScriptFile.IsScript(e.OldFullPath))
+            if (Interesting(e.OldFullPath))
             {
                 Schedule(e.OldFullPath);
             }
 
-            if (ScriptFile.IsScript(e.FullPath))
+            if (Interesting(e.FullPath))
             {
                 Schedule(e.FullPath);
             }

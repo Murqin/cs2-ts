@@ -182,9 +182,9 @@ the server, with JSDoc types wherever they are wanted.
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
 | 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
-| 2 | Player and entity APIs, commands, timers, escape hatch | facade, commands, timers, entities and the escape hatch |
+| 2 | Player and entity APIs, commands, timers, escape hatch | facade, commands, timers, entities, plugin folders and the escape hatch |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
-| 4 | Module resolution, permissions, plugin distribution | |
+| 4 | Permissions, plugin distribution, packages | |
 
 ## Building
 
@@ -223,10 +223,36 @@ events into dispatches, and drains queued work once a tick.
 
 ## Writing a script
 
-Drop a `.ts` or `.js` file in the plugin's `scripts/` directory. The plugin puts
-`cs2ts.d.ts` and `tsconfig.json` there for you on first run, so opening that folder in an
-editor gives typed globals, and `fetch`, `process` and `enum` are refused there rather
-than on a live server. The declarations are kept current on every start because they
+Drop a `.ts` or `.js` file in the plugin's `scripts/` directory. When one file stops
+being enough, make it a folder instead:
+
+```text
+scripts/
+├── cs2ts.d.ts          written for you, kept current
+├── tsconfig.json       written for you, once
+├── welcome.ts          a plugin
+└── jetpack/            a plugin
+    ├── index.ts        what loads
+    ├── physics.ts      a module it imports
+    └── hud.ts
+```
+
+A file at the top of `scripts/` is a plugin. A folder at the top of `scripts/` is a
+plugin too, starting at its `index.ts`; everything else inside it is a module, imported
+by name and never loaded on its own.
+
+The folder is also the boundary: a plugin can import what is inside it and nothing else.
+That is what makes one plugin an archive you can hand to somebody — and what stops
+deleting one plugin from breaking another. It is why a single file cannot import: its
+neighbours at the top of `scripts/` are plugins, not modules, so there is nothing there
+for it to import. Move it into a folder and it has somewhere to import from.
+
+Saving anything inside a plugin folder reloads that plugin, so splitting a plugin up
+does not cost you the reload.
+
+The plugin puts `cs2ts.d.ts` and `tsconfig.json` in `scripts/` for you on first run, so
+opening that folder in an editor gives typed globals, and `fetch`, `process` and `enum`
+are refused there rather than on a live server. The declarations are kept current on every start because they
 describe the plugin's own API; the tsconfig is written once and never touched again,
 because it is yours. There is no examples directory yet: the sample scripts the
 test suites run live with the tests, and a worked set for authors is written

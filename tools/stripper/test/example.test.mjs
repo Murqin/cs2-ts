@@ -9,7 +9,7 @@
 
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, copyFileSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, copyFileSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -383,6 +383,70 @@ test("the controller knows its pawn without going through the player", () => {
     assert.equal(
         check('on("tick", (): void => { players.all()[0]!.controller.raw.playerPawn?.raw.health; });\n'),
         "");
+});
+
+/**
+ * Compiles a whole folder of files in a workspace of its own.
+ *
+ * Its own, because check() leaves its plugin.ts behind and tsc compiles the whole
+ * directory: a folder plugin dropped into that workspace would be recompiled by every
+ * test after it.
+ */
+function checkFiles(files) {
+    const where = mkdtempSync(join(tmpdir(), "cs2ts-folder-"));
+    try {
+        copyFileSync(join(repository, "templates", "tsconfig.json"), join(where, "tsconfig.json"));
+        copyFileSync(join(repository, "templates", "cs2ts.d.ts"), join(where, "cs2ts.d.ts"));
+
+        for (const [name, contents] of Object.entries(files)) {
+            const path = join(where, name);
+            mkdirSync(dirname(path), { recursive: true });
+            writeFileSync(path, contents);
+        }
+
+        try {
+            execFileSync(process.execPath, [tsc, "-p", where], { encoding: "utf8", stdio: "pipe" });
+            return "";
+        } catch (error) {
+            return error.stdout ?? "";
+        }
+    } finally {
+        rmSync(where, { recursive: true, force: true });
+    }
+}
+
+test("the folder plugin sample compiles against the shipped tsconfig", () => {
+    // The same two files the host suite runs. Neither check is worth much alone:
+    // running proves it works on a runtime nobody type-checks, compiling proves it
+    // satisfies a compiler nobody runs.
+    assert.equal(
+        checkFiles({
+            "jetpack/index.ts": readFileSync(join(fixtures, "jetpack", "index.ts"), "utf8"),
+            "jetpack/physics.ts": readFileSync(join(fixtures, "jetpack", "physics.ts"), "utf8"),
+        }),
+        "");
+});
+
+test("two plugins may use the same top-level name", () => {
+    // Without moduleDetection: force, a file with no imports is a script to TypeScript,
+    // its top-level declarations are globals, and these two refuse to compile with
+    // TS2451 — while running in separate engines where they could never collide. The
+    // runtime runs every plugin as a module; the compiler has to agree.
+    assert.equal(
+        checkFiles({
+            "jetpack.ts": 'const cooldown = 5;\non("tick", (): void => { console.log(`${cooldown}`); });\n',
+            "surf.ts": 'const cooldown = 3;\non("tick", (): void => { console.log(`${cooldown}`); });\n',
+        }),
+        "");
+});
+
+test("a module's exports are typed across the import", () => {
+    assert.match(
+        checkFiles({
+            "jetpack/physics.ts": "export const BOOST = 350;\n",
+            "jetpack/index.ts": 'import { BOOST } from "./physics.ts";\nconst s: string = BOOST;\n',
+        }),
+        /TS2322/);
 });
 
 test("a tick handler takes nothing and returns nothing", () => {

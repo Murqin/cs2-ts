@@ -97,6 +97,62 @@ public sealed class TypeStripperTests(StripperFixture fixture, ITestOutputHelper
     }
 
     /// <summary>
+    /// Top-level await slips past every other guard the way decorators do, and what it
+    /// causes is quieter than what they cause.
+    ///
+    /// Measured against ClearScript rather than assumed: the host's Execute returns
+    /// immediately, having run the module only as far as the first await. Everything
+    /// after it is left undone, nothing is thrown, and nothing is logged — a rejected
+    /// await is swallowed entirely. So the plugin registers some of its handlers and
+    /// not others, and the author sees something that "sometimes works".
+    /// </summary>
+    [Fact]
+    public void RefusesTopLevelAwait()
+    {
+        var result = Stripper.Strip(
+            "plugin.ts",
+            "const settings = await load();\non(\"tick\", () => {});\n");
+
+        Assert.False(result.Succeeded);
+        var diagnostic = Assert.Single(result.Diagnostics);
+        Assert.Equal("CS2TS_TOP_LEVEL_AWAIT", diagnostic.Code);
+        Assert.Equal(1, diagnostic.Line);
+        Assert.Equal(18, diagnostic.Column);
+    }
+
+    /// <summary>
+    /// The same await wearing a loop, and the same failure. Worth its own test because
+    /// the modifier is not an AwaitExpression and a walk that only looked for those
+    /// would let it through.
+    /// </summary>
+    [Fact]
+    public void RefusesTopLevelForAwait()
+    {
+        var result = Stripper.Strip("plugin.ts", "for await (const line of stream()) {\n    console.log(line);\n}\n");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("CS2TS_TOP_LEVEL_AWAIT", Assert.Single(result.Diagnostics).Code);
+    }
+
+    /// <summary>
+    /// Inside a function it is that function's business: it runs when the function is
+    /// called rather than while the plugin is loading, so nothing about the load is
+    /// left half done. Refusing it here would take away the only way to write
+    /// asynchronous code at all.
+    /// </summary>
+    [Fact]
+    public void AllowsAwaitInsideAFunction()
+    {
+        var result = Stripper.Strip(
+            "plugin.ts",
+            "async function reload(): Promise<void> {\n    await load();\n}\n" +
+            "const f = async () => { await load(); };\n" +
+            "class A { async m() { for await (const x of y()) {} } }\n");
+
+        Assert.True(result.Succeeded, string.Join("; ", result.Diagnostics.Select(d => d.ToString())));
+    }
+
+    /// <summary>
     /// ts-blank-space emits output for a file that does not parse, and that output is
     /// broken somewhere other than the mistake. Reading the parse diagnostics first is
     /// what keeps the reported location pointing at the typo.
