@@ -419,6 +419,43 @@ public sealed class BindingTests(ServerFixture fixture)
         Assert.Equal("", fields["name"]);
     }
 
+    /// <summary>
+    /// A field that holds another entity, against a real one. The controller keeps its
+    /// own handle to the pawn, so the body is reachable without going through the player
+    /// — and it has to be the same body, or the handle is being read as a wrong number
+    /// and answering with whatever lives at that slot.
+    /// </summary>
+    [Fact]
+    public async Task AFieldHoldingAnotherEntityResolvesToThatEntity()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        server.Command("css_hhandle");
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS handle ", StringComparison.Ordinal), Answer);
+
+        Assert.DoesNotContain("no-pawn", line, StringComparison.Ordinal);
+        var fields = Fields(line, "handle ");
+
+        Assert.Equal("true", fields["found"]);
+
+        // The controller's own pointer to the pawn is the pawn: same slot, same health.
+        Assert.Equal(Halves(fields["index"]).Curated, Halves(fields["index"]).Wide);
+        Assert.Equal(Halves(fields["health"]).Curated, Halves(fields["health"]).Wide);
+
+        // And it is the same object as the one the entity list hands out, which is what
+        // one table for the whole server buys.
+        Assert.Equal("true", fields["same"]);
+
+        // A player standing on the map is standing on an entity; in the air they are
+        // standing on nothing, and both are answers rather than a throw.
+        Assert.Contains(fields["ground"], new[] { "null", "string" });
+
+        // A handle that points at nothing reads as null rather than as an entity at
+        // slot 32767. Every player has an empty split-screen owner.
+        Assert.Equal("true", fields["empty"]);
+    }
+
     /// <summary>Splits a "key=value key=value" tail into a dictionary.</summary>
     private static Dictionary<string, string> Fields(string line, string after) =>
         line[(line.IndexOf(after, StringComparison.Ordinal) + after.Length)..]

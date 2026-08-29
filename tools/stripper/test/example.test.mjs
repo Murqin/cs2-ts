@@ -350,6 +350,41 @@ test("a player's two entities have the entity verbs too", () => {
         "");
 });
 
+test("a field holding another entity arrives as one, and may be nothing", () => {
+    // What the game stores there is a handle, which is the identity these objects are
+    // keyed by — so it can arrive as the entity rather than as an index to look up.
+    assert.equal(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p) { p.raw.groundEntity?.designerName; } });\n'),
+        "");
+
+    // It points at nothing often enough that the compiler has to ask: a player in the
+    // air is standing on no entity at all.
+    assert.match(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p) { p.raw.groundEntity.designerName; } });\n'),
+        /TS18047|TS2531|TS2533/);
+
+    // And what comes back is a whole entity, not a number.
+    assert.match(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p) { p.raw.groundEntity?.toFixed(0); } });\n'),
+        /TS2339|TS2551/);
+});
+
+test("an entity-valued field is read-only", () => {
+    // What writing one means varies per field and several are the engine's own
+    // bookkeeping, so none of them is writable until there is a field somebody wants.
+    assert.match(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p) { p.raw.groundEntity = null; } });\n'),
+        /TS2540/);
+});
+
+test("the controller knows its pawn without going through the player", () => {
+    // One of the eleven fields the generator used to leave out, and the one that shows
+    // what carrying them buys.
+    assert.equal(
+        check('on("tick", (): void => { players.all()[0]!.controller.raw.playerPawn?.raw.health; });\n'),
+        "");
+});
+
 test("a tick handler takes nothing and returns nothing", () => {
     assert.equal(check('on("tick", (): void => {});\n'), "");
 

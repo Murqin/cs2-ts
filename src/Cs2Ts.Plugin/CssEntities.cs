@@ -135,7 +135,7 @@ public sealed class CssEntities
     /// compares the handle it is given against the one in the slot and answers null when
     /// they differ, which is exactly the question being asked.
     /// </summary>
-    private static EntityFacade? Build(long handle)
+    private EntityFacade? Build(long handle)
     {
         var raw = unchecked((uint)handle);
         if (Resolve(raw) is not { } entity)
@@ -154,7 +154,7 @@ public sealed class CssEntities
         return new EntityFacade(
             "entity",
             description,
-            new CssEntityAccess(Live, new EntityRaw(Live)),
+            new CssEntityAccess(Live, new EntityRaw(Live, this)),
             () => Resolve(raw) is not null);
     }
 

@@ -25,13 +25,19 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     private ScriptHost? _host;
     private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;
 
-    // The world that is not players. It hands out one facade per entity handle, so
-    // two lookups of the same weapon are the same object in script.
-    private CssEntities? _entities;
+    // The world that is not players. It hands out one facade per entity handle, so two
+    // lookups of the same weapon are the same object in script.
+    private readonly CssEntities _entities = new();
 
     // One instance, shared by the facade and the escape hatch. Both need the rule for
     // what counts as a pawn, and two copies of that rule would drift.
-    private readonly CssPlayerOperations _operations = new();
+    private readonly CssPlayerOperations _operations;
+
+    // A constructor only because a field initialiser cannot see another field, and this
+    // one has to: a player's two entities have fields holding other entities, and those
+    // go through the same table as everything else so that one weapon is one object
+    // however it was reached.
+    public Cs2TsPlugin() => _operations = new CssPlayerOperations(_entities);
 
     private FileSystemWatcher? _watcher;
     private bool _scriptsLoaded;
@@ -101,7 +107,6 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         _host.EventRegistered = HookScriptEvent;
         _players = new PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>(
             "player", ResolvePlayer, _operations);
-        _entities = new CssEntities();
         _host.Configure = InstallApi;
 
         Directory.CreateDirectory(ScriptDirectory);
@@ -202,7 +207,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         engine.AddHostObject("server", new ServerApi(plugin, _host!.Frames));
         engine.AddHostObject("console", new ConsoleApi(plugin.Name, Console.WriteLine));
         engine.AddHostObject("players", new PlayersApi(_players!));
-        engine.AddHostObject("entities", new EntitiesApi(_entities!));
+        engine.AddHostObject("entities", new EntitiesApi(_entities));
         engine.AddHostObject("unsafe", new UnsafeApi(_operations));
 
         // Once, for the first engine, and silent when it passes. An operator has no
@@ -379,7 +384,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
             Console.WriteLine($"[CS2-TS] {_host.Loaded.Count} script(s): {string.Join(", ", _host.Loaded)}");
             Console.WriteLine($"[CS2-TS] queued frames: {_host.Frames.Count}, dropped: {_host.Frames.Dropped}");
             Console.WriteLine($"[CS2-TS] pending timers: {_host.Timers.Count}, dropped: {_host.Timers.Dropped}");
-            Console.WriteLine($"[CS2-TS] entities handed out: {_entities?.Count ?? 0}");
+            Console.WriteLine($"[CS2-TS] entities handed out: {_entities.Count}");
             Console.WriteLine($"[CS2-TS] watchdog interruptions: {_host.Watchdog.Interruptions}");
 
             // Available to whoever asks, rather than announced to everyone who does not.
@@ -583,7 +588,6 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         _players?.Clear();
         _players = null;
 
-        _entities?.Clear();
-        _entities = null;
+        _entities.Clear();
     }
 }

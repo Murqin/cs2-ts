@@ -23,8 +23,13 @@ namespace Cs2Ts.Plugin;
 /// The live entity. Called on every access and never held, and it throws rather than
 /// returning something stale once the entity is gone.
 /// </param>
+/// <param name="entities">
+/// Turns the entity handles stored in this entity's fields into entities. It is the
+/// one table for the whole server, so a weapon reached through its owner's field is
+/// the same object as the same weapon reached through <c>entities.byIndex</c>.
+/// </param>
 [DefaultScriptUsage(ScriptAccess.None)]
-public sealed class EntityRaw(Func<global::CounterStrikeSharp.API.Core.CBaseEntity> resolve) : ScriptSurface
+public sealed class EntityRaw(Func<global::CounterStrikeSharp.API.Core.CBaseEntity> resolve, CssEntities entities) : ScriptSurface
 {
     /// <summary>CBaseEntity/m_flActualGravityScale</summary>
     [ScriptMember("actualGravityScale")]
@@ -77,6 +82,10 @@ public sealed class EntityRaw(Func<global::CounterStrikeSharp.API.Core.CBaseEnti
                 () => entity.AnimatedEveryTick = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("blocker")]
+    public EntityFacade? Blocker => entities.ForHandle(resolve().Blocker.Raw);
 
     /// <summary>CBaseEntity/m_nBloodType — A BloodType.</summary>
     [ScriptMember("bloodType")]
@@ -143,6 +152,10 @@ public sealed class EntityRaw(Func<global::CounterStrikeSharp.API.Core.CBaseEnti
         }
     }
 
+    /// <summary>CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("damageFilter")]
+    public EntityFacade? DamageFilter => entities.ForHandle(resolve().DamageFilter.Raw);
+
     /// <summary>CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is.</summary>
     [ScriptMember("damageFilterName")]
     public string DamageFilterName => resolve().DamageFilterName;
@@ -185,6 +198,10 @@ public sealed class EntityRaw(Func<global::CounterStrikeSharp.API.Core.CBaseEnti
                 () => entity.EFlags = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("effectEntity")]
+    public EntityFacade? EffectEntity => entities.ForHandle(resolve().EffectEntity.Raw);
 
     /// <summary>CBaseEntity/m_fEffects</summary>
     [ScriptMember("effects")]
@@ -293,6 +310,10 @@ public sealed class EntityRaw(Func<global::CounterStrikeSharp.API.Core.CBaseEnti
                 () => entity.GroundBodyIndex = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("groundEntity")]
+    public EntityFacade? GroundEntity => entities.ForHandle(resolve().GroundEntity.Raw);
 
     /// <summary>CBaseEntity/m_iHealth</summary>
     [ScriptMember("health")]
@@ -488,6 +509,10 @@ public sealed class EntityRaw(Func<global::CounterStrikeSharp.API.Core.CBaseEnti
                 () => entity.NextThinkTick = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("ownerEntity")]
+    public EntityFacade? OwnerEntity => entities.ForHandle(resolve().OwnerEntity.Raw);
 
     /// <summary>CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t.</summary>
     [ScriptMember("platformType")]

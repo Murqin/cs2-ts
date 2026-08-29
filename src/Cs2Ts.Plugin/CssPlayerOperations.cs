@@ -16,7 +16,13 @@ namespace Cs2Ts.Plugin;
 /// looks like the game ignoring the plugin. Routing every write through one helper
 /// means the step cannot be left out of a member written later.
 /// </summary>
-public sealed class CssPlayerOperations : IPlayerOperations<CCSPlayerController, CCSPlayerPawn>
+/// <param name="entities">
+/// The one entity table for the server. A player's two entities have fields that hold
+/// other entities — the pawn a controller owns, the thing a player is standing on — and
+/// those become entities through here, so the same weapon reached two ways is one object.
+/// </param>
+public sealed class CssPlayerOperations(CssEntities entities)
+    : IPlayerOperations<CCSPlayerController, CCSPlayerPawn>
 {
     /// <inheritdoc />
     public CCSPlayerPawn? FindPawn(CCSPlayerController controller)
@@ -37,11 +43,11 @@ public sealed class CssPlayerOperations : IPlayerOperations<CCSPlayerController,
     /// player's two entities be the same kind of object as a weapon or a door.
     /// </remarks>
     public IEntityAccess AccessController(Func<CCSPlayerController> resolve) =>
-        new CssEntityAccess(resolve, new ControllerRaw(resolve));
+        new CssEntityAccess(resolve, new ControllerRaw(resolve, entities));
 
     /// <inheritdoc />
     public IEntityAccess AccessPawn(Func<CCSPlayerPawn> resolve) =>
-        new CssEntityAccess(resolve, new PawnRaw(resolve));
+        new CssEntityAccess(resolve, new PawnRaw(resolve, entities));
 
     /// <inheritdoc />
     public string GetName(CCSPlayerController controller) => controller.PlayerName;

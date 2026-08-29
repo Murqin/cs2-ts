@@ -48,8 +48,14 @@ internal static class Emit
         text.AppendLine("/// The live entity. Called on every access and never held, and it throws rather than");
         text.AppendLine("/// returning something stale once the entity is gone.");
         text.AppendLine("/// </param>");
+        text.AppendLine("/// <param name=\"entities\">");
+        text.AppendLine("/// Turns the entity handles stored in this entity's fields into entities. It is the");
+        text.AppendLine("/// one table for the whole server, so a weapon reached through its owner's field is");
+        text.AppendLine("/// the same object as the same weapon reached through <c>entities.byIndex</c>.");
+        text.AppendLine("/// </param>");
         text.AppendLine("[DefaultScriptUsage(ScriptAccess.None)]");
-        text.AppendLine($"public sealed class {surface.Name}(Func<{entity}> resolve) : ScriptSurface");
+        text.AppendLine(
+            $"public sealed class {surface.Name}(Func<{entity}> resolve, CssEntities entities) : ScriptSurface");
         text.AppendLine("{");
 
         foreach (var field in surface.Fields)

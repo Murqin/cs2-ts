@@ -23,8 +23,13 @@ namespace Cs2Ts.Plugin;
 /// The live entity. Called on every access and never held, and it throws rather than
 /// returning something stale once the entity is gone.
 /// </param>
+/// <param name="entities">
+/// Turns the entity handles stored in this entity's fields into entities. It is the
+/// one table for the whole server, so a weapon reached through its owner's field is
+/// the same object as the same weapon reached through <c>entities.byIndex</c>.
+/// </param>
 [DefaultScriptUsage(ScriptAccess.None)]
-public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerController> resolve) : ScriptSurface
+public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerController> resolve, CssEntities entities) : ScriptSurface
 {
     /// <summary>CCSPlayerController/m_bAbandonAllowsSurrender</summary>
     [ScriptMember("abandonAllowsSurrender")]
@@ -142,6 +147,10 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
                 () => entity.AvailableEntitySteadyState = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("blocker")]
+    public EntityFacade? Blocker => entities.ForHandle(resolve().Blocker.Raw);
 
     /// <summary>CBaseEntity/m_nBloodType — A BloodType.</summary>
     [ScriptMember("bloodType")]
@@ -385,6 +394,10 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
         }
     }
 
+    /// <summary>CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("damageFilter")]
+    public EntityFacade? DamageFilter => entities.ForHandle(resolve().DamageFilter.Raw);
+
     /// <summary>CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is.</summary>
     [ScriptMember("damageFilterName")]
     public string DamageFilterName => resolve().DamageFilterName;
@@ -427,6 +440,10 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
                 () => entity.DesiredObserverMode = value);
         }
     }
+
+    /// <summary>CCSPlayerController/m_hDesiredObserverTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("desiredObserverTarget")]
+    public EntityFacade? DesiredObserverTarget => entities.ForHandle(resolve().DesiredObserverTarget.Raw);
 
     /// <summary>CBaseEntity/m_bDisableLowViolence</summary>
     [ScriptMember("disableLowViolence")]
@@ -505,6 +522,10 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
                 () => entity.EFlags = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("effectEntity")]
+    public EntityFacade? EffectEntity => entities.ForHandle(resolve().EffectEntity.Raw);
 
     /// <summary>CBaseEntity/m_fEffects</summary>
     [ScriptMember("effects")]
@@ -730,6 +751,10 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
                 () => entity.GroundBodyIndex = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("groundEntity")]
+    public EntityFacade? GroundEntity => entities.ForHandle(resolve().GroundEntity.Raw);
 
     /// <summary>CBasePlayerController/m_bHasAnySteadyStateEnts</summary>
     [ScriptMember("hasAnySteadyStateEnts")]
@@ -1337,6 +1362,22 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
         }
     }
 
+    /// <summary>CCSPlayerController/m_hObserverPawn — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("observerPawn")]
+    public EntityFacade? ObserverPawn => entities.ForHandle(resolve().ObserverPawn.Raw);
+
+    /// <summary>CCSPlayerController/m_hOriginalControllerOfCurrentPawn — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("originalControllerOfCurrentPawn")]
+    public EntityFacade? OriginalControllerOfCurrentPawn => entities.ForHandle(resolve().OriginalControllerOfCurrentPawn.Raw);
+
+    /// <summary>CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("ownerEntity")]
+    public EntityFacade? OwnerEntity => entities.ForHandle(resolve().OwnerEntity.Raw);
+
+    /// <summary>CBasePlayerController/m_hPawn — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("pawn")]
+    public EntityFacade? Pawn => entities.ForHandle(resolve().Pawn.Raw);
+
     /// <summary>CCSPlayerController/m_iPawnArmor</summary>
     [ScriptMember("pawnArmor")]
     public int PawnArmor
@@ -1504,6 +1545,10 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
     /// <summary>CBasePlayerController/m_iszPlayerName — Read-only, as every string field is.</summary>
     [ScriptMember("playerName")]
     public string PlayerName => resolve().PlayerName;
+
+    /// <summary>CCSPlayerController/m_hPlayerPawn — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("playerPawn")]
+    public EntityFacade? PlayerPawn => entities.ForHandle(resolve().PlayerPawn.Raw);
 
     /// <summary>CCSPlayerController/m_unPlayerTvControlFlags</summary>
     [ScriptMember("playerTvControlFlags")]
@@ -1759,6 +1804,10 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
                 () => entity.Spawnflags = value);
         }
     }
+
+    /// <summary>CBasePlayerController/m_hSplitOwner — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("splitOwner")]
+    public EntityFacade? SplitOwner => entities.ForHandle(resolve().SplitOwner.Raw);
 
     /// <summary>CBasePlayerController/m_nSplitScreenSlot</summary>
     [ScriptMember("splitScreenSlot")]
