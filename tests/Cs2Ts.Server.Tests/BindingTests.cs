@@ -184,12 +184,18 @@ public sealed class BindingTests(ServerFixture fixture)
         // A write through the wide surface, read back through the facade.
         Assert.Equal("77/77", fields["armor"]);
 
+        // The float write, read back through the field it was written to. The value
+        // arrives from script as a double and the game holds a float; a narrowing that
+        // landed anywhere else would show up here rather than as a rounding nobody sees.
+        Assert.Equal("0.5", fields["velocity"]);
+
         // What resolve() does to a schema field, and what this must not do: it hands
         // script an object with nothing on it, in either direction, with nothing logged.
-        // These three are the boolean, the number and the string of that question.
+        // These four are every kind the generated surface carries.
         Assert.Equal("boolean", fields["scoped"]);
-        Assert.Equal("number", fields["velocity"]);
+        Assert.Equal("number", fields["enum"]);
         Assert.Equal("string", fields["place"]);
+        Assert.Equal("string", fields["wide"]);
     }
 
     private static (string Wide, string Curated) Halves(string pair)

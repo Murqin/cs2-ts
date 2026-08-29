@@ -6,7 +6,11 @@
   <Folder Name="/bench/">
     <Project Path="bench/Cs2Ts.Spike/Cs2Ts.Spike.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/datagen/Cs2Ts.DataGen.csproj" />
+  </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Cs2Ts.DataGen.Tests/Cs2Ts.DataGen.Tests.csproj" />
     <Project Path="tests/Cs2Ts.Runtime.Tests/Cs2Ts.Runtime.Tests.csproj" />
     <Project Path="tests/Cs2Ts.Server.Tests/Cs2Ts.Server.Tests.csproj" />
   </Folder>

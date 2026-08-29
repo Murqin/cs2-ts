@@ -73,16 +73,23 @@ command("!hentity", () => {
 
     pawn.raw.armorValue = 77;
 
-    // The last three are reported as types rather than values, because the type is the
-    // claim: the escape hatch reads a schema field as an object with nothing on it, and
+    // A float, which is the one write that is narrowed on the way in. Read back through
+    // the same field, so a narrowing that landed somewhere else shows up as a value.
+    pawn.raw.velocityModifier = 0.5;
+
+    // The tail is reported as types rather than values, because the type is the claim:
+    // the escape hatch reads a schema field as an object with nothing on it, and
     // "object" here would mean this surface had inherited that failure without any other
-    // symptom. A boolean, a number and a string mean the marshalling happened.
+    // symptom. The four cover every kind that crosses — boolean, number, string, and an
+    // enum, which is a number in both directions only because it is cast.
     console.log(
         `HARNESS entity health=${pawn.raw.health}/${target.health} ` +
         `armor=${pawn.raw.armorValue}/${target.armor} ` +
         `name=${target.controller.raw.playerName}/${target.name} ` +
-        `scoped=${typeof pawn.raw.isScoped} velocity=${typeof pawn.raw.velocityModifier} ` +
-        `place=${typeof pawn.raw.lastPlaceName}`);
+        `velocity=${pawn.raw.velocityModifier} ` +
+        `scoped=${typeof pawn.raw.isScoped} enum=${typeof pawn.raw.moveType} ` +
+        `place=${typeof pawn.raw.lastPlaceName} ` +
+        `wide=${typeof target.controller.raw.playerDominated}`);
 });
 
 // A player who has left has to stop resolving rather than hand back a stale pointer.
