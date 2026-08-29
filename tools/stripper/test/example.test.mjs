@@ -1,6 +1,11 @@
-// The shipped tsconfig, the shipped declarations and the example script have to agree.
-// Each one is easy to change without noticing the other two, and the failure only shows
-// up as an author's first script refusing to compile.
+// The shipped tsconfig, the shipped declarations and the test suite's sample scripts
+// have to agree. Each one is easy to change without noticing the other two, and the
+// failure only shows up as an author's first script refusing to compile.
+//
+// The samples live in tests/Cs2Ts.Runtime.Tests/fixtures/ because that is what they
+// are: the host suite runs them, and this one type-checks them against the config an
+// author gets. Neither check is worth much alone — running proves it works on a
+// runtime nobody type-checks, compiling proves it satisfies a compiler nobody runs.
 
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -13,6 +18,7 @@ import { execFileSync } from "node:child_process";
 const here = dirname(fileURLToPath(import.meta.url));
 const repository = join(here, "..", "..", "..");
 const tsc = join(here, "..", "node_modules", "typescript", "bin", "tsc");
+const fixtures = join(repository, "tests", "Cs2Ts.Runtime.Tests", "fixtures");
 
 let workspace;
 let jsWorkspace;
@@ -44,8 +50,8 @@ function check(source) {
     }
 }
 
-test("the example script compiles against the shipped tsconfig", () => {
-    const example = readFileSync(join(repository, "examples", "scripts", "welcome.ts"), "utf8");
+test("the sample script compiles against the shipped tsconfig", () => {
+    const example = readFileSync(join(fixtures, "welcome.ts"), "utf8");
     assert.equal(check(example), "");
 });
 
@@ -112,8 +118,8 @@ test("command arguments arrive as strings", () => {
         /TS2339|TS2551/);
 });
 
-test("the timer example compiles against the shipped tsconfig", () => {
-    const example = readFileSync(join(repository, "examples", "scripts", "timers.ts"), "utf8");
+test("the timer sample compiles against the shipped tsconfig", () => {
+    const example = readFileSync(join(fixtures, "timers.ts"), "utf8");
     assert.equal(check(example), "");
 });
 
@@ -215,8 +221,8 @@ test("the shipped tsconfig checks JavaScript too", () => {
     }
 });
 
-test("the JavaScript example checks clean against the shipped jsconfig", () => {
-    const example = readFileSync(join(repository, "examples", "scripts", "rounds.js"), "utf8");
+test("the JavaScript sample checks clean against the shipped jsconfig", () => {
+    const example = readFileSync(join(fixtures, "rounds.js"), "utf8");
     assert.equal(checkJs(example), "");
 });
 
