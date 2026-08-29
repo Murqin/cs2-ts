@@ -1,4 +1,5 @@
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 
 namespace Cs2Ts.Runtime;
@@ -104,7 +105,9 @@ public sealed class ScriptPlugin : IDisposable
         Action<string>? commandRegistered = null,
         Action<string>? eventRegistered = null,
         TimerTable? timers = null,
-        Func<double>? clock = null)
+        Func<double>? clock = null,
+        ScriptModuleLoader? modules = null,
+        string? entryPath = null)
     {
         // HideHostExceptions keeps the .NET exception object off the Error a script
         // catches; without it e.hostException is a way out of the sandbox. Reflection is
@@ -146,7 +149,13 @@ public sealed class ScriptPlugin : IDisposable
             engine.Execute(new DocumentInfo("cs2ts:prelude.js"), Prelude);
             configure?.Invoke(plugin, engine);
 
-            plugin.RunTopLevel(javaScript);
+            if (modules is not null)
+            {
+                engine.DocumentSettings.Loader = modules;
+                engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            }
+
+            plugin.RunTopLevel(javaScript, entryPath);
             return plugin;
         }
         catch
@@ -256,15 +265,31 @@ public sealed class ScriptPlugin : IDisposable
     /// boundary: a plugin whose top level fails never loaded, and pretending otherwise
     /// leaves half-registered handlers behind.
     /// </summary>
-    private void RunTopLevel(string javaScript)
+    private void RunTopLevel(string javaScript, string? entryPath)
     {
         using var guard = _watchdog?.Guard(_engine);
-        // The name here is what every stack frame will carry, so it is the author's own
-        // file name and nothing else. ClearScript may still decorate it — see
-        // ScriptError, which undoes that — and IsTransient is not the way out: it
-        // trades "vip [2].ts" for "vip.ts [temp]", which is the same problem wearing a
-        // different suffix.
-        _engine.Execute(new DocumentInfo(FileName), javaScript);
+
+        // Everything runs as a module, whether or not it imports anything, so that a
+        // plugin behaves the same before and after it grows a second file. Modules are
+        // also strict mode, which is the right default and one an author cannot
+        // accidentally opt out of.
+        //
+        // Top-level await is what makes running as a module worth a sentence: measured
+        // against ClearScript, Execute returns as soon as the module hits one, leaving
+        // everything after it undone with nothing thrown and nothing logged. The
+        // stripper refuses it before it can get here.
+        //
+        // The name is what every stack frame will carry. A file path is used when there
+        // is one, because relative imports resolve against the importing document and a
+        // bare name gives them nowhere to start from. ClearScript may still decorate a
+        // bare name — see ScriptError, which undoes that — and IsTransient is not the
+        // way out: it trades "vip [2].ts" for "vip.ts [temp]", the same problem wearing
+        // a different suffix.
+        var document = entryPath is null
+            ? new DocumentInfo(FileName) { Category = ModuleCategory.Standard }
+            : new DocumentInfo(new Uri(entryPath)) { Category = ModuleCategory.Standard };
+
+        _engine.Execute(document, javaScript);
     }
 
     /// <summary>

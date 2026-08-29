@@ -126,6 +126,18 @@ public sealed class SampleScriptTests : IDisposable
         return _host.Load("timers", "timers.ts", File.ReadAllText(path));
     }
 
+    /// <summary>
+    /// The folder plugin, loaded the way the binding loads one: found by discovery
+    /// rather than named, so the fixture proves the rules and the loader agree.
+    /// </summary>
+    private PluginLoadResult LoadJetpackExample()
+    {
+        var source = PluginDiscovery.Find(AppContext.BaseDirectory, _console.Lines.Add)
+            .Single(plugin => plugin.Name == "jetpack");
+
+        return _host.Load(source, File.ReadAllText(source.EntryPath));
+    }
+
     private PluginLoadResult LoadEntityExample()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "entities.ts");
@@ -437,6 +449,41 @@ public sealed class SampleScriptTests : IDisposable
 
         Assert.False(crate.IsValid);
         Assert.Single(_entities.Find("weapon_deagle"));
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// A plugin split across two files, run rather than merely compiled.
+    ///
+    /// Everything here was impossible an hour ago: the shipped tsconfig accepted the
+    /// import and the server answered "Cannot use import statement outside a module".
+    /// </summary>
+    [Fact]
+    public void TheFolderPluginImportsItsOwnModule()
+    {
+        var result = LoadJetpackExample();
+        Assert.True(result.Succeeded, string.Join(" | ", result.Report()));
+
+        var controller = _world.Add(7, "murqin");
+        controller.Pawn!.Origin = new ScriptVector(10, 20, 30);
+
+        Assert.Equal(1, _host.DispatchCommand("jetpack", _table.For(7), []).Taken);
+
+        // 30 + 350, computed in physics.ts and applied in index.ts. A number that could
+        // only have come from the imported module.
+        Assert.Equal(380, controller.Pawn.Origin!.Z);
+        Assert.Contains("murqin boosted to 380", _console.Lines);
+
+        // Module state, kept across calls: half a charge left, so the second boost is
+        // half as high.
+        Assert.Equal(1, _host.DispatchCommand("jetpack", _table.For(7), []).Taken);
+        Assert.Equal(555, controller.Pawn.Origin!.Z);
+
+        Assert.Equal(1, _host.DispatchCommand("jetpack", _table.For(7), []).Taken);
+        Assert.Contains("jetpack is empty until the next round", controller.Chat);
+
+        Assert.Equal(1, _host.Dispatch("round_start", new FakeRoundStartEvent(115)));
+        Assert.Contains("jetpacks refuelled", _console.Lines);
         Assert.Empty(_errors);
     }
 

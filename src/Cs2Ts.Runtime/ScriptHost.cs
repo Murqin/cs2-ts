@@ -170,12 +170,24 @@ public sealed class ScriptHost : IDisposable
     /// running after a failed reload would be friendlier for about a minute and then
     /// deeply confusing: the file on disk and the code on the server would disagree.
     /// </summary>
-    public PluginLoadResult Load(string name, string fileName, string typeScript)
+    public PluginLoadResult Load(string name, string fileName, string typeScript) =>
+        Load(new PluginSource(name, fileName, ModuleRoot: null), typeScript);
+
+    /// <inheritdoc cref="Load(string, string, string)" />
+    /// <param name="source">
+    /// The plugin as it sits on disk. A folder plugin gets a module loader built from
+    /// it; a single file gets one that refuses every import, with a sentence saying how
+    /// to turn it into a folder.
+    /// </param>
+    /// <param name="typeScript">The entry file's source, already read.</param>
+    public PluginLoadResult Load(PluginSource source, string typeScript)
     {
-        ArgumentException.ThrowIfNullOrEmpty(name);
-        ArgumentException.ThrowIfNullOrEmpty(fileName);
+        ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(typeScript);
         ObjectDisposedException.ThrowIf(_disposed, this);
+
+        var name = source.Name;
+        var fileName = source.DisplayName;
 
         Unload(name);
 
@@ -184,6 +196,8 @@ public sealed class ScriptHost : IDisposable
         {
             return PluginLoadResult.Refused(name, stripped.Diagnostics);
         }
+
+        var modules = new ScriptModuleLoader(name, source.ModuleRoot, Stripper);
 
         ScriptPlugin plugin;
         try
@@ -200,10 +214,21 @@ public sealed class ScriptHost : IDisposable
                 OnCommandRegistered,
                 OnEventRegistered,
                 Timers,
-                _clock);
+                _clock,
+                modules,
+                source.ModuleRoot is null ? null : source.EntryPath);
         }
         catch (Exception exception)
         {
+            // A module that would not compile is reported as the refusal it is, in the
+            // file it happened in. It cannot be caught: what comes out of Execute is a
+            // ScriptEngineException with the original type gone, so the loader keeps
+            // the diagnostics and they are read here instead.
+            if (modules.Diagnostics.Count > 0)
+            {
+                return PluginLoadResult.Refused(name, modules.Diagnostics);
+            }
+
             // The plugin's own top level threw, so it never finished loading. It is
             // reported like any other script error and the name stays free.
             var error = ScriptError.FromException(name, exception, isAsync: false);

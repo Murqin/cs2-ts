@@ -28,6 +28,13 @@
 
         "module": "esnext",
         "moduleResolution": "bundler",
+
+        // Every plugin file is run as an ES module, whether or not it imports anything,
+        // so the compiler has to treat every file as one too. Without this a file with
+        // no imports is a script to TypeScript, its top-level declarations are globals,
+        // and two plugins in this folder that both declare `const cooldown` refuse to
+        // compile — while running in separate engines where they could never collide.
+        "moduleDetection": "force",
         "target": "esnext",
 
         // esnext only. The DOM lib declares fetch, setTimeout and console, none of

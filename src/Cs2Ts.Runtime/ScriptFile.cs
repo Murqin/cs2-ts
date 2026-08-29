@@ -11,7 +11,11 @@ namespace Cs2Ts.Runtime;
 /// </summary>
 public static class ScriptFile
 {
-    /// <summary>The extensions a script may have. Both are first class.</summary>
+    /// <summary>
+    /// The extensions a script may have. Both are first class: a .js file has nothing
+    /// to strip, so accepting one costs the runtime nothing — and the audience this is
+    /// aimed at, people who already write Valve's cs_script, write JavaScript.
+    /// </summary>
     public static readonly string[] Extensions = [".ts", ".js"];
 
     /// <summary>

@@ -114,6 +114,64 @@ function collectDecorators(sourceFile, report) {
 }
 
 /**
+ * Top-level await falls through every guard the way decorators do, and the failure it
+ * causes is quieter than theirs.
+ *
+ * The shipped tsconfig cannot refuse it — it is ordinary module syntax — and
+ * ts-blank-space copies it through untouched. What happens then was measured against
+ * ClearScript rather than assumed: the host's Execute **returns immediately**, having
+ * run the module only as far as the first await. Everything after it is left undone,
+ * nothing is thrown, and nothing is logged. A rejected await is swallowed entirely.
+ *
+ * So a plugin whose top level awaits anything half-loads in silence: some handlers are
+ * registered and some are not, and the author sees a plugin that "sometimes works".
+ *
+ * There is also nothing worth awaiting up there. The top level runs on the game thread
+ * while the server waits, and the way back from work that takes time is
+ * `server.nextFrame`.
+ */
+function collectTopLevelAwait(sourceFile, report) {
+    const described = {
+        code: "CS2TS_TOP_LEVEL_AWAIT",
+        message:
+            "'await' at the top level of a plugin is not supported: the plugin would " +
+            "load only as far as this line, with nothing reported. Do the work inside " +
+            "a handler, and come back to the game thread with server.nextFrame.",
+    };
+
+    // Descends through everything except the bodies that introduce their own await
+    // context: inside a function, `await` is that function's business and runs when it
+    // is called rather than while the plugin is loading.
+    const walk = (node) => {
+        if (
+            ts.isFunctionDeclaration(node) ||
+            ts.isFunctionExpression(node) ||
+            ts.isArrowFunction(node) ||
+            ts.isMethodDeclaration(node) ||
+            ts.isGetAccessor(node) ||
+            ts.isSetAccessor(node) ||
+            ts.isConstructorDeclaration(node) ||
+            ts.isClassStaticBlockDeclaration(node)
+        ) {
+            return;
+        }
+
+        if (node.kind === SK.AwaitExpression) {
+            report(node, described);
+        }
+
+        // `for await (const x of y)` is the same await wearing a loop.
+        if (ts.isForOfStatement(node) && node.awaitModifier) {
+            report(node.awaitModifier, described);
+        }
+
+        ts.forEachChild(node, walk);
+    };
+
+    ts.forEachChild(sourceFile, walk);
+}
+
+/**
  * Picks the parser mode from the file's extension.
  *
  * This is not a formality. Parsed as TypeScript, `a < b > (c)` reads as a call with
@@ -158,6 +216,7 @@ function strip(fileName, source) {
     }
 
     collectDecorators(sourceFile, report);
+    collectTopLevelAwait(sourceFile, report);
     const javaScript = blankSourceFile(sourceFile, (node) => report(node, describe(node)));
 
     return diagnostics.length > 0 ? { javaScript: null, diagnostics } : { javaScript, diagnostics };
