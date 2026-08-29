@@ -157,6 +157,28 @@ internal static class Surfaces
         var writable = !declared.IsByRef || !IsReadOnlyRef(property);
         var blank = new SchemaField("", "", "", "", "", "", "{0}", null, null);
 
+        // A field holding another entity. What it stores is a handle — a slot with a
+        // serial number above it — which is the identity the entity table is keyed by,
+        // so it becomes the same kind of object every other entity is rather than a
+        // number an author would then have to look up themselves.
+        //
+        // Read-only, and that is a decision rather than a limit of the machinery: what
+        // the game means by writing one of these varies per field, several of them are
+        // the engine's own bookkeeping, and a wrong one is not a value that looks odd —
+        // it is an entity pointing at the wrong owner. It can be added per field when
+        // there is a field somebody wants.
+        if (type.Name.StartsWith("CHandle", StringComparison.Ordinal))
+        {
+            return blank with
+            {
+                CSharpType = "EntityFacade?",
+                TypeScriptType = "Entity<EntityRaw> | null",
+                ReadFormat = "entities.ForHandle({0}.Raw)",
+                WriteFormat = null,
+                Note = "Another entity, or null when it points at nothing. Read-only.",
+            };
+        }
+
         if (type.IsEnum)
         {
             // As a number, not as the enum: a host enum crosses into script as an object,
@@ -259,7 +281,6 @@ internal static class Surfaces
 
         return name switch
         {
-            _ when name.StartsWith("CHandle", StringComparison.Ordinal) => "entity handle",
             _ when name.StartsWith("Span", StringComparison.Ordinal) => "array",
             _ when name.StartsWith("NetworkedVector", StringComparison.Ordinal) => "array",
             "Vector" or "QAngle" or "Color" or "CNetworkVelocityVector" or "CNetworkViewOffsetVector"

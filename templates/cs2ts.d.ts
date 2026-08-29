@@ -170,9 +170,24 @@ declare global {
      * no honest form here: a 64-bit value does not survive a JavaScript number, so it
      * arrives as a string with no way to write it back.
      *
-     * What is missing is whole objects — sub-entities, vectors and angles, arrays, and
-     * references to other entities. Those wait for a step that can give them a shape
-     * worth having. `unsafe` still reaches a field by name in the meantime.
+     * A field that holds another entity is the one exception, and it arrives as an
+     * `Entity` rather than as a number. What the game stores there is a handle — a slot
+     * with a serial number above it — which is exactly the identity these objects are
+     * keyed by, so `pawn.raw.groundEntity` is the thing being stood on and not an index
+     * to go and look up. It is `null` when the field points at nothing, and it is
+     * read-only: what writing one means varies per field, several are the engine's own
+     * bookkeeping, and getting one wrong is not a value that looks odd — it is an entity
+     * pointing at the wrong owner.
+     *
+     * Worth knowing about `controller.raw.playerPawn`: it is the pawn as an entity, and
+     * `player.pawn` is whatever body that player has right now. They point at the same
+     * thing while the player is alive and they are not the same object, because they
+     * answer different questions — one follows the player across a respawn, the other
+     * dies with the body.
+     *
+     * What is still missing is whole objects — sub-entities, vectors and angles, and
+     * arrays. Those wait for a step that can give them a shape worth having. `unsafe`
+     * still reaches a field by name in the meantime.
      *
      * Writing any of these replicates, the same as the curated members do.
      */
@@ -203,6 +218,8 @@ declare global {
         blindStartTime: number;
         /** CCSPlayerPawnBase/m_blindUntilTime */
         blindUntilTime: number;
+        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        readonly blocker: Entity<EntityRaw> | null;
         /** CCSPlayerPawn/m_iBlockingUseActionInProgress — A CSPlayerBlockingUseAction_t. */
         blockingUseActionInProgress: number;
         /** CBaseEntity/m_nBloodType — A BloodType. */
@@ -215,6 +232,8 @@ declare global {
         clientSideRagdoll: boolean;
         /** CCSPlayerPawn/m_bCommittingSuicideOnTeamChange */
         committingSuicideOnTeamChange: boolean;
+        /** CBasePlayerPawn/m_hController — Another entity, or null when it points at nothing. Read-only. */
+        readonly controller: Entity<EntityRaw> | null;
         /** CBaseEntity/m_flCreateTime */
         createTime: number;
         /** CCSPlayerPawn/m_unCurrentEquipmentValue */
@@ -223,6 +242,8 @@ declare global {
         currentThinkContext: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
+        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
         /** CCSPlayerPawn/m_flDealtDamageToEnemyMostRecentTimestamp */
@@ -235,6 +256,8 @@ declare global {
         deathInfoTime: number;
         /** CBasePlayerPawn/m_flDeathTime */
         deathTime: number;
+        /** CBasePlayerPawn/m_hDefaultController — Another entity, or null when it points at nothing. Read-only. */
+        readonly defaultController: Entity<EntityRaw> | null;
         /** CBaseModelEntity/m_nDestructiblePartInitialStateDestructed0 — A HitGroup_t. */
         destructiblePartInitialStateDestructed0: number;
         /** CBaseModelEntity/m_bDestructiblePartInitialStateDestructed0_GenerateBreakpieces */
@@ -277,6 +300,8 @@ declare global {
         eFlags: number;
         /** CCSPlayerPawn/m_nEconGlovesChanged */
         econGlovesChanged: number;
+        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
         /** CBaseEntity/m_flElasticity */
@@ -321,6 +346,8 @@ declare global {
         grenadeParametersStashed: boolean;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
+        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly groundEntity: Entity<EntityRaw> | null;
         /** CCSPlayerPawn/m_bGunGameImmunity */
         gunGameImmunity: boolean;
         /** CCSPlayerPawn/m_bHasDeathInfo */
@@ -449,6 +476,10 @@ declare global {
         objectCulling: number;
         /** CCSPlayerPawn/m_bOnGroundLastTick */
         onGroundLastTick: boolean;
+        /** CCSPlayerPawnBase/m_hOriginalController — Another entity, or null when it points at nothing. Read-only. */
+        readonly originalController: Entity<EntityRaw> | null;
+        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly ownerEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
         platformType: number;
         /** CCSPlayerPawn/m_iPlayerLocked */
@@ -595,6 +626,8 @@ declare global {
         attemptedToGetColor: boolean;
         /** CBasePlayerController/m_nAvailableEntitySteadyState */
         availableEntitySteadyState: number;
+        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        readonly blocker: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nBloodType — A BloodType. */
         bloodType: number;
         /** CCSPlayerController/m_nBotsControlledThisRound */
@@ -635,6 +668,8 @@ declare global {
         currentThinkContext: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
+        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
         /** CCSPlayerController/m_dblLastReceivedPacketPlatFloatTime */
@@ -643,6 +678,8 @@ declare global {
         desiredFOV: number;
         /** CCSPlayerController/m_DesiredObserverMode */
         desiredObserverMode: number;
+        /** CCSPlayerController/m_hDesiredObserverTarget — Another entity, or null when it points at nothing. Read-only. */
+        readonly desiredObserverTarget: Entity<EntityRaw> | null;
         /** CBaseEntity/m_bDisableLowViolence */
         disableLowViolence: boolean;
         /** CBaseEntity/m_bDisabledContextThinks */
@@ -655,6 +692,8 @@ declare global {
         draftIndex: number;
         /** CBaseEntity/m_iEFlags */
         eFlags: number;
+        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
         /** CBaseEntity/m_flElasticity */
@@ -691,6 +730,8 @@ declare global {
         gravityScale: number;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
+        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly groundEntity: Entity<EntityRaw> | null;
         /** CBasePlayerController/m_bHasAnySteadyStateEnts */
         hasAnySteadyStateEnts: boolean;
         /** CCSPlayerController/m_bHasBeenControlledByPlayerThisRound */
@@ -787,6 +828,14 @@ declare global {
         noClipEnabled: boolean;
         /** CCSPlayerController/m_nNonSuspiciousHitStreak */
         nonSuspiciousHitStreak: number;
+        /** CCSPlayerController/m_hObserverPawn — Another entity, or null when it points at nothing. Read-only. */
+        readonly observerPawn: Entity<EntityRaw> | null;
+        /** CCSPlayerController/m_hOriginalControllerOfCurrentPawn — Another entity, or null when it points at nothing. Read-only. */
+        readonly originalControllerOfCurrentPawn: Entity<EntityRaw> | null;
+        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly ownerEntity: Entity<EntityRaw> | null;
+        /** CBasePlayerController/m_hPawn — Another entity, or null when it points at nothing. Read-only. */
+        readonly pawn: Entity<EntityRaw> | null;
         /** CCSPlayerController/m_iPawnArmor */
         pawnArmor: number;
         /** CCSPlayerController/m_iPawnBotDifficulty */
@@ -817,6 +866,8 @@ declare global {
         readonly playerDominatingMe: string;
         /** CBasePlayerController/m_iszPlayerName — Read-only, as every string field is. */
         readonly playerName: string;
+        /** CCSPlayerController/m_hPlayerPawn — Another entity, or null when it points at nothing. Read-only. */
+        readonly playerPawn: Entity<EntityRaw> | null;
         /** CCSPlayerController/m_unPlayerTvControlFlags */
         playerTvControlFlags: number;
         /** CBasePlayerController/m_bPredict */
@@ -859,6 +910,8 @@ declare global {
         smoothedPing: number;
         /** CBaseEntity/m_spawnflags */
         spawnflags: number;
+        /** CBasePlayerController/m_hSplitOwner — Another entity, or null when it points at nothing. Read-only. */
+        readonly splitOwner: Entity<EntityRaw> | null;
         /** CBasePlayerController/m_nSplitScreenSlot */
         splitScreenSlot: number;
         /** CBasePlayerController/m_steamID — A 64-bit id, as a string: it does not survive a JavaScript number. */
@@ -911,6 +964,8 @@ declare global {
         animTime: number;
         /** CBaseEntity/m_bAnimatedEveryTick */
         animatedEveryTick: boolean;
+        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        readonly blocker: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nBloodType — A BloodType. */
         bloodType: number;
         /** CBaseEntity/m_bClientSideRagdoll */
@@ -921,6 +976,8 @@ declare global {
         currentThinkContext: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
+        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
         /** CBaseEntity/m_bDisableLowViolence */
@@ -929,6 +986,8 @@ declare global {
         disabledContextThinks: boolean;
         /** CBaseEntity/m_iEFlags */
         eFlags: number;
+        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
         /** CBaseEntity/m_flElasticity */
@@ -947,6 +1006,8 @@ declare global {
         gravityScale: number;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
+        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly groundEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iHealth */
         health: number;
         /** CBaseEntity/m_iInitialTeamNum */
@@ -977,6 +1038,8 @@ declare global {
         networkQuantizeOriginAndAngles: boolean;
         /** CBaseEntity/m_nNextThinkTick */
         nextThinkTick: number;
+        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        readonly ownerEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
         platformType: number;
         /** CBaseEntity/m_nPreviouslySetMoveType — A MoveType_t. */

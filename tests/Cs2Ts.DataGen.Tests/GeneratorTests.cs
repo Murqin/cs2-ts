@@ -47,15 +47,42 @@ public sealed class GeneratorTests
     }
 
     [Fact]
-    public void OnlyThreeKindsOfValueCrossTheBoundary()
+    public void OnlyThreeKindsOfValueAndOneKindOfReferenceCrossTheBoundary()
     {
         // A number, a boolean and a string. Anything else either has no honest
         // JavaScript form or is an object of its own, and arriving half-right is worse
         // than not arriving: the escape hatch already hands script a schema field as an
         // object with nothing on it, and this surface exists because that is useless.
-        var kinds = Pawn.Fields.Concat(Controller.Fields).Select(field => field.TypeScriptType).ToHashSet();
+        //
+        // The fourth is not a value. A field holding another entity stores a handle,
+        // which is the identity these objects are already keyed by, so it can arrive as
+        // the entity itself rather than as a number to go and look up.
+        var kinds = AllSurfaces.SelectMany(surface => surface.Fields)
+            .Select(field => field.TypeScriptType)
+            .ToHashSet();
 
-        Assert.Equal(["boolean", "number", "string"], kinds.Order());
+        Assert.Equal(["boolean", "Entity<EntityRaw> | null", "number", "string"], kinds.Order());
+    }
+
+    [Fact]
+    public void AFieldHoldingAnotherEntityArrivesAsOne()
+    {
+        // The controller's own pointer to the pawn. It was one of the eleven fields the
+        // generator used to leave out, and it is the one that shows what carrying them
+        // buys: the body is reachable from the controller without going through the
+        // player at all.
+        var field = Field(Controller, "playerPawn");
+
+        Assert.Equal("EntityFacade?", field.CSharpType);
+        Assert.Equal("Entity<EntityRaw> | null", field.TypeScriptType);
+
+        // Read through the one table, so the same entity reached two ways is one object.
+        Assert.Equal("entities.ForHandle({0}.Raw)", field.ReadFormat);
+
+        // Read-only, and deliberately: what writing one of these means varies per field,
+        // and a wrong one is an entity pointing at the wrong owner rather than a value
+        // that looks odd.
+        Assert.Null(field.WriteFormat);
     }
 
     [Fact]

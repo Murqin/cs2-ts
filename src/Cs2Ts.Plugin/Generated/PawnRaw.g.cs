@@ -23,8 +23,13 @@ namespace Cs2Ts.Plugin;
 /// The live entity. Called on every access and never held, and it throws rather than
 /// returning something stale once the entity is gone.
 /// </param>
+/// <param name="entities">
+/// Turns the entity handles stored in this entity's fields into entities. It is the
+/// one table for the whole server, so a weapon reached through its owner's field is
+/// the same object as the same weapon reached through <c>entities.byIndex</c>.
+/// </param>
 [DefaultScriptUsage(ScriptAccess.None)]
-public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPawn> resolve) : ScriptSurface
+public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPawn> resolve, CssEntities entities) : ScriptSurface
 {
     /// <summary>CBaseEntity/m_flActualGravityScale</summary>
     [ScriptMember("actualGravityScale")]
@@ -182,6 +187,10 @@ public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPa
         }
     }
 
+    /// <summary>CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("blocker")]
+    public EntityFacade? Blocker => entities.ForHandle(resolve().Blocker.Raw);
+
     /// <summary>CCSPlayerPawn/m_iBlockingUseActionInProgress — A CSPlayerBlockingUseAction_t.</summary>
     [ScriptMember("blockingUseActionInProgress")]
     public int BlockingUseActionInProgress
@@ -260,6 +269,10 @@ public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPa
         }
     }
 
+    /// <summary>CBasePlayerPawn/m_hController — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("controller")]
+    public EntityFacade? Controller => entities.ForHandle(resolve().Controller.Raw);
+
     /// <summary>CBaseEntity/m_flCreateTime</summary>
     [ScriptMember("createTime")]
     public double CreateTime
@@ -311,6 +324,10 @@ public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPa
                 () => entity.DamageAccumulator = (float)value);
         }
     }
+
+    /// <summary>CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("damageFilter")]
+    public EntityFacade? DamageFilter => entities.ForHandle(resolve().DamageFilter.Raw);
 
     /// <summary>CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is.</summary>
     [ScriptMember("damageFilterName")]
@@ -380,6 +397,10 @@ public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPa
                 () => entity.DeathTime = (float)value);
         }
     }
+
+    /// <summary>CBasePlayerPawn/m_hDefaultController — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("defaultController")]
+    public EntityFacade? DefaultController => entities.ForHandle(resolve().DefaultController.Raw);
 
     /// <summary>CBaseModelEntity/m_nDestructiblePartInitialStateDestructed0 — A HitGroup_t.</summary>
     [ScriptMember("destructiblePartInitialStateDestructed0")]
@@ -653,6 +674,10 @@ public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPa
                 () => entity.EconGlovesChanged = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("effectEntity")]
+    public EntityFacade? EffectEntity => entities.ForHandle(resolve().EffectEntity.Raw);
 
     /// <summary>CBaseEntity/m_fEffects</summary>
     [ScriptMember("effects")]
@@ -930,6 +955,10 @@ public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPa
                 () => entity.GroundBodyIndex = value);
         }
     }
+
+    /// <summary>CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("groundEntity")]
+    public EntityFacade? GroundEntity => entities.ForHandle(resolve().GroundEntity.Raw);
 
     /// <summary>CCSPlayerPawn/m_bGunGameImmunity</summary>
     [ScriptMember("gunGameImmunity")]
@@ -1753,6 +1782,14 @@ public sealed class PawnRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerPa
                 () => entity.OnGroundLastTick = value);
         }
     }
+
+    /// <summary>CCSPlayerPawnBase/m_hOriginalController — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("originalController")]
+    public EntityFacade? OriginalController => entities.ForHandle(resolve().OriginalController.Raw);
+
+    /// <summary>CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    [ScriptMember("ownerEntity")]
+    public EntityFacade? OwnerEntity => entities.ForHandle(resolve().OwnerEntity.Raw);
 
     /// <summary>CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t.</summary>
     [ScriptMember("platformType")]

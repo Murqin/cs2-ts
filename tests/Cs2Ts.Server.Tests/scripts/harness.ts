@@ -216,6 +216,36 @@ command("!hentgone", () => {
     }, 500);
 });
 
+// A field that holds another entity. The controller keeps its own pointer to the pawn,
+// so the body is reachable without going through the player at all — and it has to be
+// the same body, or the handle is being read as the wrong number.
+command("!hhandle", () => {
+    const target = alivePlayer();
+    if (target === undefined) {
+        console.log("HARNESS handle nobody-alive");
+        return;
+    }
+
+    const pawn = target.pawn;
+    if (pawn === null) {
+        console.log("HARNESS handle no-pawn");
+        return;
+    }
+
+    const viaField = target.controller.raw.playerPawn;
+
+    // groundEntity is null in the air and the world entity when standing on the map, so
+    // its type is the claim here rather than its value.
+    const ground = pawn.raw.groundEntity;
+
+    console.log(
+        `HARNESS handle found=${viaField !== null} index=${viaField?.index}/${pawn.index} ` +
+        `health=${viaField?.raw.health}/${target.health} ` +
+        `same=${viaField === entities.byIndex(pawn.index)} ` +
+        `ground=${ground === null ? "null" : typeof ground.designerName} ` +
+        `empty=${target.controller.raw.splitOwner === null}`);
+});
+
 // A player who has left has to stop resolving rather than hand back a stale pointer.
 let held: Player | null = null;
 
