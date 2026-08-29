@@ -195,9 +195,21 @@ step needs Node; the rest does not.
 ```sh
 cd tools/stripper && npm ci && npm run build   # writes Resources/stripper.js.gz
 cd ../.. && dotnet build Cs2Ts.slnx
-dotnet test tests/Cs2Ts.Runtime.Tests          # host side
-cd tools/stripper && npm test                  # tsconfig, declarations, the example
+dotnet test tests/Cs2Ts.Runtime.Tests          # host side, against a fake game
+cd tools/stripper && npm test                  # tsconfig, declarations, the samples
 ```
+
+The third suite needs a real server, so it is not in that list:
+
+```sh
+dotnet test tests/Cs2Ts.Server.Tests           # boots a dedicated server and asks it
+```
+
+It starts its own server on a free port bound to loopback, loads only its own
+scripts, and stops what it started — it will not touch a server you are already
+running. It refuses to run against an installed plugin older than the build in
+your tree, because a green run on yesterday's binary is not a weaker signal, it
+is a wrong one.
 
 `src/Cs2Ts.Runtime` holds everything with logic in it and knows nothing about
 CounterStrikeSharp, so it is tested without a server.
