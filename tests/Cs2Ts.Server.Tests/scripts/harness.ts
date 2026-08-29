@@ -50,6 +50,41 @@ command("!hbadname", () => {
     }
 });
 
+// The wide surface: `player.pawn` and `player.controller`, and the generated fields
+// hanging off them. No fake can fail the way this can — every member there is a
+// CounterStrikeSharp property reached by a schema name we typed out, so a wrong name is
+// a wrong offset rather than a compile error, and a value that arrives as an object
+// instead of a number is a marshalling question only a real engine answers.
+//
+// Each pair below is one field reached twice, by the curated member and by the generated
+// one. They have to agree, or one of them is looking somewhere else.
+command("!hentity", () => {
+    const target = alivePlayer();
+    if (target === undefined) {
+        console.log("HARNESS entity nobody-alive");
+        return;
+    }
+
+    const pawn = target.pawn;
+    if (pawn === null) {
+        console.log("HARNESS entity no-pawn");
+        return;
+    }
+
+    pawn.raw.armorValue = 77;
+
+    // The last three are reported as types rather than values, because the type is the
+    // claim: the escape hatch reads a schema field as an object with nothing on it, and
+    // "object" here would mean this surface had inherited that failure without any other
+    // symptom. A boolean, a number and a string mean the marshalling happened.
+    console.log(
+        `HARNESS entity health=${pawn.raw.health}/${target.health} ` +
+        `armor=${pawn.raw.armorValue}/${target.armor} ` +
+        `name=${target.controller.raw.playerName}/${target.name} ` +
+        `scoped=${typeof pawn.raw.isScoped} velocity=${typeof pawn.raw.velocityModifier} ` +
+        `place=${typeof pawn.raw.lastPlaceName}`);
+});
+
 // A player who has left has to stop resolving rather than hand back a stale pointer.
 let held: Player | null = null;
 

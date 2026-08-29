@@ -1,4 +1,5 @@
 using Cs2Ts.Runtime;
+using Microsoft.ClearScript;
 
 namespace Cs2Ts.Runtime.Tests;
 
@@ -133,11 +134,51 @@ public sealed class FakeOperations(FakeWorld world) : IPlayerOperations<FakeCont
         Writes.Add($"armor={armor}");
     }
 
+    public RawSurface CreateControllerRaw(Func<FakeController> resolve) => new FakeControllerRaw(resolve);
+
+    public RawSurface CreatePawnRaw(Func<FakePawn> resolve) => new FakePawnRaw(resolve);
+
     public ScriptVector? GetPosition(FakePawn pawn) => pawn.Origin;
 
     public void Teleport(FakePawn pawn, float x, float y, float z)
     {
         pawn.Origin = new ScriptVector(x, y, z);
         Writes.Add($"teleport={x},{y},{z}");
+    }
+}
+
+/// <summary>
+/// What a generated raw surface looks like from the runtime's side: it holds a way to
+/// resolve the entity, never the entity itself, and every member goes through it.
+/// </summary>
+[DefaultScriptUsage(ScriptAccess.None)]
+public sealed class FakePawnRaw(Func<FakePawn> resolve) : RawSurface
+{
+    /// <summary>How often a member has asked for the entity. The rule is once per access.</summary>
+    public int Resolutions { get; private set; }
+
+    [ScriptMember("health")]
+    public int Health
+    {
+        get { Resolutions++; return resolve().Health; }
+        set { Resolutions++; resolve().Health = value; }
+    }
+
+    [ScriptMember("armorValue")]
+    public int ArmorValue
+    {
+        get { Resolutions++; return resolve().Armor; }
+        set { Resolutions++; resolve().Armor = value; }
+    }
+}
+
+[DefaultScriptUsage(ScriptAccess.None)]
+public sealed class FakeControllerRaw(Func<FakeController> resolve) : RawSurface
+{
+    [ScriptMember("score")]
+    public int Score
+    {
+        get => resolve().Money;
+        set => resolve().Money = value;
     }
 }

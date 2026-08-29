@@ -31,6 +31,11 @@ namespace Cs2Ts.Runtime;
 /// situation a script is in without throwing: <c>isValid</c> for whether the player is
 /// still on the server at all, <c>isAlive</c> for whether they are in the world.
 ///
+/// What is not here is reachable anyway. <c>pawn</c> and <c>controller</c> lead to the
+/// two entities behind a player with every field they have on them, so this type being
+/// behind the game is a reason to write a longer line rather than a reason to stop. The
+/// members here are the ones worth curating; that is the floor.
+///
 /// Only members marked <see cref="ScriptMemberAttribute"/> are visible to script, and
 /// the type opts out by default so that adding a public member cannot widen that
 /// surface by accident.
@@ -44,6 +49,12 @@ public sealed class PlayerFacade<TController, TPawn>
 {
     private readonly EntityHandle<TController> _handle;
     private readonly IPlayerOperations<TController, TPawn> _operations;
+
+    // Made on first use and kept. Neither holds an entity — each one holds a way to
+    // look one up — so keeping them is what makes `player.pawn === player.pawn` true in
+    // script without any of them outliving the body they were made for.
+    private EntityFacade? _controllerEntity;
+    private EntityFacade? _pawnEntity;
 
     internal PlayerFacade(EntityHandle<TController> handle, IPlayerOperations<TController, TPawn> operations)
     {
@@ -157,6 +168,60 @@ public sealed class PlayerFacade<TController, TPawn>
     [ScriptMember("teleport")]
     public void Teleport(double x, double y, double z) =>
         _operations.Teleport(Pawn, (float)x, (float)y, (float)z);
+
+    /// <summary>
+    /// The player's controller: the half of them that persists, with every field it has.
+    ///
+    /// The floor under the curated surface. `player.money` is the way to read money;
+    /// this is the way to read the two hundred things nobody has written a member for
+    /// yet.
+    ///
+    /// Never null. Nullability on the two entities means one thing — "the player is not
+    /// in the world" — and a controller is there for as long as the player is, so
+    /// making this nullable too would cost every script a check that can never fail and
+    /// would say nothing about the case that can.
+    /// </summary>
+    /// <exception cref="DeadEntityException">The player has left.</exception>
+    [ScriptMember("controller")]
+    public EntityFacade ControllerEntity
+    {
+        get
+        {
+            // Resolved before the facade is handed over, so that a player who has left
+            // fails on `player.controller` rather than one member later. Both are the
+            // same failure; this one names the line the author actually wrote.
+            _ = Controller;
+
+            return _controllerEntity ??= new EntityFacade(
+                "controller",
+                $"controller of {this}",
+                _operations.CreateControllerRaw(() => Controller),
+                () => _handle.Find() is not null);
+        }
+    }
+
+    /// <summary>
+    /// The player's pawn: their body, with every field it has. Null when they have none.
+    ///
+    /// The null is the point. A spectator, a player who has not spawned, a player
+    /// between maps — none of them have a body, and today that is something a script
+    /// finds out by having `player.health` throw at it. Here the compiler asks first,
+    /// so the case is handled where it is cheap rather than discovered where it is not.
+    ///
+    /// Worth keeping in mind that null is an answer about this moment. A pawn read a
+    /// tick ago can be gone now, so the members of what comes back still throw — being
+    /// non-null is not a promise, it is an observation.
+    /// </summary>
+    /// <exception cref="DeadEntityException">The player has left.</exception>
+    [ScriptMember("pawn")]
+    public EntityFacade? PawnEntity =>
+        _operations.FindPawn(Controller) is null
+            ? null
+            : _pawnEntity ??= new EntityFacade(
+                "pawn",
+                $"pawn of {this}",
+                _operations.CreatePawnRaw(() => Pawn),
+                () => _handle.Find() is { } controller && _operations.FindPawn(controller) is not null);
 
     /// <summary>
     /// The live CounterStrikeSharp controller, or a throw.

@@ -157,6 +157,48 @@ public sealed class BindingTests(ServerFixture fixture)
     }
 
     [Fact]
+    public async Task TheWideSurfaceReachesTheSameFieldsTheFacadeDoes()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        server.Command("css_hentity");
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS entity ", StringComparison.Ordinal), Answer);
+
+        // A bot in the world has a pawn. Reaching here without one means the wide
+        // surface reported absent for a player who is standing up, which is the one
+        // thing its nullability must not do.
+        Assert.DoesNotContain("no-pawn", line, StringComparison.Ordinal);
+
+        var fields = line[(line.IndexOf("entity ", StringComparison.Ordinal) + 7)..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(field => field.Split('=', 2))
+            .ToDictionary(field => field[0], field => field[1], StringComparer.Ordinal);
+
+        // Two routes to one field. The curated member goes through CssPlayerOperations,
+        // the generated one through its own property and its own schema name; a wrong
+        // name in the second reads a different offset and these stop matching.
+        Assert.Equal(Halves(fields["health"]).Curated, Halves(fields["health"]).Wide);
+        Assert.Equal(Halves(fields["name"]).Curated, Halves(fields["name"]).Wide);
+
+        // A write through the wide surface, read back through the facade.
+        Assert.Equal("77/77", fields["armor"]);
+
+        // What resolve() does to a schema field, and what this must not do: it hands
+        // script an object with nothing on it, in either direction, with nothing logged.
+        // These three are the boolean, the number and the string of that question.
+        Assert.Equal("boolean", fields["scoped"]);
+        Assert.Equal("number", fields["velocity"]);
+        Assert.Equal("string", fields["place"]);
+    }
+
+    private static (string Wide, string Curated) Halves(string pair)
+    {
+        var slash = pair.IndexOf('/', StringComparison.Ordinal);
+        return (pair[..slash], pair[(slash + 1)..]);
+    }
+
+    [Fact]
     public async Task AHandleStopsResolvingWhenThePlayerLeaves()
     {
         var server = await fixture.RequireWithPlayersAsync();

@@ -59,6 +59,83 @@ declare global {
     }
 
     /**
+     * A live object in the game, with every field it has on it.
+     *
+     * `Player` is the curated surface: a small number of members that are named for
+     * what they mean and cannot be used wrongly. It will always be behind the game.
+     * This is the floor underneath it, so that "there is no member for that yet" is a
+     * reason to write a slightly uglier line rather than a reason to stop.
+     *
+     * Everything on `raw` is named the way the game names it, because nobody renamed
+     * it: `armorValue`, `velocityModifier`, `isScoped`. That is the trade — the wide
+     * surface is current and complete, and it reads like the engine's internals,
+     * because it is them. Writing through it replicates, the same as the curated
+     * members do.
+     *
+     * Holds an identity rather than a pointer, like everything else worth keeping. A
+     * pawn stored before a respawn reads the new body afterwards; it does not read
+     * freed memory.
+     */
+    interface Entity<TRaw> {
+        /** What this is: "pawn", "controller". */
+        readonly kind: string;
+
+        /**
+         * Whether the entity is still there — the player is on the server and, for a
+         * pawn, in the world. Cheap, and never throws.
+         */
+        readonly isValid: boolean;
+
+        /** Every field the entity has, by name. Throws once the entity is gone. */
+        readonly raw: TRaw;
+
+        toString(): string;
+    }
+
+    /**
+     * A pawn's own fields. Comments give the schema class and field each one is.
+     *
+     * A slice, for now: five of the two hundred a pawn has. The rest arrive generated
+     * from the same place these were read out of, and nothing about the shape changes
+     * when they do.
+     */
+    interface PawnRaw {
+        /** CBaseEntity/m_iHealth */
+        health: number;
+
+        /** CCSPlayerPawn/m_ArmorValue */
+        armorValue: number;
+
+        /** CCSPlayerPawn/m_bIsScoped */
+        isScoped: boolean;
+
+        /** CCSPlayerPawn/m_flVelocityModifier — 1 is normal speed. */
+        velocityModifier: number;
+
+        /**
+         * CCSPlayerPawn/m_szLastPlaceName — the callout the player is standing in,
+         * "BombsiteA" and the like.
+         *
+         * Read-only, and every string field here will be: CounterStrikeSharp's getter
+         * and setter for a string field disagree about what one is, so writing would
+         * overwrite the first eight characters and report nothing.
+         */
+        readonly lastPlaceName: string;
+    }
+
+    /** A controller's own fields. A slice, like `PawnRaw`. */
+    interface ControllerRaw {
+        /** CCSPlayerController/m_iScore — the scoreboard number. */
+        score: number;
+
+        /** CCSPlayerController/m_iPing */
+        ping: number;
+
+        /** CBasePlayerController/m_iszPlayerName. Read-only, as every string field is. */
+        readonly playerName: string;
+    }
+
+    /**
      * A player. Holds a userid, not a pointer, so it stays usable after the player
      * leaves — every member simply starts throwing something catchable instead.
      *
@@ -128,6 +205,28 @@ declare global {
          * player is in the world.
          */
         teleport(x: number, y: number, z: number): void;
+
+        /**
+         * The player's body, with every field it has — or `null` when they have none.
+         *
+         * The `null` is the point. A spectator, someone who has not spawned, someone
+         * between maps: none of them have a body, and this is the one place where that
+         * is a question the compiler makes you answer rather than something `health`
+         * throws at you later.
+         *
+         * It answers about this moment, though. A pawn that was there a tick ago can be
+         * gone now, so the fields on what comes back still throw — non-null is an
+         * observation, not a promise. Throws itself if the player has left.
+         */
+        readonly pawn: Entity<PawnRaw> | null;
+
+        /**
+         * The persistent half of the player, with every field it has. Never null: a
+         * controller is there for as long as the player is, so a check here could never
+         * fail and would say nothing about the case that can. Throws if the player has
+         * left.
+         */
+        readonly controller: Entity<ControllerRaw>;
     }
 
     /** Handler signatures for the events the runtime dispatches. */

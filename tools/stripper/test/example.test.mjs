@@ -179,6 +179,45 @@ test("the escape hatch's value types are checked", () => {
         /TS2322/);
 });
 
+test("a player's pawn may not be there, and the compiler says so", () => {
+    // The whole reason pawn is a separate thing: a spectator has none. Reaching through
+    // it without saying what happens then must not compile.
+    assert.match(
+        check('on("tick", (): void => { players.all()[0]!.pawn.raw.isScoped; });\n'),
+        /TS18047|TS2531|TS2533/);
+
+    assert.equal(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p !== null) { p.raw.isScoped; } });\n'),
+        "");
+
+    assert.equal(
+        check('on("tick", (): void => { players.all()[0]!.pawn?.raw.isScoped; });\n'),
+        "");
+});
+
+test("the controller is always there while the player is", () => {
+    // No null: a player who has left throws on every member, and the controller is not
+    // an exception to that. Nullability here would mean "spectating", which is wrong.
+    assert.equal(
+        check('on("tick", (): void => { const n: number = players.all()[0]!.controller.raw.score; });\n'),
+        "");
+});
+
+test("a raw field is writable and typed", () => {
+    assert.equal(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p) { p.raw.velocityModifier = 0.4; } });\n'),
+        "");
+
+    assert.match(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p) { p.raw.isScoped = "yes"; } });\n'),
+        /TS2322/);
+
+    // Reading a field nobody generated is a compile error, not a runtime surprise.
+    assert.match(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p) { p.raw.noSuchField; } });\n'),
+        /TS2339/);
+});
+
 test("a tick handler takes nothing and returns nothing", () => {
     assert.equal(check('on("tick", (): void => {});\n'), "");
 
