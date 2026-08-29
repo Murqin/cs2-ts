@@ -1,4 +1,5 @@
 using System.Reflection;
+using CounterStrikeSharp.API.Core;
 
 namespace Cs2Ts.DataGen;
 
@@ -32,6 +33,26 @@ internal sealed record SchemaSurface(
 
 internal static class Surfaces
 {
+    /// <summary>
+    /// The entities the generator writes a surface for.
+    ///
+    /// One list, here rather than in the tool, because the staleness test has to
+    /// generate exactly what the tool generates. Two lists would agree until somebody
+    /// added a surface to one of them, and the test whose whole job is to notice drift
+    /// would be the thing that drifted.
+    /// </summary>
+    public static IReadOnlyList<SchemaSurface> All() =>
+    [
+        Read("PawnRaw", typeof(CCSPlayerPawn)),
+        Read("ControllerRaw", typeof(CCSPlayerController)),
+
+        // The floor under every entity in the world: the fields a weapon, a door and a
+        // prop all have rather than the ones any of them has of its own. It is what
+        // makes one surface serve all of them until the generator is opened to the
+        // other five hundred classes.
+        Read("EntityRaw", typeof(CBaseEntity)),
+    ];
+
     /// <summary>
     /// Reads an entity's fields out of CounterStrikeSharp's own classes.
     ///

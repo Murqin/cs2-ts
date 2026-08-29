@@ -77,17 +77,81 @@ declare global {
      * freed memory.
      */
     interface Entity<TRaw> {
-        /** What this is: "pawn", "controller". */
+        /** What this is: "pawn", "controller", "entity". */
         readonly kind: string;
 
         /**
          * Whether the entity is still there — the player is on the server and, for a
-         * pawn, in the world. Cheap, and never throws.
+         * pawn, in the world; for anything else, that it has not been removed. Cheap,
+         * and never throws.
          */
         readonly isValid: boolean;
 
+        /**
+         * The entity's slot in the game's entity list: what the server console means by
+         * "entity 42", and what `entities.byIndex` takes.
+         *
+         * Not an identity, and not something to keep. The game hands a slot back out
+         * once what was in it is gone, so a stored index eventually names something
+         * else — this object is the thing that knows the difference, so keep this. It
+         * reads as -1 once the entity is gone rather than throwing, because an index is
+         * the sort of thing that ends up in a log line.
+         */
+        readonly index: number;
+
+        /**
+         * The classname the map and the game use — "weapon_ak47", "planted_c4",
+         * "func_door". The one thing that says what an entity is, and the name
+         * `entities.find` searches by. Empty once the entity is gone.
+         */
+        readonly designerName: string;
+
         /** Every field the entity has, by name. Throws once the entity is gone. */
         readonly raw: TRaw;
+
+        /**
+         * Where the entity is, copied out at the moment of the read: changing what
+         * comes back moves nothing.
+         *
+         * `null` for an entity that has no place in the world yet, which is what a
+         * freshly created entity is until it is spawned. Throws once the entity is
+         * gone, which is a different thing.
+         */
+        readonly position: { readonly x: number; readonly y: number; readonly z: number } | null;
+
+        /** Moves the entity, keeping its angles and velocity. */
+        teleport(x: number, y: number, z: number): void;
+
+        /**
+         * Brings a newly created entity into the world. Whatever was written to it
+         * before this call is what it starts life with, which is the only reason
+         * creating and spawning are two steps.
+         */
+        spawn(): void;
+
+        /**
+         * Takes the entity out of the world. Everything holding it — this object
+         * included — reads as invalid afterwards.
+         */
+        remove(): void;
+
+        /**
+         * Fires one of the entity's map inputs: the same ones a level designer wires up
+         * in Hammer — "Kill", "TurnOn", "Open", "AddOutput". `value` is what the input
+         * takes, and is left out for the many that take nothing.
+         *
+         * No activator and no caller are passed. Those name the entity that triggered
+         * the input and the one that relayed it, and a script firing an input directly
+         * is neither, so the inputs that read them will see nothing.
+         */
+        input(name: string, value?: string): void;
+
+        /**
+         * The live CounterStrikeSharp object, or a thrown Error. The escape hatch, with
+         * the same limits as `Player.resolve` — ordinary members work, schema fields do
+         * not, and `unsafe` is the way to those.
+         */
+        resolve(): unknown;
 
         toString(): string;
     }
@@ -827,6 +891,126 @@ declare global {
         readonly uniqueHammerID: string;
         /** CCSPlayerController/m_nUpdateCounter */
         updateCounter: number;
+        /** CBaseEntity/m_flVPhysicsUpdateLocalTime */
+        vPhysicsUpdateLocalTime: number;
+        /** CBaseEntity/m_flWaterLevel */
+        waterLevel: number;
+        /** CBaseEntity/m_nWaterTouch */
+        waterTouch: number;
+        /** CBaseEntity/m_nWaterType */
+        waterType: number;
+    }
+
+    /** Every field a CBaseEntity has, by name. */
+    interface EntityRaw {
+        /** CBaseEntity/m_flActualGravityScale */
+        actualGravityScale: number;
+        /** CBaseEntity/m_nActualMoveType — A MoveType_t. */
+        actualMoveType: number;
+        /** CBaseEntity/m_flAnimTime */
+        animTime: number;
+        /** CBaseEntity/m_bAnimatedEveryTick */
+        animatedEveryTick: boolean;
+        /** CBaseEntity/m_nBloodType — A BloodType. */
+        bloodType: number;
+        /** CBaseEntity/m_bClientSideRagdoll */
+        clientSideRagdoll: boolean;
+        /** CBaseEntity/m_flCreateTime */
+        createTime: number;
+        /** CBaseEntity/m_iCurrentThinkContext */
+        currentThinkContext: number;
+        /** CBaseEntity/m_flDamageAccumulator */
+        damageAccumulator: number;
+        /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
+        readonly damageFilterName: string;
+        /** CBaseEntity/m_bDisableLowViolence */
+        disableLowViolence: boolean;
+        /** CBaseEntity/m_bDisabledContextThinks */
+        disabledContextThinks: boolean;
+        /** CBaseEntity/m_iEFlags */
+        eFlags: number;
+        /** CBaseEntity/m_fEffects */
+        effects: number;
+        /** CBaseEntity/m_flElasticity */
+        elasticity: number;
+        /** CBaseEntity/m_fFlags */
+        flags: number;
+        /** CBaseEntity/m_flFriction */
+        friction: number;
+        /** CBaseEntity/m_iGlobalname — Read-only, as every string field is. */
+        readonly globalname: string;
+        /** CBaseEntity/m_bGravityActuallyDisabled */
+        gravityActuallyDisabled: boolean;
+        /** CBaseEntity/m_bGravityDisabled */
+        gravityDisabled: boolean;
+        /** CBaseEntity/m_flGravityScale */
+        gravityScale: number;
+        /** CBaseEntity/m_nGroundBodyIndex */
+        groundBodyIndex: number;
+        /** CBaseEntity/m_iHealth */
+        health: number;
+        /** CBaseEntity/m_iInitialTeamNum */
+        initialTeamNum: number;
+        /** CBaseEntity/m_ubInterpolationFrame */
+        interpolationFrame: number;
+        /** CBaseEntity/m_bLagCompensate */
+        lagCompensate: boolean;
+        /** CBaseEntity/m_lastNetworkChange */
+        lastNetworkChange: number;
+        /** CBaseEntity/m_nLastThinkTick */
+        lastThinkTick: number;
+        /** CBaseEntity/m_lifeState */
+        lifeState: number;
+        /** CBaseEntity/m_flLocalTime */
+        localTime: number;
+        /** CBaseEntity/m_iMaxHealth */
+        maxHealth: number;
+        /** CBaseEntity/m_MoveCollide — A MoveCollide_t. */
+        moveCollide: number;
+        /** CBaseEntity/m_flMoveDoneTime */
+        moveDoneTime: number;
+        /** CBaseEntity/m_MoveType — A MoveType_t. */
+        moveType: number;
+        /** CBaseEntity/m_flNavIgnoreUntilTime */
+        navIgnoreUntilTime: number;
+        /** CBaseEntity/m_bNetworkQuantizeOriginAndAngles */
+        networkQuantizeOriginAndAngles: boolean;
+        /** CBaseEntity/m_nNextThinkTick */
+        nextThinkTick: number;
+        /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
+        platformType: number;
+        /** CBaseEntity/m_nPreviouslySetMoveType — A MoveType_t. */
+        previouslySetMoveType: number;
+        /** CEntityInstance/m_iszPrivateVScripts — Read-only, as every string field is. */
+        readonly privateVScripts: string;
+        /** CBaseEntity/m_nPushEnumCount */
+        pushEnumCount: number;
+        /** CBaseEntity/m_iszResponseContext — Read-only, as every string field is. */
+        readonly responseContext: string;
+        /** CBaseEntity/m_bRestoreInHierarchy */
+        restoreInHierarchy: boolean;
+        /** CBaseEntity/m_iSentToClients */
+        sentToClients: number;
+        /** CBaseEntity/m_nSimulationTick */
+        simulationTick: number;
+        /** CBaseEntity/m_flSimulationTime */
+        simulationTime: number;
+        /** CBaseEntity/m_nSlimeTouch */
+        slimeTouch: number;
+        /** CBaseEntity/m_spawnflags */
+        spawnflags: number;
+        /** CBaseEntity/m_nTakeDamageFlags — A TakeDamageFlags_t. */
+        takeDamageFlags: number;
+        /** CBaseEntity/m_bTakesDamage */
+        takesDamage: boolean;
+        /** CBaseEntity/m_target — Read-only, as every string field is. */
+        readonly target: string;
+        /** CBaseEntity/m_iTeamNum */
+        teamNum: number;
+        /** CBaseEntity/m_flTimeScale */
+        timeScale: number;
+        /** CBaseEntity/m_sUniqueHammerID — Read-only, as every string field is. */
+        readonly uniqueHammerID: string;
         /** CBaseEntity/m_flVPhysicsUpdateLocalTime */
         vPhysicsUpdateLocalTime: number;
         /** CBaseEntity/m_flWaterLevel */
@@ -3758,6 +3942,68 @@ declare global {
     };
 
     /**
+     * Everything in the world that is not a player: weapons, the bomb, hostages, doors,
+     * props, and whatever a script makes itself.
+     *
+     * ```ts
+     * const bomb = entities.first("planted_c4");
+     * if (bomb !== null) console.log(`${bomb.position?.x}`);
+     *
+     * const box = entities.create("prop_physics_override");
+     * box.raw.teamNum = 2;
+     * box.spawn();
+     * box.teleport(0, 0, 128);
+     * ```
+     *
+     * What comes back is the same kind of object a player's pawn is, so `raw` and
+     * `unsafe` work on it the same way. Its `raw` is the fields **every** entity has,
+     * not the ones a weapon or a door has of its own; `unsafe` is still how to reach
+     * those, by name.
+     *
+     * These references hold the game's own entity handle, which is a slot number with a
+     * serial number packed above it — so a reference kept after the entity is gone
+     * reads as invalid rather than quietly becoming a reference to whatever took the
+     * slot. That matters more here than it does for players: entity slots are recycled
+     * constantly, several times a round.
+     */
+    const entities: {
+        /** The entity in a slot, or `null` when the slot is empty. */
+        byIndex(index: number): Entity<EntityRaw> | null;
+
+        /**
+         * Every entity whose classname is exactly this. Empty when there are none.
+         *
+         * Exact, not a substring match: `find("weapon_knife")` returns the plain knives
+         * and not every knife skin, which is the opposite of what CounterStrikeSharp's
+         * own search by designer name does.
+         */
+        find(designerName: string): Entity<EntityRaw>[];
+
+        /** The first entity with this classname, or `null`. */
+        first(designerName: string): Entity<EntityRaw> | null;
+
+        /**
+         * Everything in the world right now.
+         *
+         * A long list — a stock map is a couple of thousand entities before anyone
+         * joins — and every one of them becomes an object that is then held for as long
+         * as it lives. It is here because there is otherwise no way to find out what
+         * classnames a map has, which is the first thing anyone needs. It is not
+         * something to call on a tick.
+         */
+        all(): Entity<EntityRaw>[];
+
+        /**
+         * Makes an entity, not yet in the world: write to it, then `spawn()` it, then
+         * put it somewhere with `teleport()`.
+         *
+         * Throws if the game will not make one of those. The alternative is a typo that
+         * hands back an object which silently does nothing.
+         */
+        create(designerName: string): Entity<EntityRaw>;
+    };
+
+    /**
      * Entity fields the facade does not cover, read and written by name.
      *
      * ```ts
@@ -3792,6 +4038,17 @@ declare global {
      * Both accessors take an entity from `pawn()` or `controller()`. Do not keep one
      * past the statement that made it — the pawn a script stored is freed at the end of
      * the round, and the `Player` it came from is the thing designed to be kept.
+     *
+     * Anything from `entities` gets here through its own `resolve()`, and that is how
+     * to read a field this `raw` does not have — a weapon's ammunition, the bomb's
+     * timer, a door's speed:
+     *
+     * ```ts
+     * const bomb = entities.first("planted_c4");
+     * if (bomb !== null) {
+     *     const blow: number = unsafe.getFloat(bomb.resolve(), "CPlantedC4", "m_flC4Blow");
+     * }
+     * ```
      */
     const unsafe: {
         /**

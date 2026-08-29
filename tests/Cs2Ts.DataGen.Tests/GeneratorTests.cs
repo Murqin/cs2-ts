@@ -14,8 +14,9 @@ namespace Cs2Ts.DataGen.Tests;
 /// </summary>
 public sealed class GeneratorTests
 {
-    private static readonly SchemaSurface Pawn = Surfaces.Read("PawnRaw", typeof(CCSPlayerPawn));
-    private static readonly SchemaSurface Controller = Surfaces.Read("ControllerRaw", typeof(CCSPlayerController));
+    private static readonly IReadOnlyList<SchemaSurface> AllSurfaces = Surfaces.All();
+    private static readonly SchemaSurface Pawn = AllSurfaces.First(surface => surface.Name == "PawnRaw");
+    private static readonly SchemaSurface Controller = AllSurfaces.First(surface => surface.Name == "ControllerRaw");
     private static readonly IReadOnlyList<EventSurface> GameEvents = Events.Read(typeof(CCSPlayerPawn).Assembly);
 
     [Fact]
@@ -23,7 +24,7 @@ public sealed class GeneratorTests
     {
         var root = Repository.Root();
 
-        foreach (var surface in new[] { Pawn, Controller })
+        foreach (var surface in AllSurfaces)
         {
             var path = Path.Combine(root, "src", "Cs2Ts.Plugin", "Generated", $"{surface.Name}.g.cs");
             Assert.True(File.Exists(path), $"{path} is missing; run 'dotnet run --project tools/datagen'");
@@ -40,8 +41,7 @@ public sealed class GeneratorTests
         Assert.Equal(
             declarations,
             Region.Replace(declarations, string.Join("\n", [
-                Emit.TypeScript(Pawn),
-                Emit.TypeScript(Controller),
+                .. AllSurfaces.Select(Emit.TypeScript),
                 Emit.TypeScriptEvents(GameEvents),
             ])));
     }
@@ -112,7 +112,7 @@ public sealed class GeneratorTests
     [Fact]
     public void EveryWriteReplicates()
     {
-        foreach (var surface in new[] { Pawn, Controller })
+        foreach (var surface in AllSurfaces)
         {
             var emitted = Emit.CSharp(surface);
             var writable = surface.Fields.Where(field => field.WriteFormat is not null).ToList();

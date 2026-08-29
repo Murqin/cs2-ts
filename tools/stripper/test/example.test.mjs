@@ -280,6 +280,76 @@ test("a raw field is writable and typed", () => {
         /TS2339/);
 });
 
+test("the entity sample compiles against the shipped tsconfig", () => {
+    const example = readFileSync(join(fixtures, "entities.ts"), "utf8");
+    assert.equal(check(example), "");
+});
+
+test("a slot may be empty, and the compiler says so", () => {
+    // byIndex and first are lookups that can fail. Reaching through one without saying
+    // what happens then is the mistake the null exists to catch.
+    assert.match(check('on("tick", (): void => { entities.byIndex(42).remove(); });\n'), /TS18047|TS2531|TS2533/);
+    assert.match(check('on("tick", (): void => { entities.first("weapon_ak47").remove(); });\n'), /TS18047|TS2531|TS2533/);
+
+    assert.equal(check('on("tick", (): void => { entities.byIndex(42)?.remove(); });\n'), "");
+});
+
+test("create hands back an entity rather than something that may be nothing", () => {
+    // The difference between making and finding: a lookup can miss, a creation either
+    // works or throws. A null here would cost every script a check that cannot fail.
+    assert.equal(
+        check('command("!crate", (): void => { const c = entities.create("prop_physics"); c.spawn(); });\n'),
+        "");
+});
+
+test("an entity's position may be nothing until it is spawned", () => {
+    // A created entity has no place in the world yet, and that is the case a script
+    // making entities meets first.
+    assert.match(
+        check('command("!c", (): void => { entities.create("prop_physics").position.x; });\n'),
+        /TS18047|TS2531|TS2533/);
+
+    assert.equal(
+        check('command("!c", (): void => { const p = entities.create("prop_physics").position; if (p) { p.x.toFixed(0); } });\n'),
+        "");
+});
+
+test("an entity's wide surface is the fields every entity has", () => {
+    assert.equal(
+        check('on("tick", (): void => { const e = entities.byIndex(1); if (e) { e.raw.teamNum = 2; } });\n'),
+        "");
+
+    // A pawn's own fields are not on it. This is the honest edge of one surface for
+    // every entity, and it is a compile error rather than undefined at runtime.
+    assert.match(
+        check('on("tick", (): void => { const e = entities.byIndex(1); if (e) { e.raw.isScoped; } });\n'),
+        /TS2339/);
+});
+
+test("index and designerName are readable and not writable", () => {
+    assert.equal(
+        check('on("tick", (): void => { const e = entities.byIndex(1); if (e) { console.log(`${e.designerName} ${e.index}`); } });\n'),
+        "");
+
+    // Both describe the entity. Writing either would look like it worked.
+    assert.match(check('on("tick", (): void => { entities.byIndex(1)!.index = 2; });\n'), /TS2540/);
+    assert.match(check('on("tick", (): void => { entities.byIndex(1)!.designerName = "x"; });\n'), /TS2540/);
+});
+
+test("an input's value is optional, because most inputs take none", () => {
+    assert.equal(check('on("tick", (): void => { entities.byIndex(1)?.input("Kill"); });\n'), "");
+    assert.equal(check('on("tick", (): void => { entities.byIndex(1)?.input("AddOutput", "targetname x"); });\n'), "");
+    assert.match(check('on("tick", (): void => { entities.byIndex(1)?.input("Kill", 1); });\n'), /TS2345|TS2769/);
+});
+
+test("a player's two entities have the entity verbs too", () => {
+    // One concept, not two. A pawn is an entity, so whatever is true of entities is
+    // true of it — including that it has an index and can be asked what it is.
+    assert.equal(
+        check('on("tick", (): void => { const p = players.all()[0]!.pawn; if (p) { console.log(`${p.designerName} ${p.index}`); } });\n'),
+        "");
+});
+
 test("a tick handler takes nothing and returns nothing", () => {
     assert.equal(check('on("tick", (): void => {});\n'), "");
 

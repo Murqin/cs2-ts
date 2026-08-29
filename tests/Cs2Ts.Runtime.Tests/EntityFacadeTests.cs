@@ -214,10 +214,12 @@ public sealed class EntityFacadeTests : IDisposable
         _world.Add(7);
         Expose(7);
 
-        // The entity itself is four members and nothing else. GetType is ClearScript's
-        // and cannot be hidden; AllowReflection staying false is what makes it harmless.
+        // A player's pawn is an entity like any other, and it gets the same members: the
+        // guards, the wide surface, and the verbs that apply to anything in the world.
+        // GetType is ClearScript's and cannot be hidden; AllowReflection staying false is
+        // what makes it harmless.
         Assert.Equal(
-            "GetType,isValid,kind,raw,toString",
+            "GetType,designerName,index,input,isValid,kind,position,raw,remove,resolve,spawn,teleport,toString",
             _engine.Evaluate("Object.keys(player.pawn).sort().join(',')"));
 
         // And the wide surface is the fields and nothing else. Two things are being

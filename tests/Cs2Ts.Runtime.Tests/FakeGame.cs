@@ -3,8 +3,26 @@ using Microsoft.ClearScript;
 
 namespace Cs2Ts.Runtime.Tests;
 
+/// <summary>
+/// What every object in the fake world has, because every object in the real one does:
+/// a slot, a classname, and somewhere to be. It is the fake's stand-in for CBaseEntity,
+/// and it exists so that one <see cref="FakeEntityAccess"/> can serve a pawn, a
+/// controller and a loose entity, exactly as one CssEntityAccess does.
+/// </summary>
+public interface IFakeEntity
+{
+    int Index { get; }
+
+    string DesignerName { get; }
+
+    ScriptVector? Origin { get; set; }
+
+    /// <summary>Verbs that reached the game, in order, for tests that care one did.</summary>
+    List<string> Verbs { get; }
+}
+
 /// <summary>The half of a player that only exists while they are in the world.</summary>
-public sealed class FakePawn
+public sealed class FakePawn : IFakeEntity
 {
     public int Health { get; set; } = 100;
 
@@ -13,11 +31,25 @@ public sealed class FakePawn
     public bool Alive { get; set; } = true;
 
     public ScriptVector? Origin { get; set; } = new(1, 2, 3);
+
+    public int Index { get; init; } = 11;
+
+    public string DesignerName => "player";
+
+    public List<string> Verbs { get; } = [];
 }
 
 /// <summary>The half that survives death, and that a userid resolves to.</summary>
-public sealed class FakeController
+public sealed class FakeController : IFakeEntity
 {
+    public ScriptVector? Origin { get; set; }
+
+    public int Index { get; init; } = 1;
+
+    public string DesignerName => "cs_player_controller";
+
+    public List<string> Verbs { get; } = [];
+
     public required string Name { get; set; }
 
     public required ulong SteamId { get; init; }
@@ -134,9 +166,11 @@ public sealed class FakeOperations(FakeWorld world) : IPlayerOperations<FakeCont
         Writes.Add($"armor={armor}");
     }
 
-    public ScriptSurface CreateControllerRaw(Func<FakeController> resolve) => new FakeControllerRaw(resolve);
+    public IEntityAccess AccessController(Func<FakeController> resolve) =>
+        new FakeEntityAccess(new FakeControllerRaw(resolve), resolve);
 
-    public ScriptSurface CreatePawnRaw(Func<FakePawn> resolve) => new FakePawnRaw(resolve);
+    public IEntityAccess AccessPawn(Func<FakePawn> resolve) =>
+        new FakeEntityAccess(new FakePawnRaw(resolve), resolve);
 
     public ScriptVector? GetPosition(FakePawn pawn) => pawn.Origin;
 
@@ -228,4 +262,184 @@ public sealed class FakePlayerDeathEvent(
 
     [ScriptMember("weapon")]
     public string Weapon { get; } = weapon;
+}
+
+/// <summary>
+/// The game side of an entity, faked. Everything CounterStrikeSharp would do here is
+/// one call; what the facade is responsible for is on the other side of this interface.
+///
+/// It resolves on every member for the same reason the real one does, and the tests that
+/// count lookups are what hold it to that.
+/// </summary>
+/// <param name="remove">
+/// What removing actually does to the world, for the fake that has a world to take
+/// something out of. Without it removal is only recorded — which is all a player's own
+/// two entities can honestly report here, since the player fake takes them away by
+/// disconnecting rather than by this.
+/// </param>
+public sealed class FakeEntityAccess(
+    ScriptSurface raw,
+    Func<IFakeEntity> resolve,
+    Action<IFakeEntity>? remove = null) : IEntityAccess
+{
+    public ScriptSurface Raw { get; } = raw;
+
+    public int Index => resolve().Index;
+
+    public string DesignerName => resolve().DesignerName;
+
+    public ScriptVector? Position => resolve().Origin;
+
+    public void Teleport(float x, float y, float z)
+    {
+        var entity = resolve();
+        entity.Origin = new ScriptVector(x, y, z);
+        entity.Verbs.Add($"teleport={x},{y},{z}");
+    }
+
+    public void Spawn() => resolve().Verbs.Add("spawn");
+
+    public void Remove()
+    {
+        var entity = resolve();
+        entity.Verbs.Add("remove");
+        remove?.Invoke(entity);
+    }
+
+    public void Input(string name, string value) => resolve().Verbs.Add($"input:{name}={value}");
+
+    public object Resolve() => resolve();
+}
+
+/// <summary>
+/// Something in the world that is not a player: a weapon, a prop, the bomb.
+///
+/// It carries a serial number next to its index because that is what the real handle
+/// does, and the difference between the two is the thing <see cref="EntityFacadeTable"/>
+/// exists to get right — a slot is reused, a slot plus a serial is not.
+/// </summary>
+public sealed class FakeEntity : IFakeEntity
+{
+    public required int Index { get; init; }
+
+    /// <summary>How many times this slot has been used. The game bumps it; here a test does.</summary>
+    public required int Serial { get; init; }
+
+    public required string DesignerName { get; init; }
+
+    public ScriptVector? Origin { get; set; } = new(0, 0, 0);
+
+    /// <summary>One of the fields the wide surface writes through to.</summary>
+    public int TeamNum { get; set; }
+
+    public List<string> Verbs { get; } = [];
+
+    /// <summary>
+    /// The identity: the slot with the serial packed above it, laid out as the game
+    /// lays it out — fifteen bits of index, the rest serial.
+    /// </summary>
+    public long Handle => (uint)Index | ((long)Serial << 15);
+}
+
+/// <summary>
+/// A world a test can create and destroy entities in, and the table over it.
+///
+/// The resolver is the point of the fake: it looks up by index and then refuses a
+/// handle whose serial does not match what is in the slot now, which is exactly what
+/// the game's own handle lookup does and what makes a stored reference safe.
+/// </summary>
+public sealed class FakeEntityWorld
+{
+    private readonly Dictionary<int, FakeEntity> _slots = [];
+    private int _nextSerial = 1;
+
+    public FakeEntityWorld() => Table = new EntityFacadeTable(Create);
+
+    public EntityFacadeTable Table { get; }
+
+    /// <summary>How many times a handle has been turned into an entity.</summary>
+    public int Lookups { get; private set; }
+
+    /// <summary>Puts an entity in a slot, taking the next serial number for it.</summary>
+    public FakeEntity Spawn(int index, string designerName = "prop_physics")
+    {
+        var entity = new FakeEntity
+        {
+            Index = index,
+            Serial = _nextSerial++,
+            DesignerName = designerName,
+        };
+
+        _slots[index] = entity;
+        return entity;
+    }
+
+    /// <summary>Empties a slot. Anything holding a handle to what was in it is now stale.</summary>
+    public void Destroy(int index) => _slots.Remove(index);
+
+    /// <summary>The facade for an entity, the way the plugin's own lookups get one.</summary>
+    public EntityFacade? For(FakeEntity entity) => Table.For(entity.Handle);
+
+    /// <summary>The entity in a slot, or null when the slot is empty.</summary>
+    public EntityFacade? ByIndex(int index) =>
+        _slots.TryGetValue(index, out var entity) ? For(entity) : null;
+
+    /// <summary>Every entity with exactly this classname.</summary>
+    public EntityFacade[] Find(string designerName) =>
+        [.. _slots.Values
+            .Where(entity => entity.DesignerName == designerName)
+            .OrderBy(entity => entity.Index)
+            .Select(For)
+            .OfType<EntityFacade>()];
+
+    /// <summary>Everything in the world.</summary>
+    public EntityFacade[] All() =>
+        [.. _slots.Values.OrderBy(entity => entity.Index).Select(For).OfType<EntityFacade>()];
+
+    /// <summary>Makes one, in the first free slot, the way the game would.</summary>
+    public EntityFacade Make(string designerName)
+    {
+        var index = 1;
+        while (_slots.ContainsKey(index))
+        {
+            index++;
+        }
+
+        return For(Spawn(index, designerName))!;
+    }
+
+    private FakeEntity? Resolve(long handle)
+    {
+        Lookups++;
+        var index = (int)(handle & 0x7FFF);
+        return _slots.TryGetValue(index, out var entity) && entity.Handle == handle ? entity : null;
+    }
+
+    private EntityFacade? Create(long handle)
+    {
+        if (Resolve(handle) is not { } entity)
+        {
+            return null;
+        }
+
+        FakeEntity Live() => Resolve(handle) ?? throw new DeadEntityException("entity", handle & 0x7FFF);
+
+        return new EntityFacade(
+            "entity",
+            $"{entity.DesignerName}:{entity.Index}",
+            new FakeEntityAccess(new FakeEntityRaw(Live), Live, gone => Destroy(gone.Index)),
+            () => Resolve(handle) is not null);
+    }
+}
+
+/// <summary>The wide surface an entity gets, faked down to the fields a test reads.</summary>
+[DefaultScriptUsage(ScriptAccess.None)]
+public sealed class FakeEntityRaw(Func<FakeEntity> resolve) : ScriptSurface
+{
+    [ScriptMember("teamNum")]
+    public int TeamNum
+    {
+        get => resolve().TeamNum;
+        set => resolve().TeamNum = value;
+    }
 }

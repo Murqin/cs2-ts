@@ -182,7 +182,7 @@ the server, with JSDoc types wherever they are wanted.
 | --- | --- | --- |
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
 | 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
-| 2 | Player and entity APIs, commands, timers, escape hatch | facade, commands, timers and the escape hatch |
+| 2 | Player and entity APIs, commands, timers, escape hatch | facade, commands, timers, entities and the escape hatch |
 | 3 | `@cs2-ts/api`, editor support, documentation | |
 | 4 | Module resolution, permissions, plugin distribution | |
 
@@ -233,7 +233,15 @@ test suites run live with the tests, and a worked set for authors is written
 alongside the documentation rather than before it.
 
 ```ts
-on("player_connect", (player: Player): void => {
+// Every game event hands its handler one object, generated from the game's own event
+// class, so the fields are the ones the event really carries. A player on an event may
+// be nobody — a kill by the world has no attacker — and the compiler asks about it.
+on("player_connect_full", (e: PlayerConnectFullEvent): void => {
+    const player = e.player;
+    if (player === null) {
+        return;
+    }
+
     player.sendChat(`welcome, ${player.name}`);
 
     server.nextFrame((): void => {
@@ -264,7 +272,12 @@ command("!heal", (player: Player | null): void => {
     }
 });
 
-on("player_death", (player: Player): void => {
+on("player_death", (e: PlayerDeathEvent): void => {
+    const player = e.player;
+    if (player === null) {
+        return;
+    }
+
     // Timers belong to the script that set them, so saving the file cancels this one
     // rather than leaving the old version's work running under the new one. Three
     // seconds is long enough for the player to have left; isValid is the question.
@@ -273,6 +286,20 @@ on("player_death", (player: Player): void => {
             player.sendChat("respawning shortly");
         }
     }, 3_000);
+});
+
+// Things in the world that are not players. An entity reference holds the game's own
+// handle — a slot with a serial number above it — so one kept after the entity is gone
+// reads as invalid rather than quietly becoming whatever took the slot next.
+command("!crate", (player: Player | null): void => {
+    if (!player?.isAlive) {
+        return;
+    }
+
+    const here = player.position;
+    const crate = entities.create("prop_physics_override");
+    crate.spawn();
+    crate.teleport(here.x, here.y, here.z + 32);
 });
 ```
 

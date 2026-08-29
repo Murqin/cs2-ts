@@ -30,10 +30,18 @@ public sealed class CssPlayerOperations : IPlayerOperations<CCSPlayerController,
     }
 
     /// <inheritdoc />
-    public ScriptSurface CreateControllerRaw(Func<CCSPlayerController> resolve) => new ControllerRaw(resolve);
+    /// <remarks>
+    /// The resolver is handed on twice: once as itself, for the wide surface, and once
+    /// widened to <c>Func&lt;CBaseEntity&gt;</c> for the verbs every entity shares. The
+    /// widening is free — Func is covariant in its result — and it is what lets a
+    /// player's two entities be the same kind of object as a weapon or a door.
+    /// </remarks>
+    public IEntityAccess AccessController(Func<CCSPlayerController> resolve) =>
+        new CssEntityAccess(resolve, new ControllerRaw(resolve));
 
     /// <inheritdoc />
-    public ScriptSurface CreatePawnRaw(Func<CCSPlayerPawn> resolve) => new PawnRaw(resolve);
+    public IEntityAccess AccessPawn(Func<CCSPlayerPawn> resolve) =>
+        new CssEntityAccess(resolve, new PawnRaw(resolve));
 
     /// <inheritdoc />
     public string GetName(CCSPlayerController controller) => controller.PlayerName;

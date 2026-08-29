@@ -195,7 +195,7 @@ public sealed class PlayerFacade<TController, TPawn>
             return _controllerEntity ??= new EntityFacade(
                 "controller",
                 $"controller of {this}",
-                _operations.CreateControllerRaw(() => Controller),
+                _operations.AccessController(() => Controller),
                 () => _handle.Find() is not null);
         }
     }
@@ -220,7 +220,7 @@ public sealed class PlayerFacade<TController, TPawn>
             : _pawnEntity ??= new EntityFacade(
                 "pawn",
                 $"pawn of {this}",
-                _operations.CreatePawnRaw(() => Pawn),
+                _operations.AccessPawn(() => Pawn),
                 () => _handle.Find() is { } controller && _operations.FindPawn(controller) is not null);
 
     /// <summary>

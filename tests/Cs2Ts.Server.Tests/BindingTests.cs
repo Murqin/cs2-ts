@@ -269,6 +269,163 @@ public sealed class BindingTests(ServerFixture fixture)
         Assert.Contains("player_hrut", warning, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The entity list, and the identity over it. Nothing here has a fake that can fail
+    /// the same way: the lookup walks the game's own entity list, and the identity is the
+    /// handle the game itself keeps.
+    /// </summary>
+    [Fact]
+    public async Task TheWorldCanBeSearchedAndOneEntityIsOneObject()
+    {
+        var server = fixture.Require();
+
+        server.Command("css_hentworld");
+        var fields = Fields(await server.WaitForAsync(
+            l => l.Contains("HARNESS entworld ", StringComparison.Ordinal), Answer), "entworld ");
+
+        // A stock map is a couple of thousand entities before anyone joins. One would
+        // mean the walk stopped at the head of the list.
+        Assert.True(int.Parse(fields["count"]) > 100, $"only {fields["count"]} entities");
+
+        // Two lookups of one entity are one object, which is what makes `===` usable.
+        Assert.Equal("true", fields["same"]);
+        Assert.Equal("true", fields["named"]);
+
+        // Exact rather than CounterStrikeSharp's substring search, which would also
+        // return every classname that merely contains this one.
+        Assert.Equal("true", fields["exact"]);
+        Assert.Equal("true", fields["valid"]);
+        Assert.Equal("number", fields["index"]);
+    }
+
+    /// <summary>
+    /// The same pawn reached from both directions: through the player, and through the
+    /// entity list by index. The two have to agree about health, or one of them is
+    /// reading a different object — and the wide surface here is the generated
+    /// CBaseEntity one, reached by schema names nobody has checked before.
+    /// </summary>
+    [Fact]
+    public async Task APawnFoundThroughTheEntityListIsTheSamePawn()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        server.Command("css_hentpawn");
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS entpawn ", StringComparison.Ordinal), Answer);
+
+        Assert.DoesNotContain("no-pawn", line, StringComparison.Ordinal);
+        var fields = Fields(line, "entpawn ");
+
+        Assert.Equal("true", fields["found"]);
+        Assert.Equal("pawn", fields["kind"]);
+        Assert.Equal(Halves(fields["health"]).Curated, Halves(fields["health"]).Wide);
+        Assert.Equal(Halves(fields["team"]).Curated, Halves(fields["team"]).Wide);
+
+        // The classname of a player's body, which is also proof that DesignerName is
+        // reading the entity's identity rather than an empty string.
+        Assert.NotEmpty(fields["name"]);
+    }
+
+    [Fact]
+    public async Task AnEntityIsAWayIntoTheEscapeHatch()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        server.Command("css_hentunsafe");
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS entunsafe ", StringComparison.Ordinal), Answer);
+
+        // Three routes to one field: unsafe by name, the generated surface, and the
+        // player facade. The middle one is what this step added; without the first two
+        // agreeing with it there would be nothing to check it against.
+        Assert.Contains("host=41 raw=41 facade=41", line, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnEntityCanBeMadeAndPutSomewhere()
+    {
+        var server = fixture.Require();
+
+        try
+        {
+            server.Command("css_hentmake");
+            var fields = Fields(await server.WaitForAsync(
+                l => l.Contains("HARNESS entmake ", StringComparison.Ordinal), Answer), "entmake ");
+
+            Assert.Equal("info_target", fields["name"]);
+            Assert.Equal("true", fields["valid"]);
+            Assert.Equal("number", fields["index"]);
+
+            // Written before the spawn and still there after it, which is the whole
+            // reason creating and spawning are two steps.
+            Assert.Equal("2", fields["team"]);
+
+            // Moved after spawning, and read back out of the entity rather than out of
+            // what was passed in.
+            Assert.Equal("128", fields["x"]);
+
+            // The generated surface on something that is not a player at all.
+            Assert.Equal("number", fields["health"]);
+            Assert.Equal("number", fields["flags"]);
+        }
+        finally
+        {
+            server.Command("css_hentgone");
+        }
+    }
+
+    [Fact]
+    public async Task AClassnameTheGameDoesNotKnowIsRefused()
+    {
+        var server = fixture.Require();
+
+        server.Command("css_hentbadname");
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS entbadname ", StringComparison.Ordinal), Answer);
+
+        // Unrefused this hands back an object over a null pointer, and every call on it
+        // does nothing. A typo would look like a feature that quietly does not work.
+        Assert.Contains("refused", line, StringComparison.Ordinal);
+        Assert.Contains("no_such_entity_class", line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The claim the whole table is built on, against a real engine: a removed entity
+    /// stays removed, and a reference to it does not follow the slot to whatever the
+    /// game puts there next.
+    /// </summary>
+    [Fact]
+    public async Task AReferenceDoesNotFollowASlotToItsNextOccupant()
+    {
+        var server = fixture.Require();
+
+        server.Command("css_hentmake");
+        await server.WaitForAsync(l => l.Contains("HARNESS entmake ", StringComparison.Ordinal), Answer);
+
+        server.ClearTranscript();
+        server.Command("css_hentgone");
+        var fields = Fields(await server.WaitForAsync(
+            l => l.Contains("HARNESS entgone ", StringComparison.Ordinal), Answer), "entgone ");
+
+        // Whether the slot came back is the game's business and not something to assert.
+        // What must hold either way is that the old reference is dead and the new entity
+        // is a different object.
+        Assert.Equal("false", fields["valid"]);
+        Assert.Equal("false", fields["same"]);
+
+        // And a dead reference answers rather than throwing, because these two are what
+        // a script puts in a log line.
+        Assert.Equal("-1", fields["index"]);
+        Assert.Equal("", fields["name"]);
+    }
+
+    /// <summary>Splits a "key=value key=value" tail into a dictionary.</summary>
+    private static Dictionary<string, string> Fields(string line, string after) =>
+        line[(line.IndexOf(after, StringComparison.Ordinal) + after.Length)..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(field => field.Split('=', 2))
+            .ToDictionary(field => field[0], field => field.Length > 1 ? field[1] : "", StringComparer.Ordinal);
+
     [Fact]
     public async Task AHandleStopsResolvingWhenThePlayerLeaves()
     {
