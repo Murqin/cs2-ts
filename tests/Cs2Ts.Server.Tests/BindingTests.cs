@@ -74,6 +74,58 @@ public sealed class BindingTests(ServerFixture fixture)
     }
 
     [Fact]
+    public async Task ATickHandlerRunsOncePerGameTick()
+    {
+        var server = fixture.Require();
+
+        var first = await TickCountAsync(server);
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        var second = await TickCountAsync(server);
+
+        // The claim is a rate, not that the handler ran at all — a handler called once
+        // and a handler called on every tick both pass "greater than zero", and the
+        // difference between them is the whole feature. This server runs at 64 tick;
+        // the range is wide enough for a busy machine and narrow enough that a handler
+        // driven by anything other than the game loop fails it.
+        var perSecond = (second - first) / 2.0;
+        Assert.InRange(perSecond, 30, 130);
+    }
+
+    [Fact]
+    public async Task ATickHandlerThatKeepsThrowingIsTakenOutOfService()
+    {
+        var server = fixture.Require();
+
+        server.ClearTranscript();
+        server.Command("css_hfailtick");
+
+        // Five failures in ten seconds is the policy, and at 64 tick that is reached in
+        // under a tenth of a second. Nothing here is waiting for a slow burn.
+        var disabled = await server.WaitForAsync(
+            line => line.Contains("has been disabled", StringComparison.Ordinal), Answer);
+        Assert.Contains("handler", disabled, StringComparison.Ordinal);
+
+        // The half that matters more: the flood actually stops. An error reported sixty
+        // four times a second costs the log, the boundary crossing and the unwind, and
+        // it does it forever.
+        server.ClearTranscript();
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        Assert.DoesNotContain(server.Transcript,
+            line => line.Contains("this tick handler always throws", StringComparison.Ordinal));
+    }
+
+    private static async Task<int> TickCountAsync(DedicatedServer server)
+    {
+        server.ClearTranscript();
+        server.Command("css_hticks");
+
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS ticks=", StringComparison.Ordinal), Answer);
+
+        return int.Parse(line[(line.IndexOf("ticks=", StringComparison.Ordinal) + 6)..].Trim());
+    }
+
+    [Fact]
     public async Task TheEscapeHatchWritesASchemaFieldTheFacadeThenReads()
     {
         var server = await fixture.RequireWithPlayersAsync();
@@ -102,6 +154,54 @@ public sealed class BindingTests(ServerFixture fixture)
         // else. There is no unit test for this: the lookup is CounterStrikeSharp's.
         Assert.Contains("refused", line, StringComparison.Ordinal);
         Assert.Contains("has no field called 'm_iHealth'", line, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheWideSurfaceReachesTheSameFieldsTheFacadeDoes()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        server.Command("css_hentity");
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS entity ", StringComparison.Ordinal), Answer);
+
+        // A bot in the world has a pawn. Reaching here without one means the wide
+        // surface reported absent for a player who is standing up, which is the one
+        // thing its nullability must not do.
+        Assert.DoesNotContain("no-pawn", line, StringComparison.Ordinal);
+
+        var fields = line[(line.IndexOf("entity ", StringComparison.Ordinal) + 7)..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(field => field.Split('=', 2))
+            .ToDictionary(field => field[0], field => field[1], StringComparer.Ordinal);
+
+        // Two routes to one field. The curated member goes through CssPlayerOperations,
+        // the generated one through its own property and its own schema name; a wrong
+        // name in the second reads a different offset and these stop matching.
+        Assert.Equal(Halves(fields["health"]).Curated, Halves(fields["health"]).Wide);
+        Assert.Equal(Halves(fields["name"]).Curated, Halves(fields["name"]).Wide);
+
+        // A write through the wide surface, read back through the facade.
+        Assert.Equal("77/77", fields["armor"]);
+
+        // The float write, read back through the field it was written to. The value
+        // arrives from script as a double and the game holds a float; a narrowing that
+        // landed anywhere else would show up here rather than as a rounding nobody sees.
+        Assert.Equal("0.5", fields["velocity"]);
+
+        // What resolve() does to a schema field, and what this must not do: it hands
+        // script an object with nothing on it, in either direction, with nothing logged.
+        // These four are every kind the generated surface carries.
+        Assert.Equal("boolean", fields["scoped"]);
+        Assert.Equal("number", fields["enum"]);
+        Assert.Equal("string", fields["place"]);
+        Assert.Equal("string", fields["wide"]);
+    }
+
+    private static (string Wide, string Curated) Halves(string pair)
+    {
+        var slash = pair.IndexOf('/', StringComparison.Ordinal);
+        return (pair[..slash], pair[(slash + 1)..]);
     }
 
     [Fact]

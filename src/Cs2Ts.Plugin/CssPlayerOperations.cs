@@ -30,6 +30,12 @@ public sealed class CssPlayerOperations : IPlayerOperations<CCSPlayerController,
     }
 
     /// <inheritdoc />
+    public RawSurface CreateControllerRaw(Func<CCSPlayerController> resolve) => new ControllerRaw(resolve);
+
+    /// <inheritdoc />
+    public RawSurface CreatePawnRaw(Func<CCSPlayerPawn> resolve) => new PawnRaw(resolve);
+
+    /// <inheritdoc />
     public string GetName(CCSPlayerController controller) => controller.PlayerName;
 
     /// <inheritdoc />
@@ -97,14 +103,11 @@ public sealed class CssPlayerOperations : IPlayerOperations<CCSPlayerController,
         pawn.Teleport(new Vector3(x, y, z), null, null);
 
     /// <summary>
-    /// Writes a networked field and tells the engine it changed.
-    ///
-    /// The two steps are inseparable, so they are written once, here, rather than at
-    /// every call site where one of them could go missing.
+    /// Writes a networked field and tells the engine it changed. Kept as a name of its
+    /// own because the call sites above read better for it; the rule itself lives in
+    /// <see cref="SchemaWrite"/>, which is the one place in this assembly that knows a
+    /// write has a second half.
     /// </summary>
-    private static void SetNetworked(CBaseEntity entity, string className, string fieldName, Action write)
-    {
-        write();
-        Utilities.SetStateChanged(entity, className, fieldName);
-    }
+    private static void SetNetworked(CBaseEntity entity, string className, string fieldName, Action write) =>
+        SchemaWrite.Replicate(entity, className, fieldName, write);
 }

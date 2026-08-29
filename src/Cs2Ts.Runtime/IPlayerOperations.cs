@@ -27,6 +27,33 @@ public interface IPlayerOperations<TController, TPawn>
     /// </summary>
     TPawn? FindPawn(TController controller);
 
+    /// <summary>
+    /// The wide surface for a controller: an object whose members are the entity's own
+    /// fields, one per schema field, named as the game names them.
+    ///
+    /// It is made out here rather than in <see cref="EntityFacade"/> because the members
+    /// are the game's, and this assembly is the one that is not allowed to know the
+    /// game. What comes back is opaque to the runtime beyond <see cref="RawSurface"/>,
+    /// which is there to keep <see cref="object"/>'s members off it; script sees it
+    /// through <c>entity.raw</c>.
+    ///
+    /// <paramref name="resolve"/> hands back the live controller and throws once the
+    /// player has left. It has to be called on every member access — the object being
+    /// built here outlives any single entity, which is the whole reason it is given a
+    /// way to look one up rather than one to hold.
+    ///
+    /// Called once per player and the result kept, so the cost per access is the lookup
+    /// and not this.
+    /// </summary>
+    RawSurface CreateControllerRaw(Func<TController> resolve);
+
+    /// <summary>
+    /// The same for a pawn. <paramref name="resolve"/> throws for a player who has left
+    /// and for one who is not in the world, which is what makes a stored pawn safe to
+    /// read across a respawn: it finds the new body, or it refuses.
+    /// </summary>
+    RawSurface CreatePawnRaw(Func<TPawn> resolve);
+
     /// <summary>The name the player is showing right now.</summary>
     string GetName(TController controller);
 

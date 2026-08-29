@@ -50,6 +50,48 @@ command("!hbadname", () => {
     }
 });
 
+// The wide surface: `player.pawn` and `player.controller`, and the generated fields
+// hanging off them. No fake can fail the way this can — every member there is a
+// CounterStrikeSharp property reached by a schema name we typed out, so a wrong name is
+// a wrong offset rather than a compile error, and a value that arrives as an object
+// instead of a number is a marshalling question only a real engine answers.
+//
+// Each pair below is one field reached twice, by the curated member and by the generated
+// one. They have to agree, or one of them is looking somewhere else.
+command("!hentity", () => {
+    const target = alivePlayer();
+    if (target === undefined) {
+        console.log("HARNESS entity nobody-alive");
+        return;
+    }
+
+    const pawn = target.pawn;
+    if (pawn === null) {
+        console.log("HARNESS entity no-pawn");
+        return;
+    }
+
+    pawn.raw.armorValue = 77;
+
+    // A float, which is the one write that is narrowed on the way in. Read back through
+    // the same field, so a narrowing that landed somewhere else shows up as a value.
+    pawn.raw.velocityModifier = 0.5;
+
+    // The tail is reported as types rather than values, because the type is the claim:
+    // the escape hatch reads a schema field as an object with nothing on it, and
+    // "object" here would mean this surface had inherited that failure without any other
+    // symptom. The four cover every kind that crosses — boolean, number, string, and an
+    // enum, which is a number in both directions only because it is cast.
+    console.log(
+        `HARNESS entity health=${pawn.raw.health}/${target.health} ` +
+        `armor=${pawn.raw.armorValue}/${target.armor} ` +
+        `name=${target.controller.raw.playerName}/${target.name} ` +
+        `velocity=${pawn.raw.velocityModifier} ` +
+        `scoped=${typeof pawn.raw.isScoped} enum=${typeof pawn.raw.moveType} ` +
+        `place=${typeof pawn.raw.lastPlaceName} ` +
+        `wide=${typeof target.controller.raw.playerDominated}`);
+});
+
 // A player who has left has to stop resolving rather than hand back a stale pointer.
 let held: Player | null = null;
 
@@ -80,3 +122,15 @@ command("!htimer", () => {
 });
 
 console.log("HARNESS ready");
+
+// The tick event, counted rather than logged: a line per tick would be sixty-four
+// lines a second and the transcript would be useless for everything else.
+let ticks = 0;
+
+on("tick", () => {
+    ticks++;
+});
+
+command("!hticks", () => {
+    console.log(`HARNESS ticks=${ticks}`);
+});

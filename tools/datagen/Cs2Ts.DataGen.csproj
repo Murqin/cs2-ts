@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Cs2Ts.DataGen</AssemblyName>
+    <RootNamespace>Cs2Ts.DataGen</RootNamespace>
+    <!-- A build tool, not something the server loads. It is the only project here that
+         reads CounterStrikeSharp's assembly rather than running inside it. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.373" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The decisions this tool makes are worth testing directly, and they are all
+         internal: the alternative is a test that shells out to the executable and can
+         only see an exit code. -->
+    <InternalsVisibleTo Include="Cs2Ts.DataGen.Tests" />
+  </ItemGroup>
+
+</Project>

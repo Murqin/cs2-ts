@@ -136,6 +136,12 @@ public sealed class Cs2TsPlugin : BasePlugin
         LoadScriptsOnce();
         _host?.DrainFrames();
         _host?.AdvanceTimers();
+
+        // Last, so that a handler sees the results of whatever this frame already had
+        // queued rather than half of it. With no script listening this is a dictionary
+        // miss per plugin and no crossing into V8 at all, which is what makes it safe
+        // to call unconditionally sixty-four times a second.
+        _host?.Dispatch("tick");
     }
 
     /// <summary>

@@ -442,7 +442,7 @@ public sealed class PlayerFacadeTests : IDisposable
         // ClearScript's protocol. What keeps it harmless is AllowReflection staying
         // false, which EntityHandleTests pins directly.
         Assert.Equal(
-            "GetType,armor,health,id,isAlive,isBot,isValid,kind,money,name,position,resolve,sendChat,steamId,team,teleport,toString",
+            "GetType,armor,controller,health,id,isAlive,isBot,isValid,kind,money,name,pawn,position,resolve,sendChat,steamId,team,teleport,toString",
             _engine.Evaluate("Object.keys(player).sort().join(',')"));
     }
 
