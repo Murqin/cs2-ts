@@ -22,6 +22,19 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     public override string ModuleAuthor => "Icarus Murqin";
     public override string ModuleDescription => "TypeScript scripting for CounterStrike 2.";
 
+    /// <summary>
+    /// The version of the surface a script sees: the globals, their members, and what
+    /// the events carry. A plugin's <c>plugin.json</c> may name the one it was written
+    /// against, and one asking for a newer surface than this is refused by name rather
+    /// than left to fail at whichever global it reaches for first.
+    ///
+    /// It is not <see cref="ModuleVersion"/> and moves for different reasons: a fix in
+    /// the binding changes that one and not this, while adding a global changes this one
+    /// and not necessarily that. The minor number moves when something is added, the
+    /// major when something a script could have used is gone.
+    /// </summary>
+    public const string ScriptApiVersion = "0.1";
+
     private ScriptHost? _host;
     private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;
 
@@ -361,7 +374,8 @@ public sealed partial class Cs2TsPlugin : BasePlugin
 
             // Looked up in what is on disk now rather than in what is loaded: reloading
             // a plugin that failed to load last time is the main reason to type this.
-            _known = PluginDiscovery.Find(ScriptDirectory, message => Console.WriteLine($"[CS2-TS] {message}"));
+            _known = PluginDiscovery.Find(
+                ScriptDirectory, ScriptApiVersion, message => Console.WriteLine($"[CS2-TS] {message}"));
             var source = _known.FirstOrDefault(plugin => plugin.Name == requested);
 
             if (source is null)
@@ -381,7 +395,12 @@ public sealed partial class Cs2TsPlugin : BasePlugin
                 return;
             }
 
-            Console.WriteLine($"[CS2-TS] {_host.Loaded.Count} script(s): {string.Join(", ", _host.Loaded)}");
+            // Named as they describe themselves, with the version a bug report needs.
+            var listed = _host.Loaded
+                .Select(name => _known.FirstOrDefault(plugin => plugin.Name == name)?.Describe() ?? name);
+
+            Console.WriteLine($"[CS2-TS] {_host.Loaded.Count} script(s): {string.Join(", ", listed)}");
+            Console.WriteLine($"[CS2-TS] script API: {ScriptApiVersion}");
             Console.WriteLine($"[CS2-TS] queued frames: {_host.Frames.Count}, dropped: {_host.Frames.Dropped}");
             Console.WriteLine($"[CS2-TS] pending timers: {_host.Timers.Count}, dropped: {_host.Timers.Dropped}");
             Console.WriteLine($"[CS2-TS] entities handed out: {_entities.Count}");
@@ -402,7 +421,8 @@ public sealed partial class Cs2TsPlugin : BasePlugin
             return;
         }
 
-        var found = PluginDiscovery.Find(ScriptDirectory, message => Console.WriteLine($"[CS2-TS] {message}"));
+        var found = PluginDiscovery.Find(
+            ScriptDirectory, ScriptApiVersion, message => Console.WriteLine($"[CS2-TS] {message}"));
         _known = found;
 
         var onDisk = found.Select(plugin => plugin.Name).ToHashSet(StringComparer.Ordinal);
@@ -451,8 +471,12 @@ public sealed partial class Cs2TsPlugin : BasePlugin
 
         if (result.Succeeded)
         {
+            // A folder plugin says which version of itself this is; a single file has no
+            // manifest and its file name is already the whole of what there is to say.
+            var version = source.Manifest is { } manifest ? $" v{manifest.Version}" : "";
+
             Console.WriteLine(
-                $"[CS2-TS] loaded {source.DisplayName} " +
+                $"[CS2-TS] loaded {source.DisplayName}{version} " +
                 $"({text.Length / 1024.0:F1} KB in {elapsed.TotalMilliseconds:F1} ms)");
             return;
         }
@@ -480,7 +504,8 @@ public sealed partial class Cs2TsPlugin : BasePlugin
 
         var owned = PluginDiscovery.Owning(_known, path);
 
-        _known = PluginDiscovery.Find(ScriptDirectory, message => Console.WriteLine($"[CS2-TS] {message}"));
+        _known = PluginDiscovery.Find(
+            ScriptDirectory, ScriptApiVersion, message => Console.WriteLine($"[CS2-TS] {message}"));
         var owner = PluginDiscovery.Owning(_known, path);
 
         if (owner is not null)

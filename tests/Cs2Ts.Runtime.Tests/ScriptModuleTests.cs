@@ -48,6 +48,19 @@ public sealed class ScriptModuleTests : IDisposable
         File.WriteAllText(path, contents);
     }
 
+    /// <summary>
+    /// A folder plugin's entry point and the manifest every folder plugin needs. The
+    /// manifest is not what these tests are about; leaving it out of each of them keeps
+    /// what they are about visible.
+    /// </summary>
+    private void Entry(string plugin, string contents)
+    {
+        Write($"{plugin}/index.ts", contents);
+        Write($"{plugin}/plugin.json", $$"""
+            { "name": "{{plugin}}", "version": "1.0.0" }
+            """);
+    }
+
     /// <summary>Discovers and loads whatever is on disk, the way the binding does.</summary>
     private PluginLoadResult Load(string name)
     {
@@ -59,7 +72,7 @@ public sealed class ScriptModuleTests : IDisposable
     public void AFolderPluginImportsItsOwnFiles()
     {
         Write("jetpack/physics.ts", "export const boost: number = 21;\n");
-        Write("jetpack/index.ts",
+        Entry("jetpack",
             "import { boost } from './physics.ts';\nconsole.log(`boost ${boost * 2}`);\n");
 
         var result = Load("jetpack");
@@ -78,7 +91,7 @@ public sealed class ScriptModuleTests : IDisposable
         Write("jetpack/deep/vector.ts", "export const up: number = 3;\n");
         Write("jetpack/deep/index.ts",
             "import { up } from './vector.ts';\nexport const lift = (n: number): number => n * up;\n");
-        Write("jetpack/index.ts",
+        Entry("jetpack",
             "import { lift } from './deep/index.ts';\nconsole.log(`lift ${lift(4)}`);\n");
 
         Assert.True(Load("jetpack").Succeeded);
@@ -100,7 +113,7 @@ public sealed class ScriptModuleTests : IDisposable
     {
         Write("jetpack/physics.ts", "export const boost: number = 21;\n");
         Write("jetpack/deep/index.ts", "export const boost: number = 21;\n");
-        Write("jetpack/index.ts",
+        Entry("jetpack",
             $"import {{ boost }} from '{specifier}';\nconsole.log(`boost ${{boost}}`);\n");
 
         Assert.True(Load("jetpack").Succeeded, string.Join("; ", _logged));
@@ -110,9 +123,9 @@ public sealed class ScriptModuleTests : IDisposable
     [Fact]
     public void APluginCannotReachOutsideItsOwnFolder()
     {
-        Write("surf/index.ts", "export const secret: number = 1;\n");
+        Entry("surf", "export const secret: number = 1;\n");
         Write("surf/internals.ts", "export const secret: number = 1;\n");
-        Write("jetpack/index.ts", "import { secret } from '../surf/internals.ts';\n");
+        Entry("jetpack", "import { secret } from '../surf/internals.ts';\n");
 
         var result = Load("jetpack");
 
@@ -141,7 +154,7 @@ public sealed class ScriptModuleTests : IDisposable
     [Fact]
     public void APackageImportSaysThatItIsAPackage()
     {
-        Write("jetpack/index.ts", "import { chunk } from 'lodash';\n");
+        Entry("jetpack", "import { chunk } from 'lodash';\n");
 
         var result = Load("jetpack");
 
@@ -158,7 +171,7 @@ public sealed class ScriptModuleTests : IDisposable
     [Fact]
     public void AMissingModuleNamesWhatWasAskedFor()
     {
-        Write("jetpack/index.ts", "import { boost } from './physics.ts';\n");
+        Entry("jetpack", "import { boost } from './physics.ts';\n");
 
         var result = Load("jetpack");
 
@@ -176,7 +189,7 @@ public sealed class ScriptModuleTests : IDisposable
     public void AModuleThatWillNotCompileIsReportedInItsOwnFile()
     {
         Write("jetpack/physics.ts", "enum Direction { Up, Down }\nexport const up = Direction.Up;\n");
-        Write("jetpack/index.ts", "import { up } from './physics.ts';\n");
+        Entry("jetpack", "import { up } from './physics.ts';\n");
 
         var result = Load("jetpack");
 
@@ -192,7 +205,7 @@ public sealed class ScriptModuleTests : IDisposable
     public void AThrowInsideAModuleNamesTheModule()
     {
         Write("jetpack/physics.ts", "export function boost(): number {\n    throw new Error('physics blew up');\n}\n");
-        Write("jetpack/index.ts", "import { boost } from './physics.ts';\non('tick', () => boost());\n");
+        Entry("jetpack", "import { boost } from './physics.ts';\non('tick', () => boost());\n");
 
         Assert.True(Load("jetpack").Succeeded);
 
@@ -212,8 +225,8 @@ public sealed class ScriptModuleTests : IDisposable
     [Fact]
     public void TwoIndexFilesStayTellableApart()
     {
-        Write("jetpack/index.ts", "on('tick', () => { throw new Error('from jetpack'); });\n");
-        Write("surf/index.ts", "on('tick', () => { throw new Error('from surf'); });\n");
+        Entry("jetpack", "on('tick', () => { throw new Error('from jetpack'); });\n");
+        Entry("surf", "on('tick', () => { throw new Error('from surf'); });\n");
 
         Assert.True(Load("jetpack").Succeeded);
         Assert.True(Load("surf").Succeeded);
@@ -236,7 +249,7 @@ public sealed class ScriptModuleTests : IDisposable
     public void ReloadingDoesNotRenameTheFiles()
     {
         Write("jetpack/physics.ts", "export function boost(): number {\n    throw new Error('physics blew up');\n}\n");
-        Write("jetpack/index.ts", "import { boost } from './physics.ts';\non('tick', () => boost());\n");
+        Entry("jetpack", "import { boost } from './physics.ts';\non('tick', () => boost());\n");
 
         for (var load = 0; load < 3; load++)
         {
@@ -261,7 +274,7 @@ public sealed class ScriptModuleTests : IDisposable
     {
         Write("jetpack/counter.ts", "console.log('counter ran');\nexport const n: number = 1;\n");
         Write("jetpack/other.ts", "import { n } from './counter.ts';\nexport const m: number = n;\n");
-        Write("jetpack/index.ts",
+        Entry("jetpack",
             "import { n } from './counter.ts';\nimport { m } from './other.ts';\nconsole.log(`sum ${n + m}`);\n");
 
         Assert.True(Load("jetpack").Succeeded);

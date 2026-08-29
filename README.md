@@ -232,6 +232,7 @@ scripts/
 ├── tsconfig.json       written for you, once
 ├── welcome.ts          a plugin
 └── jetpack/            a plugin
+    ├── plugin.json     what it is
     ├── index.ts        what loads
     ├── physics.ts      a module it imports
     └── hud.ts
@@ -240,6 +241,28 @@ scripts/
 A file at the top of `scripts/` is a plugin. A folder at the top of `scripts/` is a
 plugin too, starting at its `index.ts`; everything else inside it is a module, imported
 by name and never loaded on its own.
+
+A folder plugin also has to say what it is:
+
+```json
+{
+    "name": "jetpack",
+    "version": "1.0.0",
+    "description": "Boosts a player straight up.",
+    "author": "murqin",
+    "api": "0.1"
+}
+```
+
+`name` and `version` are required, and `name` has to match the folder — the folder is
+where a plugin is installed, so an archive that disagrees with the one it was unpacked
+into is an archive somebody renamed. A single file needs none of this: it has no folder
+to keep it in, and it is the shape of plugin you write rather than install.
+
+`api` is the CS2-TS surface the plugin was written against. It is optional and it is the
+field that does something today: a plugin asking for a newer surface than the server has
+is refused by name, rather than loaded and left to fail at whichever global it reaches
+for first. `cs2ts_status` prints the surface this server provides.
 
 The folder is also the boundary: a plugin can import what is inside it and nothing else.
 That is what makes one plugin an archive you can hand to somebody — and what stops

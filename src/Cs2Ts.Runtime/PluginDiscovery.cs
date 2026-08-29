@@ -35,15 +35,30 @@ public static class PluginDiscovery
     private static readonly string[] IgnoredFolders = ["node_modules"];
 
     /// <summary>
+    /// Every plugin in a directory, in a stable order, without checking what surface
+    /// version any of them asked for.
+    /// </summary>
+    /// <param name="directory">The scripts folder.</param>
+    /// <param name="report">Told about anything that looks like a plugin and is not loadable.</param>
+    public static IReadOnlyList<PluginSource> Find(string directory, Action<string> report) =>
+        Find(directory, surface: null, report);
+
+    /// <summary>
     /// Every plugin in a directory, in a stable order.
     /// </summary>
     /// <param name="directory">The scripts folder.</param>
+    /// <param name="surface">
+    /// The version of the script-facing API this server provides, as major.minor. A
+    /// plugin whose manifest asks for a newer one is refused here rather than left to
+    /// fail at the first global it expects and does not find. Null skips the check,
+    /// which is what a test that is not about versions wants.
+    /// </param>
     /// <param name="report">
     /// Told about anything that looks like a plugin and is not loadable. It is spoken
     /// out loud rather than skipped quietly: a folder somebody believes they installed
     /// and that does nothing is worse than an error message.
     /// </param>
-    public static IReadOnlyList<PluginSource> Find(string directory, Action<string> report)
+    public static IReadOnlyList<PluginSource> Find(string directory, string? surface, Action<string> report)
     {
         ArgumentException.ThrowIfNullOrEmpty(directory);
         ArgumentNullException.ThrowIfNull(report);
@@ -55,7 +70,7 @@ public static class PluginDiscovery
 
         var found = new List<PluginSource>();
         found.AddRange(SingleFiles(directory));
-        found.AddRange(Folders(directory, report));
+        found.AddRange(Folders(directory, surface, report));
 
         return Unambiguous(found, report);
     }
@@ -118,7 +133,7 @@ public static class PluginDiscovery
             .Select(path => new PluginSource(
                 Path.GetFileNameWithoutExtension(path), path, ModuleRoot: null));
 
-    private static IEnumerable<PluginSource> Folders(string directory, Action<string> report)
+    private static IEnumerable<PluginSource> Folders(string directory, string? surface, Action<string> report)
     {
         foreach (var folder in Directory.EnumerateDirectories(directory).OrderBy(p => p, StringComparer.Ordinal))
         {
@@ -156,7 +171,23 @@ public static class PluginDiscovery
                 continue;
             }
 
-            yield return new PluginSource(name, entry, folder);
+            // Required, and only of a folder. A plugin somebody might install has to
+            // say what it is and which version of it this is; a single file has nowhere
+            // to say it and is not the thing being installed.
+            var manifest = PluginManifest.Read(folder, name, out var error);
+            if (manifest is null)
+            {
+                report(error!);
+                continue;
+            }
+
+            if (surface is not null && !manifest.RunsAgainst(surface, out var mismatch))
+            {
+                report(mismatch!);
+                continue;
+            }
+
+            yield return new PluginSource(name, entry, folder, manifest);
         }
     }
 

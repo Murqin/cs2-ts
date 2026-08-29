@@ -1,0 +1,7 @@
+{
+    "name": "jetpack",
+    "version": "1.0.0",
+    "description": "Boosts a player straight up, on a charge that refills each round.",
+    "author": "murqin",
+    "api": "0.1"
+}
