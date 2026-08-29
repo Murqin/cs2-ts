@@ -134,9 +134,9 @@ public sealed class FakeOperations(FakeWorld world) : IPlayerOperations<FakeCont
         Writes.Add($"armor={armor}");
     }
 
-    public RawSurface CreateControllerRaw(Func<FakeController> resolve) => new FakeControllerRaw(resolve);
+    public ScriptSurface CreateControllerRaw(Func<FakeController> resolve) => new FakeControllerRaw(resolve);
 
-    public RawSurface CreatePawnRaw(Func<FakePawn> resolve) => new FakePawnRaw(resolve);
+    public ScriptSurface CreatePawnRaw(Func<FakePawn> resolve) => new FakePawnRaw(resolve);
 
     public ScriptVector? GetPosition(FakePawn pawn) => pawn.Origin;
 
@@ -152,7 +152,7 @@ public sealed class FakeOperations(FakeWorld world) : IPlayerOperations<FakeCont
 /// resolve the entity, never the entity itself, and every member goes through it.
 /// </summary>
 [DefaultScriptUsage(ScriptAccess.None)]
-public sealed class FakePawnRaw(Func<FakePawn> resolve) : RawSurface
+public sealed class FakePawnRaw(Func<FakePawn> resolve) : ScriptSurface
 {
     /// <summary>How often a member has asked for the entity. The rule is once per access.</summary>
     public int Resolutions { get; private set; }
@@ -173,7 +173,7 @@ public sealed class FakePawnRaw(Func<FakePawn> resolve) : RawSurface
 }
 
 [DefaultScriptUsage(ScriptAccess.None)]
-public sealed class FakeControllerRaw(Func<FakeController> resolve) : RawSurface
+public sealed class FakeControllerRaw(Func<FakeController> resolve) : ScriptSurface
 {
     [ScriptMember("score")]
     public int Score
@@ -181,4 +181,51 @@ public sealed class FakeControllerRaw(Func<FakeController> resolve) : RawSurface
         get => resolve().Money;
         set => resolve().Money = value;
     }
+}
+
+/// <summary>
+/// What a generated event payload looks like from the runtime's side: a snapshot, with
+/// every player on it a facade rather than the game's own object.
+///
+/// The real ones are generated into the plugin assembly, which this one is not allowed
+/// to know. These carry only the fields the sample scripts read — enough for a script to
+/// be run rather than merely compiled.
+/// </summary>
+[DefaultScriptUsage(ScriptAccess.None)]
+public sealed class FakeRoundStartEvent(double timeLimit) : ScriptSurface
+{
+    [ScriptMember("timelimit")]
+    public double Timelimit { get; } = timeLimit;
+}
+
+/// <summary>An event that carries one player, which is most of them.</summary>
+[DefaultScriptUsage(ScriptAccess.None)]
+public sealed class FakePlayerEvent(PlayerFacade<FakeController, FakePawn>? player) : ScriptSurface
+{
+    [ScriptMember("player")]
+    public PlayerFacade<FakeController, FakePawn>? Player { get; } = player;
+}
+
+/// <summary>
+/// A death, with the fields that made generating events worth doing: who did it, with
+/// what, and whether it was a headshot. The attacker is null when the world did it.
+/// </summary>
+[DefaultScriptUsage(ScriptAccess.None)]
+public sealed class FakePlayerDeathEvent(
+    PlayerFacade<FakeController, FakePawn>? player,
+    PlayerFacade<FakeController, FakePawn>? attacker,
+    bool headshot,
+    string weapon) : ScriptSurface
+{
+    [ScriptMember("player")]
+    public PlayerFacade<FakeController, FakePawn>? Player { get; } = player;
+
+    [ScriptMember("attacker")]
+    public PlayerFacade<FakeController, FakePawn>? Attacker { get; } = attacker;
+
+    [ScriptMember("headshot")]
+    public bool Headshot { get; } = headshot;
+
+    [ScriptMember("weapon")]
+    public string Weapon { get; } = weapon;
 }

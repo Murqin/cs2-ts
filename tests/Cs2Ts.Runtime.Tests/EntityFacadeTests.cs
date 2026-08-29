@@ -224,7 +224,7 @@ public sealed class EntityFacadeTests : IDisposable
         // pinned. The fake's Resolutions counter is public and does not appear, which is
         // the opt-out working on a class that will one day be generated with host-side
         // members on it. And neither do Equals, GetHashCode or ToString, which is
-        // RawSurface working — opting out governs a type's own members, so before that
+        // ScriptSurface working — opting out governs a type's own members, so before that
         // base class existed all three of object's turned up here among the fields.
         Assert.Equal(
             "GetType,armorValue,health",

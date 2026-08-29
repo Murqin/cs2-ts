@@ -46,6 +46,11 @@ public sealed class ScriptHost : IDisposable
     private readonly Func<double> _clock;
     private readonly Dictionary<string, ScriptPlugin> _plugins = [];
     private readonly HashSet<string> _knownCommands = new(StringComparer.Ordinal);
+
+    // Names already reported to the host. A game event is hooked with the server once
+    // for the life of the process, so a reload that re-registers the same handler must
+    // not hook it a second time — that would deliver every firing twice.
+    private readonly HashSet<string> _knownEvents = new(StringComparer.Ordinal);
     private bool _disposed;
 
     /// <param name="report">Where every script error goes. Must not throw.</param>
@@ -119,6 +124,23 @@ public sealed class ScriptHost : IDisposable
     /// </summary>
     public Action<string>? CommandRegistered { get; set; }
 
+    /// <summary>
+    /// Called once for each game event a script asks for, the first time any script
+    /// asks for it.
+    ///
+    /// A game event is not free to listen for — the plugin layer has to hook it with
+    /// the server — and there are two hundred and seventy of them. Hooking all of them
+    /// at load would pay for every event on the server so that a script could use three,
+    /// so nothing is hooked until a script says the name.
+    ///
+    /// The name is whatever the script passed, which includes names no game event has:
+    /// <c>tick</c> is the runtime's own, and a misspelling is a script's mistake. The
+    /// handler is expected to ignore what it does not know rather than refuse it — a
+    /// name that never fires is the author's problem to see, and the runtime has no list
+    /// of the game's events to check it against.
+    /// </summary>
+    public Action<string>? EventRegistered { get; set; }
+
     /// <summary>Command names any loaded plugin answers to, without the console prefix.</summary>
     public IReadOnlyCollection<string> KnownCommands
     {
@@ -176,6 +198,7 @@ public sealed class ScriptHost : IDisposable
                 _watchdog,
                 Configure,
                 OnCommandRegistered,
+                OnEventRegistered,
                 Timers,
                 _clock);
         }
@@ -286,6 +309,46 @@ public sealed class ScriptHost : IDisposable
     /// Notes a command name and passes it on the first time it is seen. Runs while a
     /// plugin is loading, on the game thread.
     /// </summary>
+    /// <summary>
+    /// Whether any loaded plugin is listening for an event. The check that lets the
+    /// plugin layer skip building an event's arguments for an event nobody wants.
+    /// </summary>
+    public bool Handles(string eventName)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(eventName);
+
+        if (_disposed)
+        {
+            return false;
+        }
+
+        lock (_gate)
+        {
+            foreach (var plugin in _plugins.Values)
+            {
+                if (plugin.Handles(eventName))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void OnEventRegistered(string name)
+    {
+        lock (_gate)
+        {
+            if (!_knownEvents.Add(name))
+            {
+                return;
+            }
+        }
+
+        EventRegistered?.Invoke(name);
+    }
+
     private void OnCommandRegistered(string name)
     {
         lock (_gate)

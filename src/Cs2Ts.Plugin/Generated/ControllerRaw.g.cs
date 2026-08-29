@@ -3,6 +3,8 @@
 //     Regenerate with: dotnet run --project tools/datagen
 // </auto-generated>
 
+#nullable enable
+
 using System.Globalization;
 using Cs2Ts.Runtime;
 using Microsoft.ClearScript;
@@ -22,7 +24,7 @@ namespace Cs2Ts.Plugin;
 /// returning something stale once the entity is gone.
 /// </param>
 [DefaultScriptUsage(ScriptAccess.None)]
-public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerController> resolve) : RawSurface
+public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPlayerController> resolve) : ScriptSurface
 {
     /// <summary>CCSPlayerController/m_bAbandonAllowsSurrender</summary>
     [ScriptMember("abandonAllowsSurrender")]
@@ -820,7 +822,7 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
         }
     }
 
-    /// <summary>CBasePlayerController/m_nInButtonsWhichAreToggles — A 64-bit value, as a string: it does not survive a JavaScript number.</summary>
+    /// <summary>CBasePlayerController/m_nInButtonsWhichAreToggles — A 64-bit id, as a string: it does not survive a JavaScript number.</summary>
     [ScriptMember("inButtonsWhichAreToggles")]
     public string InButtonsWhichAreToggles => resolve().InButtonsWhichAreToggles.ToString(CultureInfo.InvariantCulture);
 
@@ -1491,11 +1493,11 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
         }
     }
 
-    /// <summary>CCSPlayerController/m_nPlayerDominated — A 64-bit value, as a string: it does not survive a JavaScript number.</summary>
+    /// <summary>CCSPlayerController/m_nPlayerDominated — A 64-bit id, as a string: it does not survive a JavaScript number.</summary>
     [ScriptMember("playerDominated")]
     public string PlayerDominated => resolve().PlayerDominated.ToString(CultureInfo.InvariantCulture);
 
-    /// <summary>CCSPlayerController/m_nPlayerDominatingMe — A 64-bit value, as a string: it does not survive a JavaScript number.</summary>
+    /// <summary>CCSPlayerController/m_nPlayerDominatingMe — A 64-bit id, as a string: it does not survive a JavaScript number.</summary>
     [ScriptMember("playerDominatingMe")]
     public string PlayerDominatingMe => resolve().PlayerDominatingMe.ToString(CultureInfo.InvariantCulture);
 
@@ -1771,7 +1773,7 @@ public sealed class ControllerRaw(Func<global::CounterStrikeSharp.API.Core.CCSPl
         }
     }
 
-    /// <summary>CBasePlayerController/m_steamID — A 64-bit value, as a string: it does not survive a JavaScript number.</summary>
+    /// <summary>CBasePlayerController/m_steamID — A 64-bit id, as a string: it does not survive a JavaScript number.</summary>
     [ScriptMember("steamID")]
     public string SteamID => resolve().SteamID.ToString(CultureInfo.InvariantCulture);
 

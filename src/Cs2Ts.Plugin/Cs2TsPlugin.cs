@@ -15,7 +15,7 @@ namespace Cs2Ts.Plugin;
 /// table a way to resolve players and a way to act on them, and drains queued work
 /// once a tick.
 /// </summary>
-public sealed class Cs2TsPlugin : BasePlugin
+public sealed partial class Cs2TsPlugin : BasePlugin
 {
     public override string ModuleName => "CS2-TS";
     public override string ModuleVersion => "0.1.0";
@@ -94,6 +94,7 @@ public sealed class Cs2TsPlugin : BasePlugin
 
         _host = new ScriptHost(Report);
         _host.CommandRegistered = RegisterScriptCommand;
+        _host.EventRegistered = HookScriptEvent;
         _players = new PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>(
             "player", ResolvePlayer, _operations);
         _host.Configure = InstallApi;
@@ -101,6 +102,8 @@ public sealed class Cs2TsPlugin : BasePlugin
         Directory.CreateDirectory(ScriptDirectory);
         AuthorSetup.Install(ScriptDirectory, message => Console.WriteLine($"[CS2-TS] {message}"));
         WatchForChanges();
+
+        WarmUpEventSwitch();
 
         // Background work comes back here, on the game thread, once a tick.
         RegisterListener<Listeners.OnTick>(OnTick);
@@ -111,7 +114,6 @@ public sealed class Cs2TsPlugin : BasePlugin
         // server nobody has joined yet.
         RegisterListener<Listeners.OnMapStart>(_ => LoadScriptsOnce());
 
-        RegisterEvents();
         RegisterCommands();
     }
 
@@ -231,61 +233,55 @@ public sealed class Cs2TsPlugin : BasePlugin
         }
     }
 
-    private void RegisterEvents()
-    {
-        // A deliberately short list. The facade is meant to stay behind
-        // CounterStrikeSharp's surface, and events are added when something needs them
-        // rather than in advance.
-        RegisterEventHandler<EventRoundStart>((@event, _) =>
-        {
-            _host?.Dispatch("round_start", @event.Timelimit);
-            return HookResult.Continue;
-        });
-
-        RegisterEventHandler<EventRoundEnd>((@event, _) =>
-        {
-            _host?.Dispatch("round_end", @event.Winner);
-            return HookResult.Continue;
-        });
-
-        RegisterEventHandler<EventPlayerConnectFull>((@event, _) =>
-        {
-            DispatchForPlayer("player_connect", @event.Userid);
-            return HookResult.Continue;
-        });
-
-        RegisterEventHandler<EventPlayerDisconnect>((@event, _) =>
-        {
-            DispatchForPlayer("player_disconnect", @event.Userid);
-            return HookResult.Continue;
-        });
-
-        RegisterEventHandler<EventPlayerDeath>((@event, _) =>
-        {
-            DispatchForPlayer("player_death", @event.Userid);
-            return HookResult.Continue;
-        });
-
-        RegisterEventHandler<EventPlayerSpawn>((@event, _) =>
-        {
-            DispatchForPlayer("player_spawn", @event.Userid);
-            return HookResult.Continue;
-        });
-    }
+    /// <summary>
+    /// Runs the generated switch once, here, so that the first script to ask for a game
+    /// event is not the one that pays for it.
+    ///
+    /// Measured on a server, and the first two explanations were both wrong. The first
+    /// call into <c>HookGameEvent</c> costs about 890 ms and every call after it costs
+    /// three. It is not CounterStrikeSharp: registering a handler directly was measured
+    /// at 0.2 ms. It is not the registrations inside the switch either: a call with a
+    /// name that matches nothing — which registers nothing at all — costs exactly as
+    /// much as one that matches. Two hundred and seventy-three cases is simply a lot of
+    /// method to compile before any of it runs, and splitting the bodies out into one
+    /// method per event did not change the number.
+    ///
+    /// Inside a script that 890 ms is spent against the watchdog's budget, and the
+    /// script that happened to mention an event first was killed mid-load every time,
+    /// with the failure reported against the author's file.
+    ///
+    /// The name is one no event has, so nothing is hooked. Running the switch is the
+    /// whole point.
+    /// </summary>
+    private void WarmUpEventSwitch() => HookGameEvent("cs2ts:warm-up");
 
     /// <summary>
-    /// Hands the script a facade rather than a controller. The controller is alive right
-    /// now, inside this event; the facade is still meaningful five seconds from now,
-    /// which is when a script is likely to look at it.
+    /// Hooks a game event with the server because a script asked for it.
+    ///
+    /// Nothing is hooked in advance. There are two hundred and seventy-three game
+    /// events, and a plugin that listens for three should cost three — so the host says
+    /// which names scripts have mentioned and the generated switch does the rest, once
+    /// per name for the life of the process.
+    ///
+    /// A name no game event has is worth saying out loud. A TypeScript author already
+    /// got a compile error from the declarations; a JavaScript author gets nothing, and
+    /// silently registering a handler that can never fire is the same failure as a
+    /// command that exists and never answers.
     /// </summary>
-    private void DispatchForPlayer(string eventName, CCSPlayerController? controller)
+    private void HookScriptEvent(string name)
     {
-        if (_host is null || _players is null || controller?.UserId is not { } userId)
+        // The runtime's own, dispatched from the tick listener rather than by the game.
+        if (name == "tick")
         {
             return;
         }
 
-        _host.Dispatch(eventName, _players.For(userId));
+        if (!HookGameEvent(name))
+        {
+            Console.WriteLine(
+                $"[CS2-TS] WARNING: no game event is called '{name}'. A handler registered for it " +
+                "will never run. Check the spelling against the declarations.");
+        }
     }
 
     /// <summary>

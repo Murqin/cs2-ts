@@ -118,16 +118,16 @@ public sealed class SampleScriptTests : IDisposable
         controller.Pawn!.Health = 3;
         controller.Pawn.Armor = 0;
 
-        Assert.Equal(1, _host.Dispatch("round_start", 115));
-        Assert.Equal(1, _host.Dispatch("round_start", 115));
-        Assert.Equal(1, _host.Dispatch("player_connect", _table.For(7)));
-        Assert.Equal(1, _host.Dispatch("player_spawn", _table.For(7)));
-        Assert.Equal(1, _host.Dispatch("player_death", _table.For(7)));
+        Assert.Equal(1, _host.Dispatch("round_start", new FakeRoundStartEvent(115)));
+        Assert.Equal(1, _host.Dispatch("round_start", new FakeRoundStartEvent(115)));
+        Assert.Equal(1, _host.Dispatch("player_connect_full", new FakePlayerEvent(_table.For(7))));
+        Assert.Equal(1, _host.Dispatch("player_spawn", new FakePlayerEvent(_table.For(7))));
+        Assert.Equal(1, _host.Dispatch("player_death", new FakePlayerDeathEvent(_table.For(7), null, false, "ak47")));
 
         Assert.Contains("round 1 started, 115s limit, on de_dust2", _console.Lines);
         Assert.Contains("round 2 started, 115s limit, on de_dust2", _console.Lines);
         Assert.Contains("murqin spawned at 1, 2, 3 with $800", _console.Lines);
-        Assert.Contains("murqin died; 1 still connected", _console.Lines);
+        Assert.Contains("murqin died to the world (ak47); 1 still connected", _console.Lines);
         Assert.Equal(["welcome, murqin"], controller.Chat);
 
         // The example's round_start heals everyone who is in the world, and the whole
@@ -148,7 +148,7 @@ public sealed class SampleScriptTests : IDisposable
         Assert.True(LoadExample().Succeeded);
         var controller = _world.Add(7, "murqin");
 
-        _host.Dispatch("player_connect", _table.For(7));
+        _host.Dispatch("player_connect_full", new FakePlayerEvent(_table.For(7)));
         _world.Disconnect(7);
 
         Assert.Equal(1, _host.DrainFrames());
@@ -168,7 +168,7 @@ public sealed class SampleScriptTests : IDisposable
         Assert.True(LoadTimerExample().Succeeded);
         var controller = _world.Add(7, "murqin");
 
-        Assert.Equal(1, _host.Dispatch("round_start", 115));
+        Assert.Equal(1, _host.Dispatch("round_start", new FakeRoundStartEvent(115)));
 
         // Nothing at 29 seconds. The reminder is a reminder, not a greeting.
         Advance(29);
@@ -189,7 +189,7 @@ public sealed class SampleScriptTests : IDisposable
         Assert.True(LoadTimerExample().Succeeded);
         _world.Add(7, "murqin");
 
-        Assert.Equal(1, _host.Dispatch("player_connect", _table.For(7)));
+        Assert.Equal(1, _host.Dispatch("player_connect_full", new FakePlayerEvent(_table.For(7))));
         Assert.Equal(1, _host.Timers.Count);
 
         for (var second = 0; second < 8; second++)
@@ -216,7 +216,7 @@ public sealed class SampleScriptTests : IDisposable
         Assert.True(LoadTimerExample().Succeeded);
         var controller = _world.Add(7, "murqin");
 
-        Assert.Equal(1, _host.Dispatch("player_death", _table.For(7)));
+        Assert.Equal(1, _host.Dispatch("player_death", new FakePlayerDeathEvent(_table.For(7), null, false, "ak47")));
         _world.Disconnect(7);
 
         Advance(4);
@@ -234,7 +234,7 @@ public sealed class SampleScriptTests : IDisposable
     {
         Assert.True(LoadTimerExample().Succeeded);
         _world.Add(7, "murqin");
-        _host.Dispatch("player_connect", _table.For(7));
+        _host.Dispatch("player_connect_full", new FakePlayerEvent(_table.For(7)));
         Assert.Equal(1, _host.Timers.Count);
 
         Assert.True(LoadTimerExample().Succeeded);
@@ -287,8 +287,8 @@ public sealed class SampleScriptTests : IDisposable
         Assert.Equal(source, _host.Stripper.Strip("rounds.js", source).JavaScript);
 
         _world.Add(7, "murqin");
-        Assert.Equal(1, _host.Dispatch("round_start", 115));
-        Assert.Equal(1, _host.Dispatch("player_connect", _table.For(7)));
+        Assert.Equal(1, _host.Dispatch("round_start", new FakeRoundStartEvent(115)));
+        Assert.Equal(1, _host.Dispatch("player_connect_full", new FakePlayerEvent(_table.For(7))));
         Assert.Equal(1, _host.DrainFrames());
 
         Assert.Contains("round 1 started, 115s limit, on de_dust2", _console.Lines);
@@ -345,7 +345,7 @@ public sealed class SampleScriptTests : IDisposable
         Assert.True(LoadExample().Succeeded);
         _world.Add(7, "murqin", 76561198123456789UL);
 
-        _host.Dispatch("player_connect", _table.For(7));
+        _host.Dispatch("player_connect_full", new FakePlayerEvent(_table.For(7)));
 
         Assert.Equal(1, _host.DrainFrames());
         Assert.Contains("murqin (76561198123456789) is still here on the next frame", _console.Lines);

@@ -113,6 +113,41 @@ command("!hheld", () => {
     }
 });
 
+// A real game event, kept and read later. Two things only a server can answer: that
+// the event arrives at all with the fields the generator said it has, and that a player
+// on it is null when the game says nobody did it — a bot killed by bot_kill was killed
+// by the world.
+let lastDeath: PlayerDeathEvent | null = null;
+
+on("player_death", (event) => {
+    lastDeath = event;
+});
+
+// Registering a handler for a name no game event has. Done from a command rather than
+// at the top of the file so the test can trigger it and read the warning that follows,
+// instead of hunting for a line printed once at load and cleared by whichever test ran
+// first.
+command("!hbadevent", () => {
+    on("player_hrut" as keyof Cs2TsEvents, () => {});
+    console.log("HARNESS badevent registered");
+});
+
+command("!hdeath", () => {
+    if (lastDeath === null) {
+        console.log("HARNESS death none");
+        return;
+    }
+
+    // same= is the interesting one: one player appearing in two fields of one event has
+    // to be one object, or `===` stops meaning anything for the thing scripts keep.
+    console.log(
+        `HARNESS death player=${lastDeath.player !== null} ` +
+        `attacker=${lastDeath.attacker === null ? "null" : "player"} ` +
+        `same=${lastDeath.attacker === lastDeath.player} ` +
+        `headshot=${typeof lastDeath.headshot} weapon=${typeof lastDeath.weapon} ` +
+        `dmg=${typeof lastDeath.dmgHealth}`);
+});
+
 // Timers only advance on a tick, so this also proves the server is running rather than
 // hibernating — a distinction that has looked like a broken feature before.
 command("!htimer", () => {

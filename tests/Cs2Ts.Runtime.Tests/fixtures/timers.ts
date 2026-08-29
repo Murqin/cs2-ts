@@ -5,8 +5,8 @@
 // saving the file cancels every one of them, so a reload does not leave the previous
 // version's interval running underneath the new one.
 
-on("round_start", (timeLimit: number): void => {
-    console.log(`round started, ${timeLimit}s limit`);
+on("round_start", (event: RoundStartEvent): void => {
+    console.log(`round started, ${event.timelimit}s limit`);
 
     // A one-shot reminder. Nothing to cancel: it fires once and is gone.
     setTimeout((): void => {
@@ -20,7 +20,12 @@ on("round_start", (timeLimit: number): void => {
 // see it. A number, not an object: ids are numbers here as they are in a browser.
 let countdown: number | null = null;
 
-on("player_connect", (player: Player): void => {
+on("player_connect_full", (event: PlayerConnectFullEvent): void => {
+    const player = event.player;
+    if (player === null) {
+        return;
+    }
+
     player.sendChat(`welcome, ${player.name}`);
 
     if (countdown !== null) {
@@ -44,7 +49,12 @@ on("player_connect", (player: Player): void => {
     }, 1000);
 });
 
-on("player_death", (player: Player): void => {
+on("player_death", (event: PlayerDeathEvent): void => {
+    const player = event.player;
+    if (player === null) {
+        return;
+    }
+
     // The trap worth showing: `player` is captured here and used three seconds later,
     // by which time they may have disconnected. It holds an identity rather than a
     // pointer, so this is safe to keep — but reading it without asking is not, and

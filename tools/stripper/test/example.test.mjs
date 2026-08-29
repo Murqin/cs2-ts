@@ -63,33 +63,88 @@ test("a handler with the wrong signature is rejected", () => {
     assert.match(check('on("round_start", (player: Player) => {});\n'), /TS2345|TS2769/);
 });
 
+test("an event hands the handler one object, with the fields the game gives it", () => {
+    assert.equal(
+        check('on("player_death", (e: PlayerDeathEvent): void => { const n: number = e.dmgHealth; });\n'),
+        "");
+
+    // The three kinds that cross, on one event.
+    assert.equal(
+        check('on("player_death", (e: PlayerDeathEvent): void => { const b: boolean = e.headshot; const w: string = e.weapon; });\n'),
+        "");
+
+    // A field the event does not have is a compile error rather than undefined at
+    // three in the morning.
+    assert.match(
+        check('on("player_death", (e: PlayerDeathEvent): void => { e.noSuchField; });\n'),
+        /TS2339/);
+});
+
+test("a player on an event may be nobody, and the compiler says so", () => {
+    // The game raises events with nobody attached: a kill by the world has no attacker.
+    assert.match(
+        check('on("player_death", (e: PlayerDeathEvent): void => { e.attacker.sendChat("hi"); });\n'),
+        /TS18047|TS2531|TS2533/);
+
+    assert.equal(
+        check('on("player_death", (e: PlayerDeathEvent): void => { e.attacker?.sendChat("hi"); });\n'),
+        "");
+});
+
+test("player_connect and player_connect_full are not the same event", () => {
+    // The hand-written list conflated them, and the generated one cannot: they are two
+    // classes with two names, and the earlier one carries fields the later one does not.
+    assert.equal(
+        check('on("player_connect", (e: PlayerConnectEvent): void => { const bot: boolean = e.bot; });\n'),
+        "");
+
+    assert.match(
+        check('on("player_connect_full", (e: PlayerConnectFullEvent): void => { e.bot; });\n'),
+        /TS2339/);
+});
+
+test("a 64-bit id on an event is a string", () => {
+    assert.equal(
+        check('on("player_connect", (e: PlayerConnectEvent): void => { const x: string = e.xuid; });\n'),
+        "");
+
+    assert.match(
+        check('on("player_connect", (e: PlayerConnectEvent): void => { e.xuid.toFixed(0); });\n'),
+        /TS2339|TS2551/);
+});
+
+test("an event that carries nothing still type checks", () => {
+    // Sixty-two of them are the fact that something happened and nothing else.
+    assert.equal(check('on("round_freeze_end", (): void => {});\n'), "");
+});
+
 test("resolve() returns something the script has to narrow itself", () => {
     // The escape hatch is untyped on purpose; using it as if it were typed must fail.
-    assert.match(check('on("player_death", (p: Player) => { p.resolve().Health; });\n'), /TS2339|TS2571|TS18046/);
+    assert.match(check('on("tick", () => { const p = players.all()[0]!; p.resolve().Health; });\n'), /TS2339|TS2571|TS18046/);
 });
 
 test("isValid and id are usable without narrowing", () => {
-    assert.equal(check('on("player_death", (p: Player) => { if (p.isValid) { p.id.toFixed(0); } });\n'), "");
+    assert.equal(check('on("tick", () => { const p = players.all()[0]!; if (p.isValid) { p.id.toFixed(0); } });\n'), "");
 });
 
 test("the facade's writable members are writable and its readable ones are not", () => {
-    assert.equal(check('on("player_spawn", (p: Player) => { p.health = 100; p.armor = 50; p.money = 16000; });\n'), "");
+    assert.equal(check('on("tick", () => { const p = players.all()[0]!; p.health = 100; p.armor = 50; p.money = 16000; });\n'), "");
 
     // name and team describe the player; writing them would look like it worked.
-    assert.match(check('on("player_spawn", (p: Player) => { p.name = "x"; });\n'), /TS2540/);
-    assert.match(check('on("player_spawn", (p: Player) => { p.team = 2; });\n'), /TS2540/);
+    assert.match(check('on("tick", () => { players.all()[0]!.name = "x"; });\n'), /TS2540/);
+    assert.match(check('on("tick", () => { players.all()[0]!.team = 2; });\n'), /TS2540/);
 });
 
 test("a position is a copy, and the compiler says so", () => {
     // The whole reason position is not CounterStrikeSharp's Vector: a script that
     // mutated one would be writing into entity memory, and this must not compile.
-    assert.match(check('on("player_spawn", (p: Player) => { p.position.x = 0; });\n'), /TS2540/);
-    assert.equal(check('on("player_spawn", (p: Player) => { p.teleport(p.position.x, p.position.y, p.position.z + 64); });\n'), "");
+    assert.match(check('on("tick", () => { players.all()[0]!.position.x = 0; });\n'), /TS2540/);
+    assert.equal(check('on("tick", () => { const p = players.all()[0]!; p.teleport(p.position.x, p.position.y, p.position.z + 64); });\n'), "");
 });
 
 test("steamId is a string, because a 64-bit id is not a JavaScript number", () => {
-    assert.equal(check('on("player_connect", (p: Player) => { p.sendChat(p.steamId.slice(0, 4)); });\n'), "");
-    assert.match(check('on("player_connect", (p: Player) => { p.steamId.toFixed(0); });\n'), /TS2339|TS2551/);
+    assert.equal(check('on("tick", () => { const p = players.all()[0]!; p.sendChat(p.steamId.slice(0, 4)); });\n'), "");
+    assert.match(check('on("tick", () => { players.all()[0]!.steamId.toFixed(0); });\n'), /TS2339|TS2551/);
 });
 
 test("a command handler has to deal with the console case", () => {
@@ -145,7 +200,8 @@ test("a timer handler that takes arguments is rejected", () => {
 test("the escape hatch takes an entity and gives back a number", () => {
     assert.equal(
         check([
-            'on("player_spawn", (p: Player): void => {',
+            'on("tick", (): void => {',
+            'const p = players.all()[0]!;',
             "    if (!p.isAlive) { return; }",
             "    const pawn = unsafe.pawn(p);",
             '    const health: number = unsafe.getInt(pawn, "CBaseEntity", "m_iHealth");',
@@ -160,7 +216,7 @@ test("what the escape hatch returns is untyped, like resolve()", () => {
     // An entity is a native object with no declared shape. A script that treats one as
     // if it had members must not compile — the same bargain resolve() makes.
     assert.match(
-        check('on("player_spawn", (p: Player) => { unsafe.pawn(p).Health; });\n'),
+        check('on("tick", () => { unsafe.pawn(players.all()[0]!).Health; });\n'),
         /TS2339|TS2571|TS18046/);
 });
 
@@ -169,19 +225,19 @@ test("there is no setString to reach for", () => {
     // writes a pointer where its getter reads characters. If it ever appears here it
     // should be because someone meant it.
     assert.match(
-        check('on("player_spawn", (p: Player) => { unsafe.setString(unsafe.pawn(p), "C", "f", "x"); });\n'),
+        check('on("tick", () => { unsafe.setString(unsafe.pawn(players.all()[0]!), "C", "f", "x"); });\n'),
         /TS2339|TS2551/);
 });
 
 test("the escape hatch's value types are checked", () => {
     assert.match(
-        check('on("player_spawn", (p: Player) => { unsafe.setBool(unsafe.pawn(p), "C", "f", 1); });\n'),
+        check('on("tick", () => { unsafe.setBool(unsafe.pawn(players.all()[0]!), "C", "f", 1); });\n'),
         /TS2345|TS2769/);
     assert.match(
-        check('on("player_spawn", (p: Player) => { unsafe.setInt(unsafe.pawn(p), "C", "f"); });\n'),
+        check('on("tick", () => { unsafe.setInt(unsafe.pawn(players.all()[0]!), "C", "f"); });\n'),
         /TS2554/);
     assert.match(
-        check('on("player_spawn", (p: Player) => { const n: number = unsafe.getString(unsafe.pawn(p), "C", "f"); });\n'),
+        check('on("tick", () => { const n: number = unsafe.getString(unsafe.pawn(players.all()[0]!), "C", "f"); });\n'),
         /TS2322/);
 });
 

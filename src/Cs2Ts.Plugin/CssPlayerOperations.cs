@@ -30,10 +30,10 @@ public sealed class CssPlayerOperations : IPlayerOperations<CCSPlayerController,
     }
 
     /// <inheritdoc />
-    public RawSurface CreateControllerRaw(Func<CCSPlayerController> resolve) => new ControllerRaw(resolve);
+    public ScriptSurface CreateControllerRaw(Func<CCSPlayerController> resolve) => new ControllerRaw(resolve);
 
     /// <inheritdoc />
-    public RawSurface CreatePawnRaw(Func<CCSPlayerPawn> resolve) => new PawnRaw(resolve);
+    public ScriptSurface CreatePawnRaw(Func<CCSPlayerPawn> resolve) => new PawnRaw(resolve);
 
     /// <inheritdoc />
     public string GetName(CCSPlayerController controller) => controller.PlayerName;
