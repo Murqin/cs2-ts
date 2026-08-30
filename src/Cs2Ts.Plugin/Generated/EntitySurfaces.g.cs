@@ -97,7 +97,7 @@ public class EntityRaw : ScriptSurface
         }
     }
 
-    /// <summary>CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseEntity/m_pBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("blocker")]
     public EntityFacade? Blocker => _entities.ForHandle(_resolve().Blocker.Raw);
 
@@ -166,7 +166,7 @@ public class EntityRaw : ScriptSurface
         }
     }
 
-    /// <summary>CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseEntity/m_hDamageFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter").</summary>
     [ScriptMember("damageFilter")]
     public EntityFacade? DamageFilter => _entities.ForHandle(_resolve().DamageFilter.Raw);
 
@@ -213,7 +213,7 @@ public class EntityRaw : ScriptSurface
         }
     }
 
-    /// <summary>CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseEntity/m_hEffectEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("effectEntity")]
     public EntityFacade? EffectEntity => _entities.ForHandle(_resolve().EffectEntity.Raw);
 
@@ -325,7 +325,7 @@ public class EntityRaw : ScriptSurface
         }
     }
 
-    /// <summary>CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseEntity/m_hGroundEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("groundEntity")]
     public EntityFacade? GroundEntity => _entities.ForHandle(_resolve().GroundEntity.Raw);
 
@@ -524,7 +524,7 @@ public class EntityRaw : ScriptSurface
         }
     }
 
-    /// <summary>CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseEntity/m_hOwnerEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("ownerEntity")]
     public EntityFacade? OwnerEntity => _entities.ForHandle(_resolve().OwnerEntity.Raw);
 
@@ -1431,7 +1431,7 @@ public class CBasePlayerControllerRaw : EntityRaw
         }
     }
 
-    /// <summary>CBasePlayerController/m_hPawn — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBasePlayerController/m_hPawn — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn").</summary>
     [ScriptMember("pawn")]
     public EntityFacade? Pawn => _entities.ForHandle(_resolve().Pawn.Raw);
 
@@ -1452,7 +1452,7 @@ public class CBasePlayerControllerRaw : EntityRaw
         }
     }
 
-    /// <summary>CBasePlayerController/m_hSplitOwner — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBasePlayerController/m_hSplitOwner — A CBasePlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerController").</summary>
     [ScriptMember("splitOwner")]
     public EntityFacade? SplitOwner => _entities.ForHandle(_resolve().SplitOwner.Raw);
 
@@ -2106,7 +2106,7 @@ public class CEntityFlameRaw : EntityRaw
     public CEntityFlameRaw(Func<global::CounterStrikeSharp.API.Core.CEntityFlame> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CEntityFlame/m_hAttacker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEntityFlame/m_hAttacker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("attacker")]
     public EntityFacade? Attacker => _entities.ForHandle(_resolve().Attacker.Raw);
 
@@ -2149,7 +2149,7 @@ public class CEntityFlameRaw : EntityRaw
         }
     }
 
-    /// <summary>CEntityFlame/m_hEntAttached — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEntityFlame/m_hEntAttached — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("entAttached")]
     public EntityFacade? EntAttached => _entities.ForHandle(_resolve().EntAttached.Raw);
 
@@ -3296,7 +3296,7 @@ public class CEnvSoundscapeRaw : EntityRaw
         }
     }
 
-    /// <summary>CEnvSoundscape/m_hProxySoundscape — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEnvSoundscape/m_hProxySoundscape — A CEnvSoundscape, or null when it points at nothing. Read-only; reach its own fields with .as("CEnvSoundscape").</summary>
     [ScriptMember("proxySoundscape")]
     public EntityFacade? ProxySoundscape => _entities.ForHandle(_resolve().ProxySoundscape.Raw);
 
@@ -4929,7 +4929,7 @@ public class CHandleTestRaw : EntityRaw
         }
     }
 
-    /// <summary>CHandleTest/m_Handle — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CHandleTest/m_Handle — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("testHandle")]
     public EntityFacade? TestHandle => _entities.ForHandle(_resolve().TestHandle.Raw);
 }
@@ -6032,7 +6032,7 @@ public class CPlayerPingRaw : EntityRaw
     public CPlayerPingRaw(Func<global::CounterStrikeSharp.API.Core.CPlayerPing> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPlayerPing/m_hPingedEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPlayerPing/m_hPingedEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("pingedEntity")]
     public EntityFacade? PingedEntity => _entities.ForHandle(_resolve().PingedEntity.Raw);
 
@@ -6040,7 +6040,7 @@ public class CPlayerPingRaw : EntityRaw
     [ScriptMember("placeName")]
     public string PlaceName => _resolve().PlaceName;
 
-    /// <summary>CPlayerPing/m_hPlayer — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPlayerPing/m_hPlayer — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("player")]
     public EntityFacade? Player => _entities.ForHandle(_resolve().Player.Raw);
 
@@ -6563,11 +6563,11 @@ public class CPointEntityFinderRaw : EntityRaw
     public CPointEntityFinderRaw(Func<global::CounterStrikeSharp.API.Core.CPointEntityFinder> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPointEntityFinder/m_hEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointEntityFinder/m_hEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("entity")]
     public EntityFacade? Entity => _entities.ForHandle(_resolve().Entity.Raw);
 
-    /// <summary>CPointEntityFinder/m_hFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointEntityFinder/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter").</summary>
     [ScriptMember("filter")]
     public EntityFacade? Filter => _entities.ForHandle(_resolve().Filter.Raw);
 
@@ -6592,7 +6592,7 @@ public class CPointEntityFinderRaw : EntityRaw
     [ScriptMember("refName")]
     public string RefName => _resolve().RefName;
 
-    /// <summary>CPointEntityFinder/m_hReference — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointEntityFinder/m_hReference — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("reference")]
     public EntityFacade? Reference => _entities.ForHandle(_resolve().Reference.Raw);
 }
@@ -6691,7 +6691,7 @@ public class CPointOrientRaw : EntityRaw
     [ScriptMember("spawnTargetName")]
     public string SpawnTargetName => _resolve().SpawnTargetName;
 
-    /// <summary>CPointOrient/m_hTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointOrient/m_hTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("target")]
     public new EntityFacade? Target => _entities.ForHandle(_resolve().Target.Raw);
 }
@@ -6996,7 +6996,7 @@ public class CPointValueRemapperRaw : EntityRaw
         }
     }
 
-    /// <summary>CPointValueRemapper/m_hRemapLineEnd — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointValueRemapper/m_hRemapLineEnd — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("remapLineEnd")]
     public EntityFacade? RemapLineEnd => _entities.ForHandle(_resolve().RemapLineEnd.Raw);
 
@@ -7004,7 +7004,7 @@ public class CPointValueRemapperRaw : EntityRaw
     [ScriptMember("remapLineEndName")]
     public string RemapLineEndName => _resolve().RemapLineEndName;
 
-    /// <summary>CPointValueRemapper/m_hRemapLineStart — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointValueRemapper/m_hRemapLineStart — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("remapLineStart")]
     public EntityFacade? RemapLineStart => _entities.ForHandle(_resolve().RemapLineStart.Raw);
 
@@ -7071,7 +7071,7 @@ public class CPointValueRemapperRaw : EntityRaw
         }
     }
 
-    /// <summary>CPointValueRemapper/m_hUsingPlayer — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointValueRemapper/m_hUsingPlayer — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn").</summary>
     [ScriptMember("usingPlayer")]
     public EntityFacade? UsingPlayer => _entities.ForHandle(_resolve().UsingPlayer.Raw);
 }
@@ -7416,7 +7416,7 @@ public class CScriptedSequenceRaw : EntityRaw
         }
     }
 
-    /// <summary>CScriptedSequence/m_hForcedTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CScriptedSequence/m_hForcedTarget — A CBaseAnimGraph, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseAnimGraph").</summary>
     [ScriptMember("forcedTarget")]
     public EntityFacade? ForcedTarget => _entities.ForHandle(_resolve().ForcedTarget.Raw);
 
@@ -7511,7 +7511,7 @@ public class CScriptedSequenceRaw : EntityRaw
         }
     }
 
-    /// <summary>CScriptedSequence/m_hInteractionMainEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CScriptedSequence/m_hInteractionMainEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("interactionMainEntity")]
     public EntityFacade? InteractionMainEntity => _entities.ForHandle(_resolve().InteractionMainEntity.Raw);
 
@@ -7714,7 +7714,7 @@ public class CScriptedSequenceRaw : EntityRaw
         }
     }
 
-    /// <summary>CScriptedSequence/m_hNextCine — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CScriptedSequence/m_hNextCine — A CScriptedSequence, or null when it points at nothing. Read-only; reach its own fields with .as("CScriptedSequence").</summary>
     [ScriptMember("nextCine")]
     public EntityFacade? NextCine => _entities.ForHandle(_resolve().NextCine.Raw);
 
@@ -7959,7 +7959,7 @@ public class CScriptedSequenceRaw : EntityRaw
         }
     }
 
-    /// <summary>CScriptedSequence/m_hTargetEnt — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CScriptedSequence/m_hTargetEnt — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("targetEnt")]
     public EntityFacade? TargetEnt => _entities.ForHandle(_resolve().TargetEnt.Raw);
 
@@ -8092,7 +8092,7 @@ public class CSkyboxReferenceRaw : EntityRaw
     public CSkyboxReferenceRaw(Func<global::CounterStrikeSharp.API.Core.CSkyboxReference> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CSkyboxReference/m_hSkyCamera — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSkyboxReference/m_hSkyCamera — A CSkyCamera, or null when it points at nothing. Read-only; reach its own fields with .as("CSkyCamera").</summary>
     [ScriptMember("skyCamera")]
     public EntityFacade? SkyCamera => _entities.ForHandle(_resolve().SkyCamera.Raw);
 }
@@ -8944,7 +8944,7 @@ public class CAmbientGenericRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CAmbientGeneric/m_hSoundSource — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CAmbientGeneric/m_hSoundSource — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("soundSource")]
     public EntityFacade? SoundSource => _entities.ForHandle(_resolve().SoundSource.Raw);
 
@@ -9739,7 +9739,7 @@ public class CBaseToggleRaw : CBaseModelEntityRaw
     public CBaseToggleRaw(Func<global::CounterStrikeSharp.API.Core.CBaseToggle> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CBaseToggle/m_hActivator — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseToggle/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("activator")]
     public EntityFacade? Activator => _entities.ForHandle(_resolve().Activator.Raw);
 
@@ -9929,7 +9929,7 @@ public class CBeamRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CBeam/m_hEndEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBeam/m_hEndEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("endEntity")]
     public EntityFacade? EndEntity => _entities.ForHandle(_resolve().EndEntity.Raw);
 
@@ -10167,7 +10167,7 @@ public class CBreakableRaw : CBaseModelEntityRaw
     public CBreakableRaw(Func<global::CounterStrikeSharp.API.Core.CBreakable> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CBreakable/m_hBreaker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBreakable/m_hBreaker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("breaker")]
     public EntityFacade? Breaker => _entities.ForHandle(_resolve().Breaker.Raw);
 
@@ -10262,7 +10262,7 @@ public class CBreakableRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CBreakable/m_hPhysicsAttacker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBreakable/m_hPhysicsAttacker — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn").</summary>
     [ScriptMember("physicsAttacker")]
     public EntityFacade? PhysicsAttacker => _entities.ForHandle(_resolve().PhysicsAttacker.Raw);
 
@@ -11087,11 +11087,11 @@ public class ControllerRaw : CBasePlayerControllerRaw
         }
     }
 
-    /// <summary>CCSPlayerController/m_hObserverPawn — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CCSPlayerController/m_hObserverPawn — A CCSObserverPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSObserverPawn").</summary>
     [ScriptMember("observerPawn")]
     public EntityFacade? ObserverPawn => _entities.ForHandle(_resolve().ObserverPawn.Raw);
 
-    /// <summary>CCSPlayerController/m_hOriginalControllerOfCurrentPawn — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CCSPlayerController/m_hOriginalControllerOfCurrentPawn — A CCSPlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerController").</summary>
     [ScriptMember("originalControllerOfCurrentPawn")]
     public EntityFacade? OriginalControllerOfCurrentPawn => _entities.ForHandle(_resolve().OriginalControllerOfCurrentPawn.Raw);
 
@@ -11246,7 +11246,7 @@ public class ControllerRaw : CBasePlayerControllerRaw
     [ScriptMember("playerDominatingMe")]
     public string PlayerDominatingMe => _resolve().PlayerDominatingMe.ToString(CultureInfo.InvariantCulture);
 
-    /// <summary>CCSPlayerController/m_hPlayerPawn — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CCSPlayerController/m_hPlayerPawn — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("playerPawn")]
     public EntityFacade? PlayerPawn => _entities.ForHandle(_resolve().PlayerPawn.Raw);
 
@@ -12276,11 +12276,11 @@ public class CEnvEntityMakerRaw : CPointEntityRaw
     public CEnvEntityMakerRaw(Func<global::CounterStrikeSharp.API.Core.CEnvEntityMaker> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CEnvEntityMaker/m_hCurrentBlocker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEnvEntityMaker/m_hCurrentBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("currentBlocker")]
     public EntityFacade? CurrentBlocker => _entities.ForHandle(_resolve().CurrentBlocker.Raw);
 
-    /// <summary>CEnvEntityMaker/m_hCurrentInstance — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEnvEntityMaker/m_hCurrentInstance — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("currentInstance")]
     public EntityFacade? CurrentInstance => _entities.ForHandle(_resolve().CurrentInstance.Raw);
 
@@ -13911,7 +13911,7 @@ public class CFuncMoverRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CFuncMover/m_hFollowEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMover/m_hFollowEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("followEntity")]
     public EntityFacade? FollowEntity => _entities.ForHandle(_resolve().FollowEntity.Raw);
 
@@ -13945,7 +13945,7 @@ public class CFuncMoverRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CFuncMover/m_hFollowMover — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMover/m_hFollowMover — A CFuncMover, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncMover").</summary>
     [ScriptMember("followMover")]
     public EntityFacade? FollowMover => _entities.ForHandle(_resolve().FollowMover.Raw);
 
@@ -14182,11 +14182,11 @@ public class CFuncMoverRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CFuncMover/m_hOrientationFaceEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMover/m_hOrientationFaceEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("orientationFaceEntity")]
     public EntityFacade? OrientationFaceEntity => _entities.ForHandle(_resolve().OrientationFaceEntity.Raw);
 
-    /// <summary>CFuncMover/m_hOrientationMatchEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMover/m_hOrientationMatchEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("orientationMatchEntity")]
     public EntityFacade? OrientationMatchEntity => _entities.ForHandle(_resolve().OrientationMatchEntity.Raw);
 
@@ -14246,7 +14246,7 @@ public class CFuncMoverRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CFuncMover/m_hPathMover — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMover/m_hPathMover — A CPathMover, or null when it points at nothing. Read-only; reach its own fields with .as("CPathMover").</summary>
     [ScriptMember("pathMover")]
     public EntityFacade? PathMover => _entities.ForHandle(_resolve().PathMover.Raw);
 
@@ -14275,7 +14275,7 @@ public class CFuncMoverRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CFuncMover/m_hPrevPathMover — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMover/m_hPrevPathMover — A CPathMover, or null when it points at nothing. Read-only; reach its own fields with .as("CPathMover").</summary>
     [ScriptMember("prevPathMover")]
     public EntityFacade? PrevPathMover => _entities.ForHandle(_resolve().PrevPathMover.Raw);
 
@@ -14443,7 +14443,7 @@ public class CFuncMoverRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CFuncMover/m_hStopAtNode — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMover/m_hStopAtNode — A CMoverPathNode, or null when it points at nothing. Read-only; reach its own fields with .as("CMoverPathNode").</summary>
     [ScriptMember("stopAtNode")]
     public EntityFacade? StopAtNode => _entities.ForHandle(_resolve().StopAtNode.Raw);
 
@@ -15052,7 +15052,7 @@ public class CFuncRotatorRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CFuncRotator/m_hRotatorTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncRotator/m_hRotatorTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("rotatorTarget")]
     public EntityFacade? RotatorTarget => _entities.ForHandle(_resolve().RotatorTarget.Raw);
 
@@ -15721,7 +15721,7 @@ public class CFuncTrackTrainRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CFuncTrackTrain/m_ppath — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncTrackTrain/m_ppath — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack").</summary>
     [ScriptMember("ppath")]
     public EntityFacade? Ppath => _entities.ForHandle(_resolve().Ppath.Raw);
 
@@ -16208,7 +16208,7 @@ public class CInfoDynamicShadowHintRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CInfoDynamicShadowHint/m_hLight — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CInfoDynamicShadowHint/m_hLight — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("light")]
     public EntityFacade? Light => _entities.ForHandle(_resolve().Light.Raw);
 
@@ -16759,7 +16759,7 @@ public class CInstructorEventEntityRaw : CPointEntityRaw
     [ScriptMember("name")]
     public string Name => _resolve().Name;
 
-    /// <summary>CInstructorEventEntity/m_hTargetPlayer — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CInstructorEventEntity/m_hTargetPlayer — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn").</summary>
     [ScriptMember("targetPlayer")]
     public EntityFacade? TargetPlayer => _entities.ForHandle(_resolve().TargetPlayer.Raw);
 }
@@ -16789,7 +16789,7 @@ public class CItemGenericTriggerHelperRaw : CBaseModelEntityRaw
     public CItemGenericTriggerHelperRaw(Func<global::CounterStrikeSharp.API.Core.CItemGenericTriggerHelper> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CItemGenericTriggerHelper/m_hParentItem — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CItemGenericTriggerHelper/m_hParentItem — A CItemGeneric, or null when it points at nothing. Read-only; reach its own fields with .as("CItemGeneric").</summary>
     [ScriptMember("parentItem")]
     public EntityFacade? ParentItem => _entities.ForHandle(_resolve().ParentItem.Raw);
 }
@@ -16845,7 +16845,7 @@ public class CKeepUprightRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CKeepUpright/m_attachedObject — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CKeepUpright/m_attachedObject — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("attachedObject")]
     public EntityFacade? AttachedObject => _entities.ForHandle(_resolve().AttachedObject.Raw);
 
@@ -17792,7 +17792,7 @@ public class CPathNodeRaw : CPointEntityRaw
     public CPathNodeRaw(Func<global::CounterStrikeSharp.API.Core.CPathNode> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPathNode/m_hPath — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPathNode/m_hPath — A CPathWithDynamicNodes, or null when it points at nothing. Read-only; reach its own fields with .as("CPathWithDynamicNodes").</summary>
     [ScriptMember("path")]
     public EntityFacade? Path => _entities.ForHandle(_resolve().Path.Raw);
 
@@ -17898,15 +17898,15 @@ public class CPathTrackRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CPathTrack/m_paltpath — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPathTrack/m_paltpath — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack").</summary>
     [ScriptMember("paltpath")]
     public EntityFacade? Paltpath => _entities.ForHandle(_resolve().Paltpath.Raw);
 
-    /// <summary>CPathTrack/m_pnext — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPathTrack/m_pnext — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack").</summary>
     [ScriptMember("pnext")]
     public EntityFacade? Pnext => _entities.ForHandle(_resolve().Pnext.Raw);
 
-    /// <summary>CPathTrack/m_pprevious — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPathTrack/m_pprevious — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack").</summary>
     [ScriptMember("pprevious")]
     public EntityFacade? Pprevious => _entities.ForHandle(_resolve().Pprevious.Raw);
 
@@ -18134,7 +18134,7 @@ public class CPhysForceRaw : CPointEntityRaw
     public CPhysForceRaw(Func<global::CounterStrikeSharp.API.Core.CPhysForce> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPhysForce/m_attachedObject — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPhysForce/m_attachedObject — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("attachedObject")]
     public EntityFacade? AttachedObject => _entities.ForHandle(_resolve().AttachedObject.Raw);
 
@@ -18263,7 +18263,7 @@ public class CPlatTriggerRaw : CBaseModelEntityRaw
     public CPlatTriggerRaw(Func<global::CounterStrikeSharp.API.Core.CPlatTrigger> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPlatTrigger/m_pPlatform — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPlatTrigger/m_pPlatform — A CFuncPlat, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncPlat").</summary>
     [ScriptMember("platform")]
     public EntityFacade? Platform => _entities.ForHandle(_resolve().Platform.Raw);
 }
@@ -18358,7 +18358,7 @@ public class CPointAngleSensorRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CPointAngleSensor/m_hLookAtEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointAngleSensor/m_hLookAtEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("lookAtEntity")]
     public EntityFacade? LookAtEntity => _entities.ForHandle(_resolve().LookAtEntity.Raw);
 
@@ -18366,7 +18366,7 @@ public class CPointAngleSensorRaw : CPointEntityRaw
     [ScriptMember("lookAtName")]
     public string LookAtName => _resolve().LookAtName;
 
-    /// <summary>CPointAngleSensor/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointAngleSensor/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("targetEntity")]
     public EntityFacade? TargetEntity => _entities.ForHandle(_resolve().TargetEntity.Raw);
 }
@@ -18461,7 +18461,7 @@ public class CPointAngularVelocitySensorRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CPointAngularVelocitySensor/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointAngularVelocitySensor/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("targetEntity")]
     public EntityFacade? TargetEntity => _entities.ForHandle(_resolve().TargetEntity.Raw);
 
@@ -18688,7 +18688,7 @@ public class CPointGiveAmmoRaw : CPointEntityRaw
     public CPointGiveAmmoRaw(Func<global::CounterStrikeSharp.API.Core.CPointGiveAmmo> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPointGiveAmmo/m_pActivator — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointGiveAmmo/m_pActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("activator")]
     public EntityFacade? Activator => _entities.ForHandle(_resolve().Activator.Raw);
 }
@@ -18718,7 +18718,7 @@ public class CPointHurtRaw : CPointEntityRaw
     public CPointHurtRaw(Func<global::CounterStrikeSharp.API.Core.CPointHurt> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPointHurt/m_pActivator — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointHurt/m_pActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("activator")]
     public EntityFacade? Activator => _entities.ForHandle(_resolve().Activator.Raw);
 
@@ -18817,7 +18817,7 @@ public class CPointProximitySensorRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CPointProximitySensor/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointProximitySensor/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("targetEntity")]
     public EntityFacade? TargetEntity => _entities.ForHandle(_resolve().TargetEntity.Raw);
 }
@@ -18873,7 +18873,7 @@ public class CPointPushRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CPointPush/m_hFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointPush/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter").</summary>
     [ScriptMember("filter")]
     public EntityFacade? Filter => _entities.ForHandle(_resolve().Filter.Raw);
 
@@ -19010,7 +19010,7 @@ public class CPointVelocitySensorRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CPointVelocitySensor/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointVelocitySensor/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("targetEntity")]
     public EntityFacade? TargetEntity => _entities.ForHandle(_resolve().TargetEntity.Raw);
 }
@@ -19169,7 +19169,7 @@ public class CRopeKeyframeRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CRopeKeyframe/m_hEndPoint — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CRopeKeyframe/m_hEndPoint — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("endPoint")]
     public EntityFacade? EndPoint => _entities.ForHandle(_resolve().EndPoint.Raw);
 
@@ -19268,7 +19268,7 @@ public class CRopeKeyframeRaw : CBaseModelEntityRaw
         }
     }
 
-    /// <summary>CRopeKeyframe/m_hStartPoint — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CRopeKeyframe/m_hStartPoint — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("startPoint")]
     public EntityFacade? StartPoint => _entities.ForHandle(_resolve().StartPoint.Raw);
 
@@ -19423,11 +19423,11 @@ public class CSceneEntityRaw : CPointEntityRaw
     public CSceneEntityRaw(Func<global::CounterStrikeSharp.API.Core.CSceneEntity> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CSceneEntity/m_hActivator — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("activator")]
     public EntityFacade? Activator => _entities.ForHandle(_resolve().Activator.Raw);
 
-    /// <summary>CSceneEntity/m_hActor — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hActor — A CBaseModelEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseModelEntity").</summary>
     [ScriptMember("actor")]
     public EntityFacade? Actor => _entities.ForHandle(_resolve().Actor.Raw);
 
@@ -19587,35 +19587,35 @@ public class CSceneEntityRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CSceneEntity/m_hTarget1 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hTarget1 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTarget1")]
     public EntityFacade? HTarget1 => _entities.ForHandle(_resolve().HTarget1.Raw);
 
-    /// <summary>CSceneEntity/m_hTarget2 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hTarget2 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTarget2")]
     public EntityFacade? HTarget2 => _entities.ForHandle(_resolve().HTarget2.Raw);
 
-    /// <summary>CSceneEntity/m_hTarget3 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hTarget3 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTarget3")]
     public EntityFacade? HTarget3 => _entities.ForHandle(_resolve().HTarget3.Raw);
 
-    /// <summary>CSceneEntity/m_hTarget4 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hTarget4 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTarget4")]
     public EntityFacade? HTarget4 => _entities.ForHandle(_resolve().HTarget4.Raw);
 
-    /// <summary>CSceneEntity/m_hTarget5 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hTarget5 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTarget5")]
     public EntityFacade? HTarget5 => _entities.ForHandle(_resolve().HTarget5.Raw);
 
-    /// <summary>CSceneEntity/m_hTarget6 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hTarget6 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTarget6")]
     public EntityFacade? HTarget6 => _entities.ForHandle(_resolve().HTarget6.Raw);
 
-    /// <summary>CSceneEntity/m_hTarget7 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hTarget7 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTarget7")]
     public EntityFacade? HTarget7 => _entities.ForHandle(_resolve().HTarget7.Raw);
 
-    /// <summary>CSceneEntity/m_hTarget8 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hTarget8 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTarget8")]
     public EntityFacade? HTarget8 => _entities.ForHandle(_resolve().HTarget8.Raw);
 
@@ -19632,7 +19632,7 @@ public class CSceneEntityRaw : CPointEntityRaw
         }
     }
 
-    /// <summary>CSceneEntity/m_hInterruptScene — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hInterruptScene — A CSceneEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CSceneEntity").</summary>
     [ScriptMember("interruptScene")]
     public EntityFacade? InterruptScene => _entities.ForHandle(_resolve().InterruptScene.Raw);
 
@@ -19720,7 +19720,7 @@ public class CSceneEntityRaw : CPointEntityRaw
     [ScriptMember("iszTarget8")]
     public string IszTarget8 => _resolve().IszTarget8;
 
-    /// <summary>CSceneEntity/m_hLocatorOrigin — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSceneEntity/m_hLocatorOrigin — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("locatorOrigin")]
     public EntityFacade? LocatorOrigin => _entities.ForHandle(_resolve().LocatorOrigin.Raw);
 
@@ -20777,7 +20777,7 @@ public class CSpriteRaw : CBaseModelEntityRaw
     public CSpriteRaw(Func<global::CounterStrikeSharp.API.Core.CSprite> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CSprite/m_hAttachedToEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSprite/m_hAttachedToEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("attachedToEntity")]
     public EntityFacade? AttachedToEntity => _entities.ForHandle(_resolve().AttachedToEntity.Raw);
 
@@ -21135,7 +21135,7 @@ public class CTankTrainAIRaw : CPointEntityRaw
     [ScriptMember("startSoundName")]
     public string StartSoundName => _resolve().StartSoundName;
 
-    /// <summary>CTankTrainAI/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTankTrainAI/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("targetEntity")]
     public EntityFacade? TargetEntity => _entities.ForHandle(_resolve().TargetEntity.Raw);
 
@@ -21143,7 +21143,7 @@ public class CTankTrainAIRaw : CPointEntityRaw
     [ScriptMember("targetEntityName")]
     public string TargetEntityName => _resolve().TargetEntityName;
 
-    /// <summary>CTankTrainAI/m_hTrain — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTankTrainAI/m_hTrain — A CFuncTrackTrain, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncTrackTrain").</summary>
     [ScriptMember("train")]
     public EntityFacade? Train => _entities.ForHandle(_resolve().Train.Raw);
 }
@@ -21328,7 +21328,7 @@ public class CTriggerVolumeRaw : CBaseModelEntityRaw
     public CTriggerVolumeRaw(Func<global::CounterStrikeSharp.API.Core.CTriggerVolume> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CTriggerVolume/m_hFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTriggerVolume/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter").</summary>
     [ScriptMember("filter")]
     public EntityFacade? Filter => _entities.ForHandle(_resolve().Filter.Raw);
 
@@ -21450,7 +21450,7 @@ public class CBaseButtonRaw : CBaseToggleRaw
         }
     }
 
-    /// <summary>CBaseButton/m_glowEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseButton/m_glowEntity — A CBaseModelEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseModelEntity").</summary>
     [ScriptMember("glowEntity")]
     public EntityFacade? GlowEntity => _entities.ForHandle(_resolve().GlowEntity.Raw);
 
@@ -22065,11 +22065,11 @@ public class CBaseGrenadeRaw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CBaseGrenade/m_hOriginalThrower — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseGrenade/m_hOriginalThrower — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("originalThrower")]
     public EntityFacade? OriginalThrower => _entities.ForHandle(_resolve().OriginalThrower.Raw);
 
-    /// <summary>CBaseGrenade/m_hThrower — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseGrenade/m_hThrower — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("thrower")]
     public EntityFacade? Thrower => _entities.ForHandle(_resolve().Thrower.Raw);
 
@@ -22263,7 +22263,7 @@ public class CBaseTriggerRaw : CBaseToggleRaw
         }
     }
 
-    /// <summary>CBaseTrigger/m_hFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseTrigger/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter").</summary>
     [ScriptMember("filter")]
     public EntityFacade? Filter => _entities.ForHandle(_resolve().Filter.Raw);
 
@@ -22619,7 +22619,7 @@ public class CEconEntityRaw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CEconEntity/m_hOldProvidee — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEconEntity/m_hOldProvidee — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("oldProvidee")]
     public EntityFacade? OldProvidee => _entities.ForHandle(_resolve().OldProvidee.Raw);
 
@@ -22709,7 +22709,7 @@ public class CEnvBeamRaw : CBeamRaw
     [ScriptMember("endEntity")]
     public new string EndEntity => _resolve().EndEntity;
 
-    /// <summary>CEnvBeam/m_hFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEnvBeam/m_hFilter — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("filter")]
     public EntityFacade? Filter => _entities.ForHandle(_resolve().Filter.Raw);
 
@@ -22915,7 +22915,7 @@ public class CEnvExplosionRaw : CModelPointEntityRaw
         }
     }
 
-    /// <summary>CEnvExplosion/m_hEntityIgnore — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEnvExplosion/m_hEntityIgnore — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("entityIgnore")]
     public EntityFacade? EntityIgnore => _entities.ForHandle(_resolve().EntityIgnore.Raw);
 
@@ -22923,7 +22923,7 @@ public class CEnvExplosionRaw : CModelPointEntityRaw
     [ScriptMember("entityIgnoreName")]
     public string EntityIgnoreName => _resolve().EntityIgnoreName;
 
-    /// <summary>CEnvExplosion/m_hInflictor — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEnvExplosion/m_hInflictor — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("inflictor")]
     public EntityFacade? Inflictor => _entities.ForHandle(_resolve().Inflictor.Raw);
 
@@ -23143,7 +23143,7 @@ public class CEnvLaserRaw : CBeamRaw
     [ScriptMember("laserTarget")]
     public string LaserTarget => _resolve().LaserTarget;
 
-    /// <summary>CEnvLaser/m_pSprite — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CEnvLaser/m_pSprite — A CSprite, or null when it points at nothing. Read-only; reach its own fields with .as("CSprite").</summary>
     [ScriptMember("sprite")]
     public EntityFacade? Sprite => _entities.ForHandle(_resolve().Sprite.Raw);
 
@@ -23434,7 +23434,7 @@ public class CFishRaw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CFish/m_pool — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFish/m_pool — A CFishPool, or null when it points at nothing. Read-only; reach its own fields with .as("CFishPool").</summary>
     [ScriptMember("pool")]
     public EntityFacade? Pool => _entities.ForHandle(_resolve().Pool.Raw);
 
@@ -23690,7 +23690,7 @@ public class CFuncMonitorRaw : CFuncBrushRaw
         }
     }
 
-    /// <summary>CFuncMonitor/m_hTargetCamera — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMonitor/m_hTargetCamera — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hTargetCamera")]
     public EntityFacade? HTargetCamera => _entities.ForHandle(_resolve().HTargetCamera.Raw);
 
@@ -23918,7 +23918,7 @@ public class CFuncMoverRouterRaw : CLogicalEntityRaw
         }
     }
 
-    /// <summary>CFuncMoverRouter/m_hPathMover — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncMoverRouter/m_hPathMover — A CPathMover, or null when it points at nothing. Read-only; reach its own fields with .as("CPathMover").</summary>
     [ScriptMember("pathMover")]
     public EntityFacade? PathMover => _entities.ForHandle(_resolve().PathMover.Raw);
 
@@ -24041,7 +24041,7 @@ public class CGunTargetRaw : CBaseToggleRaw
         }
     }
 
-    /// <summary>CGunTarget/m_hTargetEnt — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CGunTarget/m_hTargetEnt — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("targetEnt")]
     public EntityFacade? TargetEnt => _entities.ForHandle(_resolve().TargetEnt.Raw);
 }
@@ -24279,7 +24279,7 @@ public class CInstancedSceneEntityRaw : CSceneEntityRaw
         }
     }
 
-    /// <summary>CInstancedSceneEntity/m_hOwner — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CInstancedSceneEntity/m_hOwner — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("owner")]
     public EntityFacade? Owner => _entities.ForHandle(_resolve().Owner.Raw);
 
@@ -24322,7 +24322,7 @@ public class CInstancedSceneEntityRaw : CSceneEntityRaw
         }
     }
 
-    /// <summary>CInstancedSceneEntity/m_hTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CInstancedSceneEntity/m_hTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("target")]
     public new EntityFacade? Target => _entities.ForHandle(_resolve().Target.Raw);
 }
@@ -25240,7 +25240,7 @@ public class CLogicLineToEntityRaw : CLogicalEntityRaw
     public CLogicLineToEntityRaw(Func<global::CounterStrikeSharp.API.Core.CLogicLineToEntity> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CLogicLineToEntity/m_EndEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CLogicLineToEntity/m_EndEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("endEntity")]
     public EntityFacade? EndEntity => _entities.ForHandle(_resolve().EndEntity.Raw);
 
@@ -25248,7 +25248,7 @@ public class CLogicLineToEntityRaw : CLogicalEntityRaw
     [ScriptMember("sourceName")]
     public string SourceName => _resolve().SourceName;
 
-    /// <summary>CLogicLineToEntity/m_StartEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CLogicLineToEntity/m_StartEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("startEntity")]
     public EntityFacade? StartEntity => _entities.ForHandle(_resolve().StartEntity.Raw);
 }
@@ -25278,11 +25278,11 @@ public class CLogicMeasureMovementRaw : CLogicalEntityRaw
     public CLogicMeasureMovementRaw(Func<global::CounterStrikeSharp.API.Core.CLogicMeasureMovement> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CLogicMeasureMovement/m_hMeasureReference — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CLogicMeasureMovement/m_hMeasureReference — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("measureReference")]
     public EntityFacade? MeasureReference => _entities.ForHandle(_resolve().MeasureReference.Raw);
 
-    /// <summary>CLogicMeasureMovement/m_hMeasureTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CLogicMeasureMovement/m_hMeasureTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("measureTarget")]
     public EntityFacade? MeasureTarget => _entities.ForHandle(_resolve().MeasureTarget.Raw);
 
@@ -25324,11 +25324,11 @@ public class CLogicMeasureMovementRaw : CLogicalEntityRaw
     [ScriptMember("strTargetReference")]
     public string StrTargetReference => _resolve().StrTargetReference;
 
-    /// <summary>CLogicMeasureMovement/m_hTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CLogicMeasureMovement/m_hTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("target")]
     public new EntityFacade? Target => _entities.ForHandle(_resolve().Target.Raw);
 
-    /// <summary>CLogicMeasureMovement/m_hTargetReference — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CLogicMeasureMovement/m_hTargetReference — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("targetReference")]
     public EntityFacade? TargetReference => _entities.ForHandle(_resolve().TargetReference.Raw);
 }
@@ -25435,7 +25435,7 @@ public class CLogicPlayerProxyRaw : CLogicalEntityRaw
     public CLogicPlayerProxyRaw(Func<global::CounterStrikeSharp.API.Core.CLogicPlayerProxy> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CLogicPlayerProxy/m_hPlayer — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CLogicPlayerProxy/m_hPlayer — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("player")]
     public EntityFacade? Player => _entities.ForHandle(_resolve().Player.Raw);
 }
@@ -26211,11 +26211,11 @@ public class CPathKeyFrameRaw : CLogicalEntityRaw
         }
     }
 
-    /// <summary>CPathKeyFrame/m_pNextKey — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPathKeyFrame/m_pNextKey — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame").</summary>
     [ScriptMember("pNextKey")]
     public EntityFacade? PNextKey => _entities.ForHandle(_resolve().PNextKey.Raw);
 
-    /// <summary>CPathKeyFrame/m_pPrevKey — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPathKeyFrame/m_pPrevKey — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame").</summary>
     [ScriptMember("prevKey")]
     public EntityFacade? PrevKey => _entities.ForHandle(_resolve().PrevKey.Raw);
 }
@@ -26245,7 +26245,7 @@ public class CPathMoverRaw : CPathWithDynamicNodesRaw
     public CPathMoverRaw(Func<global::CounterStrikeSharp.API.Core.CPathMover> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPathMover/m_hMoverRouter — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPathMover/m_hMoverRouter — A CFuncMoverRouter, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncMoverRouter").</summary>
     [ScriptMember("moverRouter")]
     public EntityFacade? MoverRouter => _entities.ForHandle(_resolve().MoverRouter.Raw);
 
@@ -26348,7 +26348,7 @@ public class CPathMoverEntitySpawnerRaw : CLogicalEntityRaw
         }
     }
 
-    /// <summary>CPathMoverEntitySpawner/m_hPathMover — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPathMoverEntitySpawner/m_hPathMover — A CPathMover, or null when it points at nothing. Read-only; reach its own fields with .as("CPathMover").</summary>
     [ScriptMember("pathMover")]
     public EntityFacade? PathMover => _entities.ForHandle(_resolve().PathMover.Raw);
 
@@ -26580,11 +26580,11 @@ public class CPhysConstraintRaw : CLogicalEntityRaw
     public CPhysConstraintRaw(Func<global::CounterStrikeSharp.API.Core.CPhysConstraint> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPhysConstraint/m_hAttach1 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPhysConstraint/m_hAttach1 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("attach1")]
     public EntityFacade? Attach1 => _entities.ForHandle(_resolve().Attach1.Raw);
 
-    /// <summary>CPhysConstraint/m_hAttach2 — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPhysConstraint/m_hAttach2 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("attach2")]
     public EntityFacade? Attach2 => _entities.ForHandle(_resolve().Attach2.Raw);
 
@@ -26855,7 +26855,7 @@ public class CPhysMotorRaw : CLogicalEntityRaw
         }
     }
 
-    /// <summary>CPhysMotor/m_hAnchorObject — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPhysMotor/m_hAnchorObject — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("anchorObject")]
     public EntityFacade? AnchorObject => _entities.ForHandle(_resolve().AnchorObject.Raw);
 
@@ -26872,7 +26872,7 @@ public class CPhysMotorRaw : CLogicalEntityRaw
         }
     }
 
-    /// <summary>CPhysMotor/m_hAttachedObject — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPhysMotor/m_hAttachedObject — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("attachedObject")]
     public EntityFacade? AttachedObject => _entities.ForHandle(_resolve().AttachedObject.Raw);
 
@@ -27051,11 +27051,11 @@ public class CPhysicsEntitySolverRaw : CLogicalEntityRaw
         }
     }
 
-    /// <summary>CPhysicsEntitySolver/m_hMovingEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPhysicsEntitySolver/m_hMovingEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("movingEntity")]
     public EntityFacade? MovingEntity => _entities.ForHandle(_resolve().MovingEntity.Raw);
 
-    /// <summary>CPhysicsEntitySolver/m_hPhysicsBlocker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPhysicsEntitySolver/m_hPhysicsBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("physicsBlocker")]
     public EntityFacade? PhysicsBlocker => _entities.ForHandle(_resolve().PhysicsBlocker.Raw);
 
@@ -27137,7 +27137,7 @@ public class CPlantedC4Raw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CPlantedC4/m_hBombDefuser — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPlantedC4/m_hBombDefuser — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("bombDefuser")]
     public EntityFacade? BombDefuser => _entities.ForHandle(_resolve().BombDefuser.Raw);
 
@@ -27531,7 +27531,7 @@ public class CPointClientUIDialogRaw : CBaseClientUIEntityRaw
     public CPointClientUIDialogRaw(Func<global::CounterStrikeSharp.API.Core.CPointClientUIDialog> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPointClientUIDialog/m_hActivator — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointClientUIDialog/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("activator")]
     public EntityFacade? Activator => _entities.ForHandle(_resolve().Activator.Raw);
 
@@ -27968,11 +27968,11 @@ public class CPointCommentaryNodeRaw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CPointCommentaryNode/m_hViewPosition — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointCommentaryNode/m_hViewPosition — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hViewPosition")]
     public EntityFacade? HViewPosition => _entities.ForHandle(_resolve().HViewPosition.Raw);
 
-    /// <summary>CPointCommentaryNode/m_hViewTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointCommentaryNode/m_hViewTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hViewTarget")]
     public EntityFacade? HViewTarget => _entities.ForHandle(_resolve().HViewTarget.Raw);
 
@@ -28117,11 +28117,11 @@ public class CPointCommentaryNodeRaw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CPointCommentaryNode/m_hViewPositionMover — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointCommentaryNode/m_hViewPositionMover — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("viewPositionMover")]
     public EntityFacade? ViewPositionMover => _entities.ForHandle(_resolve().ViewPositionMover.Raw);
 
-    /// <summary>CPointCommentaryNode/m_hViewTargetAngles — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointCommentaryNode/m_hViewTargetAngles — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("viewTargetAngles")]
     public EntityFacade? ViewTargetAngles => _entities.ForHandle(_resolve().ViewTargetAngles.Raw);
 }
@@ -28151,7 +28151,7 @@ public class CPointPrefabRaw : CServerOnlyPointEntityRaw
     public CPointPrefabRaw(Func<global::CounterStrikeSharp.API.Core.CPointPrefab> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CPointPrefab/m_associatedRelayEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPointPrefab/m_associatedRelayEntity — A CPointPrefab, or null when it points at nothing. Read-only; reach its own fields with .as("CPointPrefab").</summary>
     [ScriptMember("associatedRelayEntity")]
     public EntityFacade? AssociatedRelayEntity => _entities.ForHandle(_resolve().AssociatedRelayEntity.Raw);
 
@@ -28658,7 +28658,7 @@ public class CRagdollPropRaw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CRagdollProp/m_hDamageEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CRagdollProp/m_hDamageEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("damageEntity")]
     public EntityFacade? DamageEntity => _entities.ForHandle(_resolve().DamageEntity.Raw);
 
@@ -28740,7 +28740,7 @@ public class CRagdollPropRaw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CRagdollProp/m_hKiller — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CRagdollProp/m_hKiller — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("killer")]
     public EntityFacade? Killer => _entities.ForHandle(_resolve().Killer.Raw);
 
@@ -28809,7 +28809,7 @@ public class CRagdollPropRaw : CBaseAnimGraphRaw
         }
     }
 
-    /// <summary>CRagdollProp/m_hPhysicsAttacker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CRagdollProp/m_hPhysicsAttacker — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn").</summary>
     [ScriptMember("physicsAttacker")]
     public EntityFacade? PhysicsAttacker => _entities.ForHandle(_resolve().PhysicsAttacker.Raw);
 
@@ -29913,7 +29913,7 @@ public class CBaseMoveBehaviorRaw : CPathKeyFrameRaw
         }
     }
 
-    /// <summary>CBaseMoveBehavior/m_pCurrentKeyFrame — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseMoveBehavior/m_pCurrentKeyFrame — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame").</summary>
     [ScriptMember("currentKeyFrame")]
     public EntityFacade? CurrentKeyFrame => _entities.ForHandle(_resolve().CurrentKeyFrame.Raw);
 
@@ -29943,11 +29943,11 @@ public class CBaseMoveBehaviorRaw : CPathKeyFrameRaw
         }
     }
 
-    /// <summary>CBaseMoveBehavior/m_pPostKeyFrame — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseMoveBehavior/m_pPostKeyFrame — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame").</summary>
     [ScriptMember("postKeyFrame")]
     public EntityFacade? PostKeyFrame => _entities.ForHandle(_resolve().PostKeyFrame.Raw);
 
-    /// <summary>CBaseMoveBehavior/m_pPreKeyFrame — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseMoveBehavior/m_pPreKeyFrame — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame").</summary>
     [ScriptMember("preKeyFrame")]
     public EntityFacade? PreKeyFrame => _entities.ForHandle(_resolve().PreKeyFrame.Raw);
 
@@ -29964,7 +29964,7 @@ public class CBaseMoveBehaviorRaw : CPathKeyFrameRaw
         }
     }
 
-    /// <summary>CBaseMoveBehavior/m_pTargetKeyFrame — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseMoveBehavior/m_pTargetKeyFrame — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame").</summary>
     [ScriptMember("targetKeyFrame")]
     public EntityFacade? TargetKeyFrame => _entities.ForHandle(_resolve().TargetKeyFrame.Raw);
 
@@ -30007,7 +30007,7 @@ public class CBasePlayerPawnRaw : CBaseCombatCharacterRaw
     public CBasePlayerPawnRaw(Func<global::CounterStrikeSharp.API.Core.CBasePlayerPawn> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CBasePlayerPawn/m_hController — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBasePlayerPawn/m_hController — A CBasePlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerController").</summary>
     [ScriptMember("controller")]
     public EntityFacade? Controller => _entities.ForHandle(_resolve().Controller.Raw);
 
@@ -30024,7 +30024,7 @@ public class CBasePlayerPawnRaw : CBaseCombatCharacterRaw
         }
     }
 
-    /// <summary>CBasePlayerPawn/m_hDefaultController — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBasePlayerPawn/m_hDefaultController — A CBasePlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerController").</summary>
     [ScriptMember("defaultController")]
     public EntityFacade? DefaultController => _entities.ForHandle(_resolve().DefaultController.Raw);
 
@@ -30262,7 +30262,7 @@ public class CBombTargetRaw : CBaseTriggerRaw
         }
     }
 
-    /// <summary>CBombTarget/m_hInstructorHint — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBombTarget/m_hInstructorHint — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("instructorHint")]
     public EntityFacade? InstructorHint => _entities.ForHandle(_resolve().InstructorHint.Raw);
 
@@ -30335,7 +30335,7 @@ public class CBreakablePropRaw : CBasePropRaw
         }
     }
 
-    /// <summary>CBreakableProp/m_hBreaker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBreakableProp/m_hBreaker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("breaker")]
     public EntityFacade? Breaker => _entities.ForHandle(_resolve().Breaker.Raw);
 
@@ -30450,7 +30450,7 @@ public class CBreakablePropRaw : CBasePropRaw
         }
     }
 
-    /// <summary>CBreakableProp/m_hLastAttacker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBreakableProp/m_hLastAttacker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("lastAttacker")]
     public EntityFacade? LastAttacker => _entities.ForHandle(_resolve().LastAttacker.Raw);
 
@@ -30506,7 +30506,7 @@ public class CBreakablePropRaw : CBasePropRaw
         }
     }
 
-    /// <summary>CBreakableProp/m_hPhysicsAttacker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBreakableProp/m_hPhysicsAttacker — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn").</summary>
     [ScriptMember("physicsAttacker")]
     public EntityFacade? PhysicsAttacker => _entities.ForHandle(_resolve().PhysicsAttacker.Raw);
 
@@ -31492,11 +31492,11 @@ public class CFuncTrainRaw : CBasePlatTrainRaw
         }
     }
 
-    /// <summary>CFuncTrain/m_hCurrentTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncTrain/m_hCurrentTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("currentTarget")]
     public EntityFacade? CurrentTarget => _entities.ForHandle(_resolve().CurrentTarget.Raw);
 
-    /// <summary>CFuncTrain/m_hEnemy — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncTrain/m_hEnemy — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("enemy")]
     public EntityFacade? Enemy => _entities.ForHandle(_resolve().Enemy.Raw);
 
@@ -32517,11 +32517,11 @@ public class CItemDogtagsRaw : CItemRaw
     public CItemDogtagsRaw(Func<global::CounterStrikeSharp.API.Core.CItemDogtags> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CItemDogtags/m_KillingPlayer — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CItemDogtags/m_KillingPlayer — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("killingPlayer")]
     public EntityFacade? KillingPlayer => _entities.ForHandle(_resolve().KillingPlayer.Raw);
 
-    /// <summary>CItemDogtags/m_OwningPlayer — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CItemDogtags/m_OwningPlayer — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("owningPlayer")]
     public EntityFacade? OwningPlayer => _entities.ForHandle(_resolve().OwningPlayer.Raw);
 }
@@ -32624,7 +32624,7 @@ public class CItemGenericRaw : CItemRaw
         }
     }
 
-    /// <summary>CItemGeneric/m_hPickupFilter — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CItemGeneric/m_hPickupFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter").</summary>
     [ScriptMember("pickupFilter")]
     public EntityFacade? PickupFilter => _entities.ForHandle(_resolve().PickupFilter.Raw);
 
@@ -32704,7 +32704,7 @@ public class CItemGenericRaw : CItemRaw
     [ScriptMember("timeoutSoundEffect")]
     public string TimeoutSoundEffect => _resolve().TimeoutSoundEffect;
 
-    /// <summary>CItemGeneric/m_hTriggerHelper — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CItemGeneric/m_hTriggerHelper — A CItemGenericTriggerHelper, or null when it points at nothing. Read-only; reach its own fields with .as("CItemGenericTriggerHelper").</summary>
     [ScriptMember("triggerHelper")]
     public EntityFacade? TriggerHelper => _entities.ForHandle(_resolve().TriggerHelper.Raw);
 
@@ -33758,7 +33758,7 @@ public class CPhysWheelConstraintRaw : CPhysConstraintRaw
         }
     }
 
-    /// <summary>CPhysWheelConstraint/m_hSteeringMimicsEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPhysWheelConstraint/m_hSteeringMimicsEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("steeringMimicsEntity")]
     public EntityFacade? SteeringMimicsEntity => _entities.ForHandle(_resolve().SteeringMimicsEntity.Raw);
 
@@ -34604,7 +34604,7 @@ public class CSplineConstraintRaw : CPhysConstraintRaw
         }
     }
 
-    /// <summary>CSplineConstraint/m_hSplineEntity — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CSplineConstraint/m_hSplineEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("splineEntity")]
     public EntityFacade? SplineEntity => _entities.ForHandle(_resolve().SplineEntity.Raw);
 
@@ -34903,7 +34903,7 @@ public class CTriggerFanRaw : CBaseTriggerRaw
         }
     }
 
-    /// <summary>CTriggerFan/m_hInfoFan — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTriggerFan/m_hInfoFan — A CInfoFan, or null when it points at nothing. Read-only; reach its own fields with .as("CInfoFan").</summary>
     [ScriptMember("hInfoFan")]
     public EntityFacade? HInfoFan => _entities.ForHandle(_resolve().HInfoFan.Raw);
 
@@ -35376,11 +35376,11 @@ public class CTriggerLerpObjectRaw : CBaseTriggerRaw
         }
     }
 
-    /// <summary>CTriggerLerpObject/m_hEntityToWaitForDisconnect — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTriggerLerpObject/m_hEntityToWaitForDisconnect — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("entityToWaitForDisconnect")]
     public EntityFacade? EntityToWaitForDisconnect => _entities.ForHandle(_resolve().EntityToWaitForDisconnect.Raw);
 
-    /// <summary>CTriggerLerpObject/m_hLerpTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTriggerLerpObject/m_hLerpTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hLerpTarget")]
     public EntityFacade? HLerpTarget => _entities.ForHandle(_resolve().HLerpTarget.Raw);
 
@@ -35646,7 +35646,7 @@ public class CTriggerProximityRaw : CBaseTriggerRaw
     public CTriggerProximityRaw(Func<global::CounterStrikeSharp.API.Core.CTriggerProximity> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CTriggerProximity/m_hMeasureTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTriggerProximity/m_hMeasureTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("hMeasureTarget")]
     public EntityFacade? HMeasureTarget => _entities.ForHandle(_resolve().HMeasureTarget.Raw);
 
@@ -35706,7 +35706,7 @@ public class CTriggerPushRaw : CBaseTriggerRaw
     public CTriggerPushRaw(Func<global::CounterStrikeSharp.API.Core.CTriggerPush> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CTriggerPush/m_PathSimple — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTriggerPush/m_PathSimple — A CPathSimple, or null when it points at nothing. Read-only; reach its own fields with .as("CPathSimple").</summary>
     [ScriptMember("pathSimple")]
     public EntityFacade? PathSimple => _entities.ForHandle(_resolve().PathSimple.Raw);
 
@@ -36010,7 +36010,7 @@ public class CTriggerSoundscapeRaw : CBaseTriggerRaw
     public CTriggerSoundscapeRaw(Func<global::CounterStrikeSharp.API.Core.CTriggerSoundscape> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CTriggerSoundscape/m_hSoundscape — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTriggerSoundscape/m_hSoundscape — A CEnvSoundscapeTriggerable, or null when it points at nothing. Read-only; reach its own fields with .as("CEnvSoundscapeTriggerable").</summary>
     [ScriptMember("soundscape")]
     public EntityFacade? Soundscape => _entities.ForHandle(_resolve().Soundscape.Raw);
 
@@ -36321,7 +36321,7 @@ public class CCSPlayerPawnBaseRaw : CBasePlayerPawnRaw
         }
     }
 
-    /// <summary>CCSPlayerPawnBase/m_hOriginalController — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CCSPlayerPawnBase/m_hOriginalController — A CCSPlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerController").</summary>
     [ScriptMember("originalController")]
     public EntityFacade? OriginalController => _entities.ForHandle(_resolve().OriginalController.Raw);
 
@@ -36832,7 +36832,7 @@ public class CCSWeaponBaseRaw : CBasePlayerWeaponRaw
         }
     }
 
-    /// <summary>CCSWeaponBase/m_hPrevOwner — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CCSWeaponBase/m_hPrevOwner — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("prevOwner")]
     public EntityFacade? PrevOwner => _entities.ForHandle(_resolve().PrevOwner.Raw);
 
@@ -37639,7 +37639,7 @@ public class CHostageRaw : CHostageExpresserShimRaw
         }
     }
 
-    /// <summary>CHostage/m_hHostageGrabber — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CHostage/m_hHostageGrabber — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("hostageGrabber")]
     public EntityFacade? HostageGrabber => _entities.ForHandle(_resolve().HostageGrabber.Raw);
 
@@ -37760,11 +37760,11 @@ public class CHostageRaw : CHostageExpresserShimRaw
         }
     }
 
-    /// <summary>CHostage/m_lastLeader — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CHostage/m_lastLeader — A CCSPlayerPawnBase, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawnBase").</summary>
     [ScriptMember("lastLeader")]
     public EntityFacade? LastLeader => _entities.ForHandle(_resolve().LastLeader.Raw);
 
-    /// <summary>CHostage/m_leader — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CHostage/m_leader — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("leader")]
     public EntityFacade? Leader => _entities.ForHandle(_resolve().Leader.Raw);
 
@@ -39051,7 +39051,7 @@ public class CBaseCSGrenadeRaw : CCSWeaponBaseRaw
         }
     }
 
-    /// <summary>CBaseCSGrenade/m_hSwitchToWeaponAfterThrow — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBaseCSGrenade/m_hSwitchToWeaponAfterThrow — A CCSWeaponBase, or null when it points at nothing. Read-only; reach its own fields with .as("CCSWeaponBase").</summary>
     [ScriptMember("switchToWeaponAfterThrow")]
     public EntityFacade? SwitchToWeaponAfterThrow => _entities.ForHandle(_resolve().SwitchToWeaponAfterThrow.Raw);
 
@@ -39120,7 +39120,7 @@ public class CBasePropDoorRaw : CDynamicPropRaw
     public CBasePropDoorRaw(Func<global::CounterStrikeSharp.API.Core.CBasePropDoor> resolve, CssEntities entities) : base(resolve, entities) =>
         _resolve = resolve;
 
-    /// <summary>CBasePropDoor/m_hActivator — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBasePropDoor/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("activator")]
     public EntityFacade? Activator => _entities.ForHandle(_resolve().Activator.Raw);
 
@@ -39137,7 +39137,7 @@ public class CBasePropDoorRaw : CDynamicPropRaw
         }
     }
 
-    /// <summary>CBasePropDoor/m_hBlocker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBasePropDoor/m_hBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("blocker")]
     public new EntityFacade? Blocker => _entities.ForHandle(_resolve().Blocker.Raw);
 
@@ -39206,7 +39206,7 @@ public class CBasePropDoorRaw : CDynamicPropRaw
         }
     }
 
-    /// <summary>CBasePropDoor/m_hMaster — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CBasePropDoor/m_hMaster — A CBasePropDoor, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePropDoor").</summary>
     [ScriptMember("master")]
     public EntityFacade? Master => _entities.ForHandle(_resolve().Master.Raw);
 
@@ -40729,7 +40729,7 @@ public class CChickenRaw : CDynamicPropRaw
         }
     }
 
-    /// <summary>CChicken/m_fleeFrom — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CChicken/m_fleeFrom — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("fleeFrom")]
     public EntityFacade? FleeFrom => _entities.ForHandle(_resolve().FleeFrom.Raw);
 
@@ -40759,7 +40759,7 @@ public class CChickenRaw : CDynamicPropRaw
         }
     }
 
-    /// <summary>CChicken/m_leader — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CChicken/m_leader — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn").</summary>
     [ScriptMember("leader")]
     public EntityFacade? Leader => _entities.ForHandle(_resolve().Leader.Raw);
 
@@ -40928,7 +40928,7 @@ public class CFuncTrackChangeRaw : CFuncPlatRotRaw
         }
     }
 
-    /// <summary>CFuncTrackChange/m_trackBottom — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncTrackChange/m_trackBottom — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack").</summary>
     [ScriptMember("trackBottom")]
     public EntityFacade? TrackBottom => _entities.ForHandle(_resolve().TrackBottom.Raw);
 
@@ -40936,7 +40936,7 @@ public class CFuncTrackChangeRaw : CFuncPlatRotRaw
     [ScriptMember("trackBottomName")]
     public string TrackBottomName => _resolve().TrackBottomName;
 
-    /// <summary>CFuncTrackChange/m_trackTop — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncTrackChange/m_trackTop — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack").</summary>
     [ScriptMember("trackTop")]
     public EntityFacade? TrackTop => _entities.ForHandle(_resolve().TrackTop.Raw);
 
@@ -40944,7 +40944,7 @@ public class CFuncTrackChangeRaw : CFuncPlatRotRaw
     [ScriptMember("trackTopName")]
     public string TrackTopName => _resolve().TrackTopName;
 
-    /// <summary>CFuncTrackChange/m_train — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CFuncTrackChange/m_train — A CFuncTrackTrain, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncTrackTrain").</summary>
     [ScriptMember("train")]
     public EntityFacade? Train => _entities.ForHandle(_resolve().Train.Raw);
 
@@ -41238,7 +41238,7 @@ public class CTriggerLookRaw : CTriggerOnceRaw
         }
     }
 
-    /// <summary>CTriggerLook/m_hLookTarget — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CTriggerLook/m_hLookTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity").</summary>
     [ScriptMember("lookTarget")]
     public EntityFacade? LookTarget => _entities.ForHandle(_resolve().LookTarget.Raw);
 
@@ -41689,7 +41689,7 @@ public class CPropDoorRotatingRaw : CBasePropDoorRaw
         }
     }
 
-    /// <summary>CPropDoorRotating/m_hEntityBlocker — Another entity, or null when it points at nothing. Read-only.</summary>
+    /// <summary>CPropDoorRotating/m_hEntityBlocker — A CEntityBlocker, or null when it points at nothing. Read-only; reach its own fields with .as("CEntityBlocker").</summary>
     [ScriptMember("entityBlocker")]
     public EntityFacade? EntityBlocker => _entities.ForHandle(_resolve().EntityBlocker.Raw);
 

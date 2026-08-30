@@ -297,15 +297,27 @@ internal static class Surfaces
         // the engine's own bookkeeping, and a wrong one is not a value that looks odd —
         // it is an entity pointing at the wrong owner. It can be added per field when
         // there is a field somebody wants.
+        //
+        // The type is Entity<EntityRaw>, not Entity of the class the handle is declared
+        // for. It has to be: the entity comes from the one table, which hands out one
+        // facade per entity, and that facade's raw is the CBaseEntity floor — the same
+        // object reached through entities.byIndex. A narrower raw here would be a type the
+        // runtime does not back. The class the handle names is in the note instead, so
+        // that .as(it) is the obvious next step.
         if (type.Name.StartsWith("CHandle", StringComparison.Ordinal))
         {
+            var held = type.IsGenericType ? type.GetGenericArguments()[0] : null;
+            var note = held is not null && typeof(CBaseEntity).IsAssignableFrom(held)
+                ? $"A {held.Name}, or null when it points at nothing. Read-only; reach its own fields with .as(\"{held.Name}\")."
+                : "Another entity, or null when it points at nothing. Read-only.";
+
             return blank with
             {
                 CSharpType = "EntityFacade?",
                 TypeScriptType = "Entity<EntityRaw> | null",
                 ReadFormat = "_entities.ForHandle({0}.Raw)",
                 WriteFormat = null,
-                Note = "Another entity, or null when it points at nothing. Read-only.",
+                Note = note,
             };
         }
 
