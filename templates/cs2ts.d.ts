@@ -219,7 +219,7 @@ declare global {
         animTime: number;
         /** CBaseEntity/m_bAnimatedEveryTick */
         animatedEveryTick: boolean;
-        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_pBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly blocker: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nBloodType — A BloodType. */
         bloodType: number;
@@ -231,7 +231,7 @@ declare global {
         currentThinkContext: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
-        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hDamageFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
@@ -241,7 +241,7 @@ declare global {
         disabledContextThinks: boolean;
         /** CBaseEntity/m_iEFlags */
         eFlags: number;
-        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hEffectEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
@@ -261,7 +261,7 @@ declare global {
         gravityScale: number;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
-        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hGroundEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly groundEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iHealth */
         health: number;
@@ -293,7 +293,7 @@ declare global {
         networkQuantizeOriginAndAngles: boolean;
         /** CBaseEntity/m_nNextThinkTick */
         nextThinkTick: number;
-        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hOwnerEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly ownerEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
         platformType: number;
@@ -445,13 +445,13 @@ declare global {
         readonly networkIDString: string;
         /** CBasePlayerController/m_bNoClipEnabled */
         noClipEnabled: boolean;
-        /** CBasePlayerController/m_hPawn — Another entity, or null when it points at nothing. Read-only. */
+        /** CBasePlayerController/m_hPawn — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn"). */
         readonly pawn: Entity<EntityRaw> | null;
         /** CBasePlayerController/m_iszPlayerName — Read-only, as every string field is. */
         readonly playerName: string;
         /** CBasePlayerController/m_bPredict */
         predict: boolean;
-        /** CBasePlayerController/m_hSplitOwner — Another entity, or null when it points at nothing. Read-only. */
+        /** CBasePlayerController/m_hSplitOwner — A CBasePlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerController"). */
         readonly splitOwner: Entity<EntityRaw> | null;
         /** CBasePlayerController/m_nSplitScreenSlot */
         splitScreenSlot: number;
@@ -565,7 +565,7 @@ declare global {
 
     /** The fields a CEntityFlame adds to EntityRaw. */
     interface CEntityFlameRaw extends EntityRaw {
-        /** CEntityFlame/m_hAttacker — Another entity, or null when it points at nothing. Read-only. */
+        /** CEntityFlame/m_hAttacker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly attacker: Entity<EntityRaw> | null;
         /** CEntityFlame/m_bCheapEffect */
         cheapEffect: boolean;
@@ -573,7 +573,7 @@ declare global {
         customDamageType: number;
         /** CEntityFlame/m_flDirectDamagePerSecond */
         directDamagePerSecond: number;
-        /** CEntityFlame/m_hEntAttached — Another entity, or null when it points at nothing. Read-only. */
+        /** CEntityFlame/m_hEntAttached — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly entAttached: Entity<EntityRaw> | null;
         /** CEntityFlame/m_flHitboxFireScale */
         hitboxFireScale: number;
@@ -755,7 +755,7 @@ declare global {
         disabled: boolean;
         /** CEnvSoundscape/m_bOverrideWithEvent */
         overrideWithEvent: boolean;
-        /** CEnvSoundscape/m_hProxySoundscape — Another entity, or null when it points at nothing. Read-only. */
+        /** CEnvSoundscape/m_hProxySoundscape — A CEnvSoundscape, or null when it points at nothing. Read-only; reach its own fields with .as("CEnvSoundscape"). */
         readonly proxySoundscape: Entity<EntityRaw> | null;
         /** CEnvSoundscape/m_flRadius */
         radius: number;
@@ -1011,7 +1011,7 @@ declare global {
     interface CHandleTestRaw extends EntityRaw {
         /** CHandleTest/m_bSendHandle */
         sendHandle: boolean;
-        /** CHandleTest/m_Handle — Another entity, or null when it points at nothing. Read-only. */
+        /** CHandleTest/m_Handle — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly testHandle: Entity<EntityRaw> | null;
     }
 
@@ -1199,11 +1199,11 @@ declare global {
 
     /** The fields a CPlayerPing adds to EntityRaw. */
     interface CPlayerPingRaw extends EntityRaw {
-        /** CPlayerPing/m_hPingedEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPlayerPing/m_hPingedEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly pingedEntity: Entity<EntityRaw> | null;
         /** CPlayerPing/m_szPlaceName — Read-only, as every string field is. */
         readonly placeName: string;
-        /** CPlayerPing/m_hPlayer — Another entity, or null when it points at nothing. Read-only. */
+        /** CPlayerPing/m_hPlayer — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly player: Entity<EntityRaw> | null;
         /** CPlayerPing/m_iType */
         type: number;
@@ -1285,9 +1285,9 @@ declare global {
 
     /** The fields a CPointEntityFinder adds to EntityRaw. */
     interface CPointEntityFinderRaw extends EntityRaw {
-        /** CPointEntityFinder/m_hEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointEntityFinder/m_hEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly entity: Entity<EntityRaw> | null;
-        /** CPointEntityFinder/m_hFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointEntityFinder/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly filter: Entity<EntityRaw> | null;
         /** CPointEntityFinder/m_iFilterName — Read-only, as every string field is. */
         readonly filterName: string;
@@ -1295,7 +1295,7 @@ declare global {
         findMethod: number;
         /** CPointEntityFinder/m_iRefName — Read-only, as every string field is. */
         readonly refName: string;
-        /** CPointEntityFinder/m_hReference — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointEntityFinder/m_hReference — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly reference: Entity<EntityRaw> | null;
     }
 
@@ -1311,7 +1311,7 @@ declare global {
         animTime: number;
         /** CBaseEntity/m_bAnimatedEveryTick */
         animatedEveryTick: boolean;
-        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_pBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly blocker: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nBloodType — A BloodType. */
         bloodType: number;
@@ -1325,7 +1325,7 @@ declare global {
         currentThinkContext: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
-        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hDamageFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
@@ -1335,7 +1335,7 @@ declare global {
         disabledContextThinks: boolean;
         /** CBaseEntity/m_iEFlags */
         eFlags: number;
-        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hEffectEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
@@ -1357,7 +1357,7 @@ declare global {
         gravityScale: number;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
-        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hGroundEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly groundEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iHealth */
         health: number;
@@ -1393,7 +1393,7 @@ declare global {
         networkQuantizeOriginAndAngles: boolean;
         /** CBaseEntity/m_nNextThinkTick */
         nextThinkTick: number;
-        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hOwnerEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly ownerEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
         platformType: number;
@@ -1423,7 +1423,7 @@ declare global {
         takeDamageFlags: number;
         /** CBaseEntity/m_bTakesDamage */
         takesDamage: boolean;
-        /** CPointOrient/m_hTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointOrient/m_hTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly target: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iTeamNum */
         teamNum: number;
@@ -1491,11 +1491,11 @@ declare global {
         ratchetOffset: number;
         /** CPointValueRemapper/m_nRatchetType — A ValueRemapperRatchetType_t. */
         ratchetType: number;
-        /** CPointValueRemapper/m_hRemapLineEnd — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointValueRemapper/m_hRemapLineEnd — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly remapLineEnd: Entity<EntityRaw> | null;
         /** CPointValueRemapper/m_iszRemapLineEndName — Read-only, as every string field is. */
         readonly remapLineEndName: string;
-        /** CPointValueRemapper/m_hRemapLineStart — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointValueRemapper/m_hRemapLineStart — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly remapLineStart: Entity<EntityRaw> | null;
         /** CPointValueRemapper/m_iszRemapLineStartName — Read-only, as every string field is. */
         readonly remapLineStartName: string;
@@ -1515,7 +1515,7 @@ declare global {
         readonly soundReachedValueZero: string;
         /** CPointValueRemapper/m_bUpdateOnClient */
         updateOnClient: boolean;
-        /** CPointValueRemapper/m_hUsingPlayer — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointValueRemapper/m_hUsingPlayer — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn"). */
         readonly usingPlayer: Entity<EntityRaw> | null;
     }
 
@@ -1575,7 +1575,7 @@ declare global {
         forceSynch: boolean;
         /** CScriptedSequence/m_nForcedCrouchState — A ForcedCrouchState_t. */
         forcedCrouchState: number;
-        /** CScriptedSequence/m_hForcedTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CScriptedSequence/m_hForcedTarget — A CBaseAnimGraph, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseAnimGraph"). */
         readonly forcedTarget: Entity<EntityRaw> | null;
         /** CScriptedSequence/m_nHeldWeaponBehavior — A ScriptedHeldWeaponBehavior_t. */
         heldWeaponBehavior: number;
@@ -1591,7 +1591,7 @@ declare global {
         ignoreRotation: boolean;
         /** CScriptedSequence/m_bInitiatedSelfDelete */
         initiatedSelfDelete: boolean;
-        /** CScriptedSequence/m_hInteractionMainEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CScriptedSequence/m_hInteractionMainEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly interactionMainEntity: Entity<EntityRaw> | null;
         /** CScriptedSequence/m_bInterruptable */
         interruptable: boolean;
@@ -1625,7 +1625,7 @@ declare global {
         moveTo: number;
         /** CScriptedSequence/m_nMoveToGait — A SharedMovementGait_t. */
         moveToGait: number;
-        /** CScriptedSequence/m_hNextCine — Another entity, or null when it points at nothing. Read-only. */
+        /** CScriptedSequence/m_hNextCine — A CScriptedSequence, or null when it points at nothing. Read-only; reach its own fields with .as("CScriptedSequence"). */
         readonly nextCine: Entity<EntityRaw> | null;
         /** CScriptedSequence/m_iszNextScript — Read-only, as every string field is. */
         readonly nextScript: string;
@@ -1671,7 +1671,7 @@ declare global {
         readonly syncGroup: string;
         /** CScriptedSequence/m_bSynchPostIdles */
         synchPostIdles: boolean;
-        /** CScriptedSequence/m_hTargetEnt — Another entity, or null when it points at nothing. Read-only. */
+        /** CScriptedSequence/m_hTargetEnt — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly targetEnt: Entity<EntityRaw> | null;
         /** CScriptedSequence/m_bThinking */
         thinking: boolean;
@@ -1693,7 +1693,7 @@ declare global {
 
     /** The fields a CSkyboxReference adds to EntityRaw. */
     interface CSkyboxReferenceRaw extends EntityRaw {
-        /** CSkyboxReference/m_hSkyCamera — Another entity, or null when it points at nothing. Read-only. */
+        /** CSkyboxReference/m_hSkyCamera — A CSkyCamera, or null when it points at nothing. Read-only; reach its own fields with .as("CSkyCamera"). */
         readonly skyCamera: Entity<EntityRaw> | null;
     }
 
@@ -1849,7 +1849,7 @@ declare global {
         readonly sound: string;
         /** CAmbientGeneric/m_iSoundLevel — A soundlevel_t. */
         soundLevel: number;
-        /** CAmbientGeneric/m_hSoundSource — Another entity, or null when it points at nothing. Read-only. */
+        /** CAmbientGeneric/m_hSoundSource — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly soundSource: Entity<EntityRaw> | null;
         /** CAmbientGeneric/m_sSourceEntName — Read-only, as every string field is. */
         readonly sourceEntName: string;
@@ -1981,7 +1981,7 @@ declare global {
 
     /** The fields a CBaseToggle adds to CBaseModelEntityRaw. */
     interface CBaseToggleRaw extends CBaseModelEntityRaw {
-        /** CBaseToggle/m_hActivator — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseToggle/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly activator: Entity<EntityRaw> | null;
         /** CBaseToggle/m_bAlwaysFireBlockedOutputs */
         alwaysFireBlockedOutputs: boolean;
@@ -2013,7 +2013,7 @@ declare global {
         damage: number;
         /** CBeam/m_nDissolveType */
         dissolveType: number;
-        /** CBeam/m_hEndEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBeam/m_hEndEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly endEntity: Entity<EntityRaw> | null;
         /** CBeam/m_fEndWidth */
         endWidth: number;
@@ -2051,7 +2051,7 @@ declare global {
 
     /** The fields a CBreakable adds to CBaseModelEntityRaw. */
     interface CBreakableRaw extends CBaseModelEntityRaw {
-        /** CBreakable/m_hBreaker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBreakable/m_hBreaker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly breaker: Entity<EntityRaw> | null;
         /** CBreakable/m_Explosion — A Explosions. */
         explosion: number;
@@ -2067,7 +2067,7 @@ declare global {
         overrideBlockLOS: number;
         /** CBreakable/m_PerformanceMode — A PerformanceMode_t. */
         performanceMode: number;
-        /** CBreakable/m_hPhysicsAttacker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBreakable/m_hPhysicsAttacker — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn"). */
         readonly physicsAttacker: Entity<EntityRaw> | null;
         /** CBreakable/m_flPressureDelay */
         pressureDelay: number;
@@ -2203,9 +2203,9 @@ declare global {
         nextTimeCheck: number;
         /** CCSPlayerController/m_nNonSuspiciousHitStreak */
         nonSuspiciousHitStreak: number;
-        /** CCSPlayerController/m_hObserverPawn — Another entity, or null when it points at nothing. Read-only. */
+        /** CCSPlayerController/m_hObserverPawn — A CCSObserverPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSObserverPawn"). */
         readonly observerPawn: Entity<EntityRaw> | null;
-        /** CCSPlayerController/m_hOriginalControllerOfCurrentPawn — Another entity, or null when it points at nothing. Read-only. */
+        /** CCSPlayerController/m_hOriginalControllerOfCurrentPawn — A CCSPlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerController"). */
         readonly originalControllerOfCurrentPawn: Entity<EntityRaw> | null;
         /** CCSPlayerController/m_iPawnArmor */
         pawnArmor: number;
@@ -2233,7 +2233,7 @@ declare global {
         readonly playerDominated: string;
         /** CCSPlayerController/m_nPlayerDominatingMe — A 64-bit id, as a string: it does not survive a JavaScript number. */
         readonly playerDominatingMe: string;
-        /** CCSPlayerController/m_hPlayerPawn — Another entity, or null when it points at nothing. Read-only. */
+        /** CCSPlayerController/m_hPlayerPawn — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly playerPawn: Entity<EntityRaw> | null;
         /** CCSPlayerController/m_unPlayerTvControlFlags */
         playerTvControlFlags: number;
@@ -2399,9 +2399,9 @@ declare global {
 
     /** The fields a CEnvEntityMaker adds to CPointEntityRaw. */
     interface CEnvEntityMakerRaw extends CPointEntityRaw {
-        /** CEnvEntityMaker/m_hCurrentBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CEnvEntityMaker/m_hCurrentBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly currentBlocker: Entity<EntityRaw> | null;
-        /** CEnvEntityMaker/m_hCurrentInstance — Another entity, or null when it points at nothing. Read-only. */
+        /** CEnvEntityMaker/m_hCurrentInstance — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly currentInstance: Entity<EntityRaw> | null;
         /** CEnvEntityMaker/m_flPostSpawnDirectionVariance */
         postSpawnDirectionVariance: number;
@@ -2687,7 +2687,7 @@ declare global {
         followConstraintsInitialized: boolean;
         /** CFuncMover/m_flFollowDistance */
         followDistance: number;
-        /** CFuncMover/m_hFollowEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMover/m_hFollowEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly followEntity: Entity<EntityRaw> | null;
         /** CFuncMover/m_eFollowEntityDirection — A CFuncMoverFollowEntityDirection_t. */
         followEntityDirection: number;
@@ -2695,7 +2695,7 @@ declare global {
         readonly followEntityName: string;
         /** CFuncMover/m_flFollowMinimumSpeed */
         followMinimumSpeed: number;
-        /** CFuncMover/m_hFollowMover — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMover/m_hFollowMover — A CFuncMover, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncMover"). */
         readonly followMover: Entity<EntityRaw> | null;
         /** CFuncMover/m_flFollowMoverCalculatedDistance */
         followMoverCalculatedDistance: number;
@@ -2737,9 +2737,9 @@ declare global {
         moveType: number;
         /** CFuncMover/m_bNextNodeReturnsCurrent */
         nextNodeReturnsCurrent: boolean;
-        /** CFuncMover/m_hOrientationFaceEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMover/m_hOrientationFaceEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly orientationFaceEntity: Entity<EntityRaw> | null;
-        /** CFuncMover/m_hOrientationMatchEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMover/m_hOrientationMatchEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly orientationMatchEntity: Entity<EntityRaw> | null;
         /** CFuncMover/m_iszOrientationMatchEntityName — Read-only, as every string field is. */
         readonly orientationMatchEntityName: string;
@@ -2751,7 +2751,7 @@ declare global {
         pathLocationStart: number;
         /** CFuncMover/m_flPathLocationToBeginStop */
         pathLocationToBeginStop: number;
-        /** CFuncMover/m_hPathMover — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMover/m_hPathMover — A CPathMover, or null when it points at nothing. Read-only; reach its own fields with .as("CPathMover"). */
         readonly pathMover: Entity<EntityRaw> | null;
         /** CFuncMover/m_iszPathName — Read-only, as every string field is. */
         readonly pathName: string;
@@ -2761,7 +2761,7 @@ declare global {
         readonly pathNodeStart: string;
         /** CFuncMover/m_ePathRebuildStrategy — A CFuncMoverPathRebuildStrategy_t. */
         pathRebuildStrategy: number;
-        /** CFuncMover/m_hPrevPathMover — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMover/m_hPrevPathMover — A CPathMover, or null when it points at nothing. Read-only; reach its own fields with .as("CPathMover"). */
         readonly prevPathMover: Entity<EntityRaw> | null;
         /** CFuncMover/m_nPreviousNodeIndex */
         previousNodeIndex: number;
@@ -2791,7 +2791,7 @@ declare global {
         startSpeed: number;
         /** CFuncMover/m_bStartedMoving */
         startedMoving: boolean;
-        /** CFuncMover/m_hStopAtNode — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMover/m_hStopAtNode — A CMoverPathNode, or null when it points at nothing. Read-only; reach its own fields with .as("CMoverPathNode"). */
         readonly stopAtNode: Entity<EntityRaw> | null;
         /** CFuncMover/m_flStopCurveScale */
         stopCurveScale: number;
@@ -2893,7 +2893,7 @@ declare global {
         rotateType: number;
         /** CFuncRotator/m_eRotationAxis — A CFuncRotatorRotationAxis_t. */
         rotationAxis: number;
-        /** CFuncRotator/m_hRotatorTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncRotator/m_hRotatorTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly rotatorTarget: Entity<EntityRaw> | null;
         /** CFuncRotator/m_eSolidType — A SolidType_t. */
         solidType: number;
@@ -3007,7 +3007,7 @@ declare global {
         oldSpeed: number;
         /** CFuncTrackTrain/m_eOrientationType — A TrainOrientationType_t. */
         orientationType: number;
-        /** CFuncTrackTrain/m_ppath — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncTrackTrain/m_ppath — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack"). */
         readonly ppath: Entity<EntityRaw> | null;
         /** CFuncTrackTrain/m_iszSoundMove — Read-only, as every string field is. */
         readonly soundMove: string;
@@ -3091,7 +3091,7 @@ declare global {
         disabled: boolean;
         /** CInfoDynamicShadowHint/m_nImportance */
         importance: number;
-        /** CInfoDynamicShadowHint/m_hLight — Another entity, or null when it points at nothing. Read-only. */
+        /** CInfoDynamicShadowHint/m_hLight — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly light: Entity<EntityRaw> | null;
         /** CInfoDynamicShadowHint/m_nLightChoice */
         lightChoice: number;
@@ -3191,13 +3191,13 @@ declare global {
         readonly hintTargetEntity: string;
         /** CInstructorEventEntity/m_iszName — Read-only, as every string field is. */
         readonly name: string;
-        /** CInstructorEventEntity/m_hTargetPlayer — Another entity, or null when it points at nothing. Read-only. */
+        /** CInstructorEventEntity/m_hTargetPlayer — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn"). */
         readonly targetPlayer: Entity<EntityRaw> | null;
     }
 
     /** The fields a CItemGenericTriggerHelper adds to CBaseModelEntityRaw. */
     interface CItemGenericTriggerHelperRaw extends CBaseModelEntityRaw {
-        /** CItemGenericTriggerHelper/m_hParentItem — Another entity, or null when it points at nothing. Read-only. */
+        /** CItemGenericTriggerHelper/m_hParentItem — A CItemGeneric, or null when it points at nothing. Read-only; reach its own fields with .as("CItemGeneric"). */
         readonly parentItem: Entity<EntityRaw> | null;
     }
 
@@ -3207,7 +3207,7 @@ declare global {
         active: boolean;
         /** CKeepUpright/m_angularLimit */
         angularLimit: number;
-        /** CKeepUpright/m_attachedObject — Another entity, or null when it points at nothing. Read-only. */
+        /** CKeepUpright/m_attachedObject — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly attachedObject: Entity<EntityRaw> | null;
         /** CKeepUpright/m_bDampAllRotation */
         dampAllRotation: boolean;
@@ -3365,7 +3365,7 @@ declare global {
 
     /** The fields a CPathNode adds to CPointEntityRaw. */
     interface CPathNodeRaw extends CPointEntityRaw {
-        /** CPathNode/m_hPath — Another entity, or null when it points at nothing. Read-only. */
+        /** CPathNode/m_hPath — A CPathWithDynamicNodes, or null when it points at nothing. Read-only; reach its own fields with .as("CPathWithDynamicNodes"). */
         readonly path: Entity<EntityRaw> | null;
         /** CPathNode/m_strParentPathUniqueID — Read-only, as every string field is. */
         readonly strParentPathUniqueID: string;
@@ -3387,11 +3387,11 @@ declare global {
         length: number;
         /** CPathTrack/m_eOrientationType — A TrackOrientationType_t. */
         orientationType: number;
-        /** CPathTrack/m_paltpath — Another entity, or null when it points at nothing. Read-only. */
+        /** CPathTrack/m_paltpath — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack"). */
         readonly paltpath: Entity<EntityRaw> | null;
-        /** CPathTrack/m_pnext — Another entity, or null when it points at nothing. Read-only. */
+        /** CPathTrack/m_pnext — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack"). */
         readonly pnext: Entity<EntityRaw> | null;
-        /** CPathTrack/m_pprevious — Another entity, or null when it points at nothing. Read-only. */
+        /** CPathTrack/m_pprevious — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack"). */
         readonly pprevious: Entity<EntityRaw> | null;
         /** CPathTrack/m_flRadius */
         radius: number;
@@ -3429,7 +3429,7 @@ declare global {
 
     /** The fields a CPhysForce adds to CPointEntityRaw. */
     interface CPhysForceRaw extends CPointEntityRaw {
-        /** CPhysForce/m_attachedObject — Another entity, or null when it points at nothing. Read-only. */
+        /** CPhysForce/m_attachedObject — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly attachedObject: Entity<EntityRaw> | null;
         /** CPhysForce/m_force */
         force: number;
@@ -3453,7 +3453,7 @@ declare global {
 
     /** The fields a CPlatTrigger adds to CBaseModelEntityRaw. */
     interface CPlatTriggerRaw extends CBaseModelEntityRaw {
-        /** CPlatTrigger/m_pPlatform — Another entity, or null when it points at nothing. Read-only. */
+        /** CPlatTrigger/m_pPlatform — A CFuncPlat, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncPlat"). */
         readonly platform: Entity<EntityRaw> | null;
     }
 
@@ -3469,11 +3469,11 @@ declare global {
         facingTime: number;
         /** CPointAngleSensor/m_bFired */
         fired: boolean;
-        /** CPointAngleSensor/m_hLookAtEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointAngleSensor/m_hLookAtEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly lookAtEntity: Entity<EntityRaw> | null;
         /** CPointAngleSensor/m_nLookAtName — Read-only, as every string field is. */
         readonly lookAtName: string;
-        /** CPointAngleSensor/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointAngleSensor/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly targetEntity: Entity<EntityRaw> | null;
     }
 
@@ -3489,7 +3489,7 @@ declare global {
         lastCompareResult: number;
         /** CPointAngularVelocitySensor/m_nLastFireResult */
         lastFireResult: number;
-        /** CPointAngularVelocitySensor/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointAngularVelocitySensor/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly targetEntity: Entity<EntityRaw> | null;
         /** CPointAngularVelocitySensor/m_flThreshold */
         threshold: number;
@@ -3527,13 +3527,13 @@ declare global {
 
     /** The fields a CPointGiveAmmo adds to CPointEntityRaw. */
     interface CPointGiveAmmoRaw extends CPointEntityRaw {
-        /** CPointGiveAmmo/m_pActivator — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointGiveAmmo/m_pActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly activator: Entity<EntityRaw> | null;
     }
 
     /** The fields a CPointHurt adds to CPointEntityRaw. */
     interface CPointHurtRaw extends CPointEntityRaw {
-        /** CPointHurt/m_pActivator — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointHurt/m_pActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly activator: Entity<EntityRaw> | null;
         /** CPointHurt/m_bitsDamageType — A DamageTypes_t. */
         bitsDamageType: number;
@@ -3551,7 +3551,7 @@ declare global {
     interface CPointProximitySensorRaw extends CPointEntityRaw {
         /** CPointProximitySensor/m_bDisabled */
         disabled: boolean;
-        /** CPointProximitySensor/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointProximitySensor/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly targetEntity: Entity<EntityRaw> | null;
     }
 
@@ -3561,7 +3561,7 @@ declare global {
         coneOfInfluence: number;
         /** CPointPush/m_bEnabled */
         enabled: boolean;
-        /** CPointPush/m_hFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointPush/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly filter: Entity<EntityRaw> | null;
         /** CPointPush/m_iszFilterName — Read-only, as every string field is. */
         readonly filterName: string;
@@ -3585,7 +3585,7 @@ declare global {
         enabled: boolean;
         /** CPointVelocitySensor/m_fPrevVelocity */
         prevVelocity: number;
-        /** CPointVelocitySensor/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointVelocitySensor/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly targetEntity: Entity<EntityRaw> | null;
     }
 
@@ -3611,7 +3611,7 @@ declare global {
         constrainBetweenEndpoints: boolean;
         /** CRopeKeyframe/m_bCreatedFromMapFile */
         createdFromMapFile: boolean;
-        /** CRopeKeyframe/m_hEndPoint — Another entity, or null when it points at nothing. Read-only. */
+        /** CRopeKeyframe/m_hEndPoint — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly endPoint: Entity<EntityRaw> | null;
         /** CRopeKeyframe/m_bEndPointValid */
         endPointValid: boolean;
@@ -3629,7 +3629,7 @@ declare global {
         segments: number;
         /** CRopeKeyframe/m_Slack */
         slack: number;
-        /** CRopeKeyframe/m_hStartPoint — Another entity, or null when it points at nothing. Read-only. */
+        /** CRopeKeyframe/m_hStartPoint — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly startPoint: Entity<EntityRaw> | null;
         /** CRopeKeyframe/m_bStartPointValid */
         startPointValid: boolean;
@@ -3657,9 +3657,9 @@ declare global {
 
     /** The fields a CSceneEntity adds to CPointEntityRaw. */
     interface CSceneEntityRaw extends CPointEntityRaw {
-        /** CSceneEntity/m_hActivator — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly activator: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hActor — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hActor — A CBaseModelEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseModelEntity"). */
         readonly actor: Entity<EntityRaw> | null;
         /** CSceneEntity/m_bAutogenerated */
         autogenerated: boolean;
@@ -3685,25 +3685,25 @@ declare global {
         forceClientTime: number;
         /** CSceneEntity/m_flFrameTime */
         frameTime: number;
-        /** CSceneEntity/m_hTarget1 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget1 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget1: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget2 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget2 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget2: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget3 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget3 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget3: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget4 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget4 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget4: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget5 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget5 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget5: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget6 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget6 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget6: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget7 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget7 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget7: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget8 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget8 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget8: Entity<EntityRaw> | null;
         /** CSceneEntity/m_nInterruptCount */
         interruptCount: number;
-        /** CSceneEntity/m_hInterruptScene — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hInterruptScene — A CSceneEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CSceneEntity"). */
         readonly interruptScene: Entity<EntityRaw> | null;
         /** CSceneEntity/m_bInterruptSceneFinished */
         interruptSceneFinished: boolean;
@@ -3729,7 +3729,7 @@ declare global {
         readonly iszTarget7: string;
         /** CSceneEntity/m_iszTarget8 — Read-only, as every string field is. */
         readonly iszTarget8: string;
-        /** CSceneEntity/m_hLocatorOrigin — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hLocatorOrigin — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly locatorOrigin: Entity<EntityRaw> | null;
         /** CSceneEntity/m_bMultiplayer */
         multiplayer: boolean;
@@ -3905,7 +3905,7 @@ declare global {
 
     /** The fields a CSprite adds to CBaseModelEntityRaw. */
     interface CSpriteRaw extends CBaseModelEntityRaw {
-        /** CSprite/m_hAttachedToEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CSprite/m_hAttachedToEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly attachedToEntity: Entity<EntityRaw> | null;
         /** CSprite/m_nBrightness */
         brightness: number;
@@ -3967,11 +3967,11 @@ declare global {
         soundPlaying: number;
         /** CTankTrainAI/m_startSoundName — Read-only, as every string field is. */
         readonly startSoundName: string;
-        /** CTankTrainAI/m_hTargetEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CTankTrainAI/m_hTargetEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly targetEntity: Entity<EntityRaw> | null;
         /** CTankTrainAI/m_targetEntityName — Read-only, as every string field is. */
         readonly targetEntityName: string;
-        /** CTankTrainAI/m_hTrain — Another entity, or null when it points at nothing. Read-only. */
+        /** CTankTrainAI/m_hTrain — A CFuncTrackTrain, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncTrackTrain"). */
         readonly train: Entity<EntityRaw> | null;
     }
 
@@ -4001,7 +4001,7 @@ declare global {
 
     /** The fields a CTriggerVolume adds to CBaseModelEntityRaw. */
     interface CTriggerVolumeRaw extends CBaseModelEntityRaw {
-        /** CTriggerVolume/m_hFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CTriggerVolume/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly filter: Entity<EntityRaw> | null;
         /** CTriggerVolume/m_iFilterName — Read-only, as every string field is. */
         readonly filterName: string;
@@ -4027,7 +4027,7 @@ declare global {
         readonly displayText: string;
         /** CBaseButton/m_bForceNpcExclude */
         forceNpcExclude: boolean;
-        /** CBaseButton/m_glowEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseButton/m_glowEntity — A CBaseModelEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseModelEntity"). */
         readonly glowEntity: Entity<EntityRaw> | null;
         /** CBaseButton/m_bLocked */
         locked: boolean;
@@ -4141,9 +4141,9 @@ declare global {
         isSmokeGrenade: boolean;
         /** CBaseGrenade/m_flNextAttack */
         nextAttack: number;
-        /** CBaseGrenade/m_hOriginalThrower — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseGrenade/m_hOriginalThrower — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly originalThrower: Entity<EntityRaw> | null;
-        /** CBaseGrenade/m_hThrower — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseGrenade/m_hThrower — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly thrower: Entity<EntityRaw> | null;
         /** CBaseGrenade/m_flWarnAITime */
         warnAITime: number;
@@ -4177,7 +4177,7 @@ declare global {
     interface CBaseTriggerRaw extends CBaseToggleRaw {
         /** CBaseTrigger/m_bDisabled */
         disabled: boolean;
-        /** CBaseTrigger/m_hFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseTrigger/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly filter: Entity<EntityRaw> | null;
         /** CBaseTrigger/m_iFilterName — Read-only, as every string field is. */
         readonly filterName: string;
@@ -4237,7 +4237,7 @@ declare global {
         fallbackWear: number;
         /** CEconEntity/m_iOldOwnerClass */
         oldOwnerClass: number;
-        /** CEconEntity/m_hOldProvidee — Another entity, or null when it points at nothing. Read-only. */
+        /** CEconEntity/m_hOldProvidee — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly oldProvidee: Entity<EntityRaw> | null;
         /** CEconEntity/m_OriginalOwnerXuidHigh */
         originalOwnerXuidHigh: number;
@@ -4265,7 +4265,7 @@ declare global {
         beamFlags: number;
         /** CBeam/m_nBeamType — A BeamType_t. */
         beamType: number;
-        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_pBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly blocker: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nBloodType — A BloodType. */
         bloodType: number;
@@ -4281,7 +4281,7 @@ declare global {
         damage: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
-        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hDamageFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
@@ -4327,7 +4327,7 @@ declare global {
         dissolveType: number;
         /** CBaseEntity/m_iEFlags */
         eFlags: number;
-        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hEffectEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
@@ -4345,7 +4345,7 @@ declare global {
         fadeMinDist: number;
         /** CBaseModelEntity/m_flFadeScale */
         fadeScale: number;
-        /** CEnvBeam/m_hFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CEnvBeam/m_hFilter — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly filter: Entity<EntityRaw> | null;
         /** CEnvBeam/m_iFilterName — Read-only, as every string field is. */
         readonly filterName: string;
@@ -4373,7 +4373,7 @@ declare global {
         gravityScale: number;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
-        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hGroundEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly groundEntity: Entity<EntityRaw> | null;
         /** CBeam/m_flHDRColorScale */
         hDRColorScale: number;
@@ -4419,7 +4419,7 @@ declare global {
         numBeamEnts: number;
         /** CBaseModelEntity/m_nObjectCulling */
         objectCulling: number;
-        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hOwnerEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly ownerEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
         platformType: number;
@@ -4507,11 +4507,11 @@ declare global {
         readonly customSoundName: string;
         /** CEnvExplosion/m_flDamageForce */
         damageForce: number;
-        /** CEnvExplosion/m_hEntityIgnore — Another entity, or null when it points at nothing. Read-only. */
+        /** CEnvExplosion/m_hEntityIgnore — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly entityIgnore: Entity<EntityRaw> | null;
         /** CEnvExplosion/m_iszEntityIgnoreName — Read-only, as every string field is. */
         readonly entityIgnoreName: string;
-        /** CEnvExplosion/m_hInflictor — Another entity, or null when it points at nothing. Read-only. */
+        /** CEnvExplosion/m_hInflictor — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly inflictor: Entity<EntityRaw> | null;
         /** CEnvExplosion/m_flInnerRadius */
         innerRadius: number;
@@ -4549,7 +4549,7 @@ declare global {
     interface CEnvLaserRaw extends CBeamRaw {
         /** CEnvLaser/m_iszLaserTarget — Read-only, as every string field is. */
         readonly laserTarget: string;
-        /** CEnvLaser/m_pSprite — Another entity, or null when it points at nothing. Read-only. */
+        /** CEnvLaser/m_pSprite — A CSprite, or null when it points at nothing. Read-only; reach its own fields with .as("CSprite"). */
         readonly sprite: Entity<EntityRaw> | null;
         /** CEnvLaser/m_iszSpriteName — Read-only, as every string field is. */
         readonly spriteName: string;
@@ -4597,7 +4597,7 @@ declare global {
         id: number;
         /** CFish/m_panicSpeed */
         panicSpeed: number;
-        /** CFish/m_pool — Another entity, or null when it points at nothing. Read-only. */
+        /** CFish/m_pool — A CFishPool, or null when it points at nothing. Read-only; reach its own fields with .as("CFishPool"). */
         readonly pool: Entity<EntityRaw> | null;
         /** CFish/m_speed */
         speed: number;
@@ -4649,7 +4649,7 @@ declare global {
         draw3DSkybox: boolean;
         /** CFuncMonitor/m_bEnabled */
         enabled: boolean;
-        /** CFuncMonitor/m_hTargetCamera — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMonitor/m_hTargetCamera — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTargetCamera: Entity<EntityRaw> | null;
         /** CFuncMonitor/m_bRenderShadows */
         renderShadows: boolean;
@@ -4691,7 +4691,7 @@ declare global {
     interface CFuncMoverRouterRaw extends CLogicalEntityRaw {
         /** CFuncMoverRouter/m_nMoverIndex */
         moverIndex: number;
-        /** CFuncMoverRouter/m_hPathMover — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncMoverRouter/m_hPathMover — A CPathMover, or null when it points at nothing. Read-only; reach its own fields with .as("CPathMover"). */
         readonly pathMover: Entity<EntityRaw> | null;
         /** CFuncMoverRouter/m_iszPathMoverName — Read-only, as every string field is. */
         readonly pathMoverName: string;
@@ -4713,7 +4713,7 @@ declare global {
         on: boolean;
         /** CGunTarget/m_flSpeed */
         speed: number;
-        /** CGunTarget/m_hTargetEnt — Another entity, or null when it points at nothing. Read-only. */
+        /** CGunTarget/m_hTargetEnt — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly targetEnt: Entity<EntityRaw> | null;
     }
 
@@ -4753,9 +4753,9 @@ declare global {
 
     /** Every field a CInstancedSceneEntity has, by name. Flattened: it reuses a base field's name for a different type. */
     interface CInstancedSceneEntityRaw {
-        /** CSceneEntity/m_hActivator — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly activator: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hActor — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hActor — A CBaseModelEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseModelEntity"). */
         readonly actor: Entity<EntityRaw> | null;
         /** CBaseEntity/m_flActualGravityScale */
         actualGravityScale: number;
@@ -4775,7 +4775,7 @@ declare global {
         automationDelay: number;
         /** CSceneEntity/m_flAutomationTime */
         automationTime: number;
-        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_pBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly blocker: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nBloodType — A BloodType. */
         bloodType: number;
@@ -4797,7 +4797,7 @@ declare global {
         currentTime: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
-        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hDamageFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
@@ -4807,7 +4807,7 @@ declare global {
         disabledContextThinks: boolean;
         /** CBaseEntity/m_iEFlags */
         eFlags: number;
-        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hEffectEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
@@ -4831,23 +4831,23 @@ declare global {
         gravityScale: number;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
-        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hGroundEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly groundEntity: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget1 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget1 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget1: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget2 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget2 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget2: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget3 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget3 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget3: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget4 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget4 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget4: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget5 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget5 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget5: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget6 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget6 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget6: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget7 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget7 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget7: Entity<EntityRaw> | null;
-        /** CSceneEntity/m_hTarget8 — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hTarget8 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hTarget8: Entity<EntityRaw> | null;
         /** CInstancedSceneEntity/m_bHadOwner */
         hadOwner: boolean;
@@ -4859,7 +4859,7 @@ declare global {
         interpolationFrame: number;
         /** CSceneEntity/m_nInterruptCount */
         interruptCount: number;
-        /** CSceneEntity/m_hInterruptScene — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hInterruptScene — A CSceneEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CSceneEntity"). */
         readonly interruptScene: Entity<EntityRaw> | null;
         /** CSceneEntity/m_bInterruptSceneFinished */
         interruptSceneFinished: boolean;
@@ -4897,7 +4897,7 @@ declare global {
         lifeState: number;
         /** CBaseEntity/m_flLocalTime */
         localTime: number;
-        /** CSceneEntity/m_hLocatorOrigin — Another entity, or null when it points at nothing. Read-only. */
+        /** CSceneEntity/m_hLocatorOrigin — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly locatorOrigin: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iMaxHealth */
         maxHealth: number;
@@ -4915,9 +4915,9 @@ declare global {
         networkQuantizeOriginAndAngles: boolean;
         /** CBaseEntity/m_nNextThinkTick */
         nextThinkTick: number;
-        /** CInstancedSceneEntity/m_hOwner — Another entity, or null when it points at nothing. Read-only. */
+        /** CInstancedSceneEntity/m_hOwner — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly owner: Entity<EntityRaw> | null;
-        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hOwnerEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly ownerEntity: Entity<EntityRaw> | null;
         /** CSceneEntity/m_bPauseAtNextInterrupt */
         pauseAtNextInterrupt: boolean;
@@ -4977,7 +4977,7 @@ declare global {
         takeDamageFlags: number;
         /** CBaseEntity/m_bTakesDamage */
         takesDamage: boolean;
-        /** CInstancedSceneEntity/m_hTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CInstancedSceneEntity/m_hTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly target: Entity<EntityRaw> | null;
         /** CSceneEntity/m_sTargetAttachment — Read-only, as every string field is. */
         readonly targetAttachment: string;
@@ -5157,11 +5157,11 @@ declare global {
 
     /** The fields a CLogicLineToEntity adds to CLogicalEntityRaw. */
     interface CLogicLineToEntityRaw extends CLogicalEntityRaw {
-        /** CLogicLineToEntity/m_EndEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CLogicLineToEntity/m_EndEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly endEntity: Entity<EntityRaw> | null;
         /** CLogicLineToEntity/m_SourceName — Read-only, as every string field is. */
         readonly sourceName: string;
-        /** CLogicLineToEntity/m_StartEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CLogicLineToEntity/m_StartEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly startEntity: Entity<EntityRaw> | null;
     }
 
@@ -5175,7 +5175,7 @@ declare global {
         animTime: number;
         /** CBaseEntity/m_bAnimatedEveryTick */
         animatedEveryTick: boolean;
-        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_pBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly blocker: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nBloodType — A BloodType. */
         bloodType: number;
@@ -5187,7 +5187,7 @@ declare global {
         currentThinkContext: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
-        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hDamageFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
@@ -5197,7 +5197,7 @@ declare global {
         disabledContextThinks: boolean;
         /** CBaseEntity/m_iEFlags */
         eFlags: number;
-        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hEffectEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
@@ -5217,7 +5217,7 @@ declare global {
         gravityScale: number;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
-        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hGroundEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly groundEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iHealth */
         health: number;
@@ -5237,9 +5237,9 @@ declare global {
         localTime: number;
         /** CBaseEntity/m_iMaxHealth */
         maxHealth: number;
-        /** CLogicMeasureMovement/m_hMeasureReference — Another entity, or null when it points at nothing. Read-only. */
+        /** CLogicMeasureMovement/m_hMeasureReference — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly measureReference: Entity<EntityRaw> | null;
-        /** CLogicMeasureMovement/m_hMeasureTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CLogicMeasureMovement/m_hMeasureTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly measureTarget: Entity<EntityRaw> | null;
         /** CLogicMeasureMovement/m_nMeasureType */
         measureType: number;
@@ -5255,7 +5255,7 @@ declare global {
         networkQuantizeOriginAndAngles: boolean;
         /** CBaseEntity/m_nNextThinkTick */
         nextThinkTick: number;
-        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hOwnerEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly ownerEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
         platformType: number;
@@ -5291,9 +5291,9 @@ declare global {
         takeDamageFlags: number;
         /** CBaseEntity/m_bTakesDamage */
         takesDamage: boolean;
-        /** CLogicMeasureMovement/m_hTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CLogicMeasureMovement/m_hTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly target: Entity<EntityRaw> | null;
-        /** CLogicMeasureMovement/m_hTargetReference — Another entity, or null when it points at nothing. Read-only. */
+        /** CLogicMeasureMovement/m_hTargetReference — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly targetReference: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iTeamNum */
         teamNum: number;
@@ -5325,7 +5325,7 @@ declare global {
 
     /** The fields a CLogicPlayerProxy adds to CLogicalEntityRaw. */
     interface CLogicPlayerProxyRaw extends CLogicalEntityRaw {
-        /** CLogicPlayerProxy/m_hPlayer — Another entity, or null when it points at nothing. Read-only. */
+        /** CLogicPlayerProxy/m_hPlayer — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly player: Entity<EntityRaw> | null;
     }
 
@@ -5453,15 +5453,15 @@ declare global {
         moveSpeed: number;
         /** CPathKeyFrame/m_flNextTime */
         nextTime: number;
-        /** CPathKeyFrame/m_pNextKey — Another entity, or null when it points at nothing. Read-only. */
+        /** CPathKeyFrame/m_pNextKey — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame"). */
         readonly pNextKey: Entity<EntityRaw> | null;
-        /** CPathKeyFrame/m_pPrevKey — Another entity, or null when it points at nothing. Read-only. */
+        /** CPathKeyFrame/m_pPrevKey — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame"). */
         readonly prevKey: Entity<EntityRaw> | null;
     }
 
     /** The fields a CPathMover adds to CPathWithDynamicNodesRaw. */
     interface CPathMoverRaw extends CPathWithDynamicNodesRaw {
-        /** CPathMover/m_hMoverRouter — Another entity, or null when it points at nothing. Read-only. */
+        /** CPathMover/m_hMoverRouter — A CFuncMoverRouter, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncMoverRouter"). */
         readonly moverRouter: Entity<EntityRaw> | null;
         /** CPathMover/m_iszMoverRouterName — Read-only, as every string field is. */
         readonly moverRouterName: string;
@@ -5481,7 +5481,7 @@ declare global {
         lastSpawnTime: number;
         /** CPathMoverEntitySpawner/m_nMaxActive */
         maxActive: number;
-        /** CPathMoverEntitySpawner/m_hPathMover — Another entity, or null when it points at nothing. Read-only. */
+        /** CPathMoverEntitySpawner/m_hPathMover — A CPathMover, or null when it points at nothing. Read-only; reach its own fields with .as("CPathMover"). */
         readonly pathMover: Entity<EntityRaw> | null;
         /** CPathMoverEntitySpawner/m_iszPathMoverName — Read-only, as every string field is. */
         readonly pathMoverName: string;
@@ -5525,9 +5525,9 @@ declare global {
 
     /** The fields a CPhysConstraint adds to CLogicalEntityRaw. */
     interface CPhysConstraintRaw extends CLogicalEntityRaw {
-        /** CPhysConstraint/m_hAttach1 — Another entity, or null when it points at nothing. Read-only. */
+        /** CPhysConstraint/m_hAttach1 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly attach1: Entity<EntityRaw> | null;
-        /** CPhysConstraint/m_hAttach2 — Another entity, or null when it points at nothing. Read-only. */
+        /** CPhysConstraint/m_hAttach2 — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly attach2: Entity<EntityRaw> | null;
         /** CPhysConstraint/m_breakSound — Read-only, as every string field is. */
         readonly breakSound: string;
@@ -5577,11 +5577,11 @@ declare global {
     interface CPhysMotorRaw extends CLogicalEntityRaw {
         /** CPhysMotor/m_additionalAcceleration */
         additionalAcceleration: number;
-        /** CPhysMotor/m_hAnchorObject — Another entity, or null when it points at nothing. Read-only. */
+        /** CPhysMotor/m_hAnchorObject — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly anchorObject: Entity<EntityRaw> | null;
         /** CPhysMotor/m_angularAcceleration */
         angularAcceleration: number;
-        /** CPhysMotor/m_hAttachedObject — Another entity, or null when it points at nothing. Read-only. */
+        /** CPhysMotor/m_hAttachedObject — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly attachedObject: Entity<EntityRaw> | null;
         /** CPhysMotor/m_flMotorFriction */
         motorFriction: number;
@@ -5613,9 +5613,9 @@ declare global {
     interface CPhysicsEntitySolverRaw extends CLogicalEntityRaw {
         /** CPhysicsEntitySolver/m_cancelTime */
         cancelTime: number;
-        /** CPhysicsEntitySolver/m_hMovingEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPhysicsEntitySolver/m_hMovingEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly movingEntity: Entity<EntityRaw> | null;
-        /** CPhysicsEntitySolver/m_hPhysicsBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CPhysicsEntitySolver/m_hPhysicsBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly physicsBlocker: Entity<EntityRaw> | null;
         /** CPhysicsEntitySolver/m_separationDuration */
         separationDuration: number;
@@ -5629,7 +5629,7 @@ declare global {
         beingDefused: boolean;
         /** CPlantedC4/m_bBombDefused */
         bombDefused: boolean;
-        /** CPlantedC4/m_hBombDefuser — Another entity, or null when it points at nothing. Read-only. */
+        /** CPlantedC4/m_hBombDefuser — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly bombDefuser: Entity<EntityRaw> | null;
         /** CPlantedC4/m_nBombSite */
         bombSite: number;
@@ -5691,7 +5691,7 @@ declare global {
 
     /** The fields a CPointClientUIDialog adds to CBaseClientUIEntityRaw. */
     interface CPointClientUIDialogRaw extends CBaseClientUIEntityRaw {
-        /** CPointClientUIDialog/m_hActivator — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointClientUIDialog/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly activator: Entity<EntityRaw> | null;
         /** CPointClientUIDialog/m_bStartEnabled */
         startEnabled: boolean;
@@ -5761,9 +5761,9 @@ declare global {
         disabled: boolean;
         /** CPointCommentaryNode/m_flFinishedTime */
         finishedTime: number;
-        /** CPointCommentaryNode/m_hViewPosition — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointCommentaryNode/m_hViewPosition — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hViewPosition: Entity<EntityRaw> | null;
-        /** CPointCommentaryNode/m_hViewTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointCommentaryNode/m_hViewTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hViewTarget: Entity<EntityRaw> | null;
         /** CPointCommentaryNode/m_iszViewPosition — Read-only, as every string field is. */
         readonly iszViewPosition: string;
@@ -5795,15 +5795,15 @@ declare global {
         underCrosshair: boolean;
         /** CPointCommentaryNode/m_bUnstoppable */
         unstoppable: boolean;
-        /** CPointCommentaryNode/m_hViewPositionMover — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointCommentaryNode/m_hViewPositionMover — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly viewPositionMover: Entity<EntityRaw> | null;
-        /** CPointCommentaryNode/m_hViewTargetAngles — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointCommentaryNode/m_hViewTargetAngles — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly viewTargetAngles: Entity<EntityRaw> | null;
     }
 
     /** The fields a CPointPrefab adds to CServerOnlyPointEntityRaw. */
     interface CPointPrefabRaw extends CServerOnlyPointEntityRaw {
-        /** CPointPrefab/m_associatedRelayEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPointPrefab/m_associatedRelayEntity — A CPointPrefab, or null when it points at nothing. Read-only; reach its own fields with .as("CPointPrefab"). */
         readonly associatedRelayEntity: Entity<EntityRaw> | null;
         /** CPointPrefab/m_associatedRelayTargetName — Read-only, as every string field is. */
         readonly associatedRelayTargetName: string;
@@ -5895,7 +5895,7 @@ declare global {
         blendWeight: number;
         /** CRagdollProp/m_buoyancyScale */
         buoyancyScale: number;
-        /** CRagdollProp/m_hDamageEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CRagdollProp/m_hDamageEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly damageEntity: Entity<EntityRaw> | null;
         /** CRagdollProp/m_flDefaultFadeScale */
         defaultFadeScale: number;
@@ -5909,7 +5909,7 @@ declare global {
         forceNavObstacleCut: boolean;
         /** CRagdollProp/m_bHasBeenPhysgunned */
         hasBeenPhysgunned: boolean;
-        /** CRagdollProp/m_hKiller — Another entity, or null when it points at nothing. Read-only. */
+        /** CRagdollProp/m_hKiller — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly killer: Entity<EntityRaw> | null;
         /** CRagdollProp/m_flLastOriginChangeTime */
         lastOriginChangeTime: number;
@@ -5921,7 +5921,7 @@ declare global {
         massScale: number;
         /** CRagdollProp/m_nNavObstacleType — A INavObstacleNavObstacleType_t. */
         navObstacleType: number;
-        /** CRagdollProp/m_hPhysicsAttacker — Another entity, or null when it points at nothing. Read-only. */
+        /** CRagdollProp/m_hPhysicsAttacker — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn"). */
         readonly physicsAttacker: Entity<EntityRaw> | null;
         /** CRagdollProp/m_bShouldDeleteActivationRecord */
         shouldDeleteActivationRecord: boolean;
@@ -6099,19 +6099,19 @@ declare global {
         animStartTime: number;
         /** CBaseMoveBehavior/m_flAverageSpeedAcrossFrame */
         averageSpeedAcrossFrame: number;
-        /** CBaseMoveBehavior/m_pCurrentKeyFrame — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseMoveBehavior/m_pCurrentKeyFrame — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame"). */
         readonly currentKeyFrame: Entity<EntityRaw> | null;
         /** CBaseMoveBehavior/m_iDirection */
         direction: number;
         /** CBaseMoveBehavior/m_iPositionInterpolator */
         positionInterpolator: number;
-        /** CBaseMoveBehavior/m_pPostKeyFrame — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseMoveBehavior/m_pPostKeyFrame — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame"). */
         readonly postKeyFrame: Entity<EntityRaw> | null;
-        /** CBaseMoveBehavior/m_pPreKeyFrame — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseMoveBehavior/m_pPreKeyFrame — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame"). */
         readonly preKeyFrame: Entity<EntityRaw> | null;
         /** CBaseMoveBehavior/m_iRotationInterpolator */
         rotationInterpolator: number;
-        /** CBaseMoveBehavior/m_pTargetKeyFrame — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseMoveBehavior/m_pTargetKeyFrame — A CPathKeyFrame, or null when it points at nothing. Read-only; reach its own fields with .as("CPathKeyFrame"). */
         readonly targetKeyFrame: Entity<EntityRaw> | null;
         /** CBaseMoveBehavior/m_flTimeIntoFrame */
         timeIntoFrame: number;
@@ -6119,11 +6119,11 @@ declare global {
 
     /** The fields a CBasePlayerPawn adds to CBaseCombatCharacterRaw. */
     interface CBasePlayerPawnRaw extends CBaseCombatCharacterRaw {
-        /** CBasePlayerPawn/m_hController — Another entity, or null when it points at nothing. Read-only. */
+        /** CBasePlayerPawn/m_hController — A CBasePlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerController"). */
         readonly controller: Entity<EntityRaw> | null;
         /** CBasePlayerPawn/m_flDeathTime */
         deathTime: number;
-        /** CBasePlayerPawn/m_hDefaultController — Another entity, or null when it points at nothing. Read-only. */
+        /** CBasePlayerPawn/m_hDefaultController — A CBasePlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerController"). */
         readonly defaultController: Entity<EntityRaw> | null;
         /** CBasePlayerPawn/m_iHideHUD */
         hideHUD: number;
@@ -6161,7 +6161,7 @@ declare global {
         bombPlantedHere: boolean;
         /** CBombTarget/m_nBombSiteDesignation */
         bombSiteDesignation: number;
-        /** CBombTarget/m_hInstructorHint — Another entity, or null when it points at nothing. Read-only. */
+        /** CBombTarget/m_hInstructorHint — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly instructorHint: Entity<EntityRaw> | null;
         /** CBombTarget/m_bIsBombSiteB */
         isBombSiteB: boolean;
@@ -6175,7 +6175,7 @@ declare global {
     interface CBreakablePropRaw extends CBasePropRaw {
         /** CBreakableProp/m_BreakableContentsType — A BreakableContentsType_t. */
         breakableContentsType: number;
-        /** CBreakableProp/m_hBreaker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBreakableProp/m_hBreaker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly breaker: Entity<EntityRaw> | null;
         /** CBreakableProp/m_flDefBurstScale */
         defBurstScale: number;
@@ -6201,7 +6201,7 @@ declare global {
         hasBreakPiecesOrCommands: boolean;
         /** CBreakableProp/m_impactEnergyScale */
         impactEnergyScale: number;
-        /** CBreakableProp/m_hLastAttacker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBreakableProp/m_hLastAttacker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly lastAttacker: Entity<EntityRaw> | null;
         /** CBreakableProp/m_flLastPhysicsInfluenceTime */
         lastPhysicsInfluenceTime: number;
@@ -6211,7 +6211,7 @@ declare global {
         originalBlockLOS: boolean;
         /** CBreakableProp/m_PerformanceMode — A PerformanceMode_t. */
         performanceMode: number;
-        /** CBreakableProp/m_hPhysicsAttacker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBreakableProp/m_hPhysicsAttacker — A CBasePlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePlayerPawn"). */
         readonly physicsAttacker: Entity<EntityRaw> | null;
         /** CBreakableProp/m_flPressureDelay */
         pressureDelay: number;
@@ -6387,9 +6387,9 @@ declare global {
         activated: boolean;
         /** CFuncTrain/m_flBlockDamage */
         blockDamage: number;
-        /** CFuncTrain/m_hCurrentTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncTrain/m_hCurrentTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly currentTarget: Entity<EntityRaw> | null;
-        /** CFuncTrain/m_hEnemy — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncTrain/m_hEnemy — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly enemy: Entity<EntityRaw> | null;
         /** CFuncTrain/m_iszLastTarget — Read-only, as every string field is. */
         readonly lastTarget: string;
@@ -6553,9 +6553,9 @@ declare global {
 
     /** The fields a CItemDogtags adds to CItemRaw. */
     interface CItemDogtagsRaw extends CItemRaw {
-        /** CItemDogtags/m_KillingPlayer — Another entity, or null when it points at nothing. Read-only. */
+        /** CItemDogtags/m_KillingPlayer — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly killingPlayer: Entity<EntityRaw> | null;
-        /** CItemDogtags/m_OwningPlayer — Another entity, or null when it points at nothing. Read-only. */
+        /** CItemDogtags/m_OwningPlayer — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly owningPlayer: Entity<EntityRaw> | null;
     }
 
@@ -6575,7 +6575,7 @@ declare global {
         hasTriggerRadius: boolean;
         /** CItemGeneric/m_flLastPickupCheck */
         lastPickupCheck: number;
-        /** CItemGeneric/m_hPickupFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CItemGeneric/m_hPickupFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly pickupFilter: Entity<EntityRaw> | null;
         /** CItemGeneric/m_pPickupFilterName — Read-only, as every string field is. */
         readonly pickupFilterName: string;
@@ -6597,7 +6597,7 @@ declare global {
         readonly timeoutScriptFunction: string;
         /** CItemGeneric/m_pTimeoutSoundEffect — Read-only, as every string field is. */
         readonly timeoutSoundEffect: string;
-        /** CItemGeneric/m_hTriggerHelper — Another entity, or null when it points at nothing. Read-only. */
+        /** CItemGeneric/m_hTriggerHelper — A CItemGenericTriggerHelper, or null when it points at nothing. Read-only; reach its own fields with .as("CItemGenericTriggerHelper"). */
         readonly triggerHelper: Entity<EntityRaw> | null;
         /** CItemGeneric/m_flTriggerRadius */
         triggerRadius: number;
@@ -6765,7 +6765,7 @@ declare global {
         spinAxisFriction: number;
         /** CPhysWheelConstraint/m_flSteeringAxisFriction */
         steeringAxisFriction: number;
-        /** CPhysWheelConstraint/m_hSteeringMimicsEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CPhysWheelConstraint/m_hSteeringMimicsEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly steeringMimicsEntity: Entity<EntityRaw> | null;
         /** CPhysWheelConstraint/m_flSuspensionDampingRatio */
         suspensionDampingRatio: number;
@@ -6787,7 +6787,7 @@ declare global {
 
     /** Every field a CPostProcessingVolume has, by name. Flattened: it reuses a base field's name for a different type. */
     interface CPostProcessingVolumeRaw {
-        /** CBaseToggle/m_hActivator — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseToggle/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly activator: Entity<EntityRaw> | null;
         /** CBaseEntity/m_flActualGravityScale */
         actualGravityScale: number;
@@ -6801,7 +6801,7 @@ declare global {
         animTime: number;
         /** CBaseEntity/m_bAnimatedEveryTick */
         animatedEveryTick: boolean;
-        /** CBaseEntity/m_pBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_pBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly blocker: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nBloodType — A BloodType. */
         bloodType: number;
@@ -6813,7 +6813,7 @@ declare global {
         currentThinkContext: number;
         /** CBaseEntity/m_flDamageAccumulator */
         damageAccumulator: number;
-        /** CBaseEntity/m_hDamageFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hDamageFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly damageFilter: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iszDamageFilterName — Read-only, as every string field is. */
         readonly damageFilterName: string;
@@ -6857,7 +6857,7 @@ declare global {
         dissolveStartTime: number;
         /** CBaseEntity/m_iEFlags */
         eFlags: number;
-        /** CBaseEntity/m_hEffectEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hEffectEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly effectEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_fEffects */
         effects: number;
@@ -6879,7 +6879,7 @@ declare global {
         fadeMinDist: number;
         /** CBaseModelEntity/m_flFadeScale */
         fadeScale: number;
-        /** CBaseTrigger/m_hFilter — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseTrigger/m_hFilter — A CBaseFilter, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseFilter"). */
         readonly filter: Entity<EntityRaw> | null;
         /** CBaseTrigger/m_iFilterName — Read-only, as every string field is. */
         readonly filterName: string;
@@ -6899,7 +6899,7 @@ declare global {
         gravityScale: number;
         /** CBaseEntity/m_nGroundBodyIndex */
         groundBodyIndex: number;
-        /** CBaseEntity/m_hGroundEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hGroundEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly groundEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_iHealth */
         health: number;
@@ -6953,7 +6953,7 @@ declare global {
         noInterpolate: boolean;
         /** CBaseModelEntity/m_nObjectCulling */
         objectCulling: number;
-        /** CBaseEntity/m_hOwnerEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseEntity/m_hOwnerEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly ownerEntity: Entity<EntityRaw> | null;
         /** CBaseEntity/m_nPlatformType — A EntityPlatformTypes_t. */
         platformType: number;
@@ -7103,7 +7103,7 @@ declare global {
         linarDampingRatio: number;
         /** CSplineConstraint/m_flLinearFrequency */
         linearFrequency: number;
-        /** CSplineConstraint/m_hSplineEntity — Another entity, or null when it points at nothing. Read-only. */
+        /** CSplineConstraint/m_hSplineEntity — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly splineEntity: Entity<EntityRaw> | null;
         /** CSplineConstraint/m_StartTransitionTime */
         startTransitionTime: number;
@@ -7155,7 +7155,7 @@ declare global {
         falloff: boolean;
         /** CTriggerFan/m_flForce */
         force: number;
-        /** CTriggerFan/m_hInfoFan — Another entity, or null when it points at nothing. Read-only. */
+        /** CTriggerFan/m_hInfoFan — A CInfoFan, or null when it points at nothing. Read-only; reach its own fields with .as("CInfoFan"). */
         readonly hInfoFan: Entity<EntityRaw> | null;
         /** CTriggerFan/m_iszInfoFan — Read-only, as every string field is. */
         readonly iszInfoFan: string;
@@ -7235,9 +7235,9 @@ declare global {
         attachTouchingObject: boolean;
         /** CTriggerLerpObject/m_bAttachedEntityWasParented */
         attachedEntityWasParented: boolean;
-        /** CTriggerLerpObject/m_hEntityToWaitForDisconnect — Another entity, or null when it points at nothing. Read-only. */
+        /** CTriggerLerpObject/m_hEntityToWaitForDisconnect — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly entityToWaitForDisconnect: Entity<EntityRaw> | null;
-        /** CTriggerLerpObject/m_hLerpTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CTriggerLerpObject/m_hLerpTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hLerpTarget: Entity<EntityRaw> | null;
         /** CTriggerLerpObject/m_iszLerpTarget — Read-only, as every string field is. */
         readonly iszLerpTarget: string;
@@ -7285,7 +7285,7 @@ declare global {
 
     /** The fields a CTriggerProximity adds to CBaseTriggerRaw. */
     interface CTriggerProximityRaw extends CBaseTriggerRaw {
-        /** CTriggerProximity/m_hMeasureTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CTriggerProximity/m_hMeasureTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly hMeasureTarget: Entity<EntityRaw> | null;
         /** CTriggerProximity/m_iszMeasureTarget — Read-only, as every string field is. */
         readonly iszMeasureTarget: string;
@@ -7297,7 +7297,7 @@ declare global {
 
     /** The fields a CTriggerPush adds to CBaseTriggerRaw. */
     interface CTriggerPushRaw extends CBaseTriggerRaw {
-        /** CTriggerPush/m_PathSimple — Another entity, or null when it points at nothing. Read-only. */
+        /** CTriggerPush/m_PathSimple — A CPathSimple, or null when it points at nothing. Read-only; reach its own fields with .as("CPathSimple"). */
         readonly pathSimple: Entity<EntityRaw> | null;
         /** CTriggerPush/m_iszPathSimpleName — Read-only, as every string field is. */
         readonly pathSimpleName: string;
@@ -7355,7 +7355,7 @@ declare global {
 
     /** The fields a CTriggerSoundscape adds to CBaseTriggerRaw. */
     interface CTriggerSoundscapeRaw extends CBaseTriggerRaw {
-        /** CTriggerSoundscape/m_hSoundscape — Another entity, or null when it points at nothing. Read-only. */
+        /** CTriggerSoundscape/m_hSoundscape — A CEnvSoundscapeTriggerable, or null when it points at nothing. Read-only; reach its own fields with .as("CEnvSoundscapeTriggerable"). */
         readonly soundscape: Entity<EntityRaw> | null;
         /** CTriggerSoundscape/m_SoundscapeName — Read-only, as every string field is. */
         readonly soundscapeName: string;
@@ -7407,7 +7407,7 @@ declare global {
         nextRadarUpdateTime: number;
         /** CCSPlayerPawnBase/m_iNumSpawns */
         numSpawns: number;
-        /** CCSPlayerPawnBase/m_hOriginalController — Another entity, or null when it points at nothing. Read-only. */
+        /** CCSPlayerPawnBase/m_hOriginalController — A CCSPlayerController, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerController"). */
         readonly originalController: Entity<EntityRaw> | null;
         /** CCSPlayerPawnBase/m_iPlayerState — A CSPlayerState. */
         playerState: number;
@@ -7487,7 +7487,7 @@ declare global {
         postponeFireReadyFrac: number;
         /** CCSWeaponBase/m_nPostponeFireReadyTicks */
         postponeFireReadyTicks: number;
-        /** CCSWeaponBase/m_hPrevOwner — Another entity, or null when it points at nothing. Read-only. */
+        /** CCSWeaponBase/m_hPrevOwner — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly prevOwner: Entity<EntityRaw> | null;
         /** CCSWeaponBase/m_bRemoveable */
         removeable: boolean;
@@ -7617,7 +7617,7 @@ declare global {
         handsHaveBeenCut: boolean;
         /** CHostage/m_hasBeenUsed */
         hasBeenUsed: boolean;
-        /** CHostage/m_hHostageGrabber — Another entity, or null when it points at nothing. Read-only. */
+        /** CHostage/m_hHostageGrabber — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly hostageGrabber: Entity<EntityRaw> | null;
         /** CHostage/m_nHostageSpawnRandomFactor */
         hostageSpawnRandomFactor: number;
@@ -7637,9 +7637,9 @@ declare global {
         jumpedThisFrame: boolean;
         /** CHostage/m_fLastGrabTime */
         lastGrabTime: number;
-        /** CHostage/m_lastLeader — Another entity, or null when it points at nothing. Read-only. */
+        /** CHostage/m_lastLeader — A CCSPlayerPawnBase, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawnBase"). */
         readonly lastLeader: Entity<EntityRaw> | null;
-        /** CHostage/m_leader — Another entity, or null when it points at nothing. Read-only. */
+        /** CHostage/m_leader — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly leader: Entity<EntityRaw> | null;
         /** CHostage/m_nPickupEventCount */
         pickupEventCount: number;
@@ -7841,7 +7841,7 @@ declare global {
         pinPulled: boolean;
         /** CBaseCSGrenade/m_bRedraw */
         redraw: boolean;
-        /** CBaseCSGrenade/m_hSwitchToWeaponAfterThrow — Another entity, or null when it points at nothing. Read-only. */
+        /** CBaseCSGrenade/m_hSwitchToWeaponAfterThrow — A CCSWeaponBase, or null when it points at nothing. Read-only; reach its own fields with .as("CCSWeaponBase"). */
         readonly switchToWeaponAfterThrow: Entity<EntityRaw> | null;
         /** CBaseCSGrenade/m_bThrowAnimating */
         throwAnimating: boolean;
@@ -7853,11 +7853,11 @@ declare global {
 
     /** The fields a CBasePropDoor adds to CDynamicPropRaw. */
     interface CBasePropDoorRaw extends CDynamicPropRaw {
-        /** CBasePropDoor/m_hActivator — Another entity, or null when it points at nothing. Read-only. */
+        /** CBasePropDoor/m_hActivator — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly activator: Entity<EntityRaw> | null;
         /** CBasePropDoor/m_flAutoReturnDelay */
         autoReturnDelay: number;
-        /** CBasePropDoor/m_hBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CBasePropDoor/m_hBlocker — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly blocker: Entity<EntityRaw> | null;
         /** CBasePropDoor/m_eDoorState — A DoorState_t. */
         doorState: number;
@@ -7869,7 +7869,7 @@ declare global {
         hardwareType: number;
         /** CBasePropDoor/m_bLocked */
         locked: boolean;
-        /** CBasePropDoor/m_hMaster — Another entity, or null when it points at nothing. Read-only. */
+        /** CBasePropDoor/m_hMaster — A CBasePropDoor, or null when it points at nothing. Read-only; reach its own fields with .as("CBasePropDoor"). */
         readonly master: Entity<EntityRaw> | null;
         /** CBasePropDoor/m_bNeedsHardware */
         needsHardware: boolean;
@@ -8123,13 +8123,13 @@ declare global {
         currentActivity: number;
         /** CChicken/m_desiredActivity — A EChickenActivity. */
         desiredActivity: number;
-        /** CChicken/m_fleeFrom — Another entity, or null when it points at nothing. Read-only. */
+        /** CChicken/m_fleeFrom — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly fleeFrom: Entity<EntityRaw> | null;
         /** CChicken/m_isOnGround */
         isOnGround: boolean;
         /** CChicken/m_flLastJumpTime */
         lastJumpTime: number;
-        /** CChicken/m_leader — Another entity, or null when it points at nothing. Read-only. */
+        /** CChicken/m_leader — A CCSPlayerPawn, or null when it points at nothing. Read-only; reach its own fields with .as("CCSPlayerPawn"). */
         readonly leader: Entity<EntityRaw> | null;
         /** CChicken/m_turnRate */
         turnRate: number;
@@ -8157,15 +8157,15 @@ declare global {
         code: number;
         /** CFuncTrackChange/m_targetState */
         targetState: number;
-        /** CFuncTrackChange/m_trackBottom — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncTrackChange/m_trackBottom — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack"). */
         readonly trackBottom: Entity<EntityRaw> | null;
         /** CFuncTrackChange/m_trackBottomName — Read-only, as every string field is. */
         readonly trackBottomName: string;
-        /** CFuncTrackChange/m_trackTop — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncTrackChange/m_trackTop — A CPathTrack, or null when it points at nothing. Read-only; reach its own fields with .as("CPathTrack"). */
         readonly trackTop: Entity<EntityRaw> | null;
         /** CFuncTrackChange/m_trackTopName — Read-only, as every string field is. */
         readonly trackTopName: string;
-        /** CFuncTrackChange/m_train — Another entity, or null when it points at nothing. Read-only. */
+        /** CFuncTrackChange/m_train — A CFuncTrackTrain, or null when it points at nothing. Read-only; reach its own fields with .as("CFuncTrackTrain"). */
         readonly train: Entity<EntityRaw> | null;
         /** CFuncTrackChange/m_trainName — Read-only, as every string field is. */
         readonly trainName: string;
@@ -8215,7 +8215,7 @@ declare global {
         fieldOfView: number;
         /** CTriggerLook/m_bIsLooking */
         isLooking: boolean;
-        /** CTriggerLook/m_hLookTarget — Another entity, or null when it points at nothing. Read-only. */
+        /** CTriggerLook/m_hLookTarget — A CBaseEntity, or null when it points at nothing. Read-only; reach its own fields with .as("CBaseEntity"). */
         readonly lookTarget: Entity<EntityRaw> | null;
         /** CTriggerLook/m_flLookTime */
         lookTime: number;
@@ -8287,7 +8287,7 @@ declare global {
         defaultCheckDirection: number;
         /** CPropDoorRotating/m_flDistance */
         distance: number;
-        /** CPropDoorRotating/m_hEntityBlocker — Another entity, or null when it points at nothing. Read-only. */
+        /** CPropDoorRotating/m_hEntityBlocker — A CEntityBlocker, or null when it points at nothing. Read-only; reach its own fields with .as("CEntityBlocker"). */
         readonly entityBlocker: Entity<EntityRaw> | null;
         /** CPropDoorRotating/m_eOpenDirection — A PropDoorRotatingOpenDirection_e. */
         openDirection: number;
