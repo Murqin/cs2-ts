@@ -163,6 +163,49 @@ public sealed class BindingTests(ServerFixture fixture)
         }
     }
 
+    /// <summary>
+    /// A centre menu, opened for a bot and closed again. Its re-send runs on the game
+    /// thread every tick; selection and navigation need a client and are checked by
+    /// hand. What this holds is the open count, that the handle reports itself open, and
+    /// that the whole path — parse, open, re-send, close — runs without a boundary error.
+    /// </summary>
+    [Fact]
+    public async Task AMenuIsCountedWhileOpenAndGoneAfterItCloses()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        try
+        {
+            server.ClearTranscript();
+            server.Command("css_hmenu");
+            var opened = await server.WaitForAsync(
+                l => l.Contains("HARNESS menu opened", StringComparison.Ordinal), Answer);
+            Assert.Contains("isOpen=true", opened, StringComparison.Ordinal);
+
+            server.ClearTranscript();
+            server.Command("cs2ts_status");
+            var shown = await server.WaitForAsync(
+                l => l.Contains("[CS2-TS] open menus:", StringComparison.Ordinal), Answer);
+            Assert.Contains("open menus: 1", shown, StringComparison.Ordinal);
+
+            server.ClearTranscript();
+            server.Command("css_hmenuclose");
+            var closed = await server.WaitForAsync(
+                l => l.Contains("HARNESS menu closed", StringComparison.Ordinal), Answer);
+            Assert.Contains("isOpen=false", closed, StringComparison.Ordinal);
+
+            server.ClearTranscript();
+            server.Command("cs2ts_status");
+            var cleared = await server.WaitForAsync(
+                l => l.Contains("[CS2-TS] open menus:", StringComparison.Ordinal), Answer);
+            Assert.Contains("open menus: 0", cleared, StringComparison.Ordinal);
+        }
+        finally
+        {
+            server.Command("css_hmenuclose");
+        }
+    }
+
     private static async Task<int> TickCountAsync(DedicatedServer server)
     {
         server.ClearTranscript();

@@ -11914,6 +11914,76 @@ declare global {
         clear(player: Player): void;
     };
 
+    /** One line of a menu. */
+    interface MenuItem {
+        /**
+         * What the line says. Passed through untouched, so HTML works in a centre menu
+         * and shows as tags in a chat one — keep it plain if the menu might be chat.
+         */
+        text: string;
+
+        /** Called on the game thread when this line is chosen. */
+        onSelect?: (player: Player) => void;
+
+        /** Shown greyed out and not selectable. */
+        disabled?: boolean;
+    }
+
+    interface MenuOptions {
+        /** The heading, drawn above the lines. */
+        title: string;
+
+        /** The lines, at least one. More than seven paginate. */
+        items: MenuItem[];
+
+        /**
+         * `"chat"` (the default) prints numbered lines the player picks with a digit —
+         * the digit does not land in chat. `"center"` draws an HTML block the player
+         * moves a highlight through with W and S and picks with E; they still move
+         * while it is open.
+         */
+        style?: "chat" | "center";
+
+        /** Close the menu after a pick. Default true. */
+        closeOnSelect?: boolean;
+    }
+
+    /** The handle `menu.open` returns. */
+    interface OpenMenu {
+        /**
+         * False once the player picked something, closed it, opened another menu, left,
+         * or this script was reloaded.
+         */
+        readonly isOpen: boolean;
+
+        /** Closes the menu, if it is still the one open. */
+        close(): void;
+    }
+
+    /**
+     * A list of choices put in front of one player.
+     *
+     * ```ts
+     * command("!gun", (player) => {
+     *     if (player === null) return;
+     *     menu.open(player, {
+     *         title: "Pick a rifle",
+     *         items: [
+     *             { text: "AK-47", onSelect: (p) => p.sendChat("ak") },
+     *             { text: "M4A1-S", onSelect: (p) => p.sendChat("m4") },
+     *         ],
+     *     });
+     * });
+     * ```
+     *
+     * Like a timer, a menu belongs to this script: reloading closes it rather than
+     * leaving it on a screen with a dead callback. One menu per player — opening a
+     * second replaces the first.
+     */
+    const menu: {
+        open(player: Player, options: MenuOptions): OpenMenu;
+    };
+
     /**
      * Everything in the world that is not a player: weapons, the bomb, hostages, doors,
      * props, and whatever a script makes itself.

@@ -33,7 +33,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     /// and not necessarily that. The minor number moves when something is added, the
     /// major when something a script could have used is gone.
     /// </summary>
-    public const string ScriptApiVersion = "0.2";
+    public const string ScriptApiVersion = "0.3";
 
     private ScriptHost? _host;
     private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;
@@ -140,6 +140,17 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         // server nobody has joined yet.
         RegisterListener<Listeners.OnMapStart>(_ => LoadScriptsOnce());
 
+        // A chat menu reads the digit a player types by watching the say commands and
+        // swallowing the line when it belongs to an open menu. Pre, so Handled stops the
+        // text before it reaches chat. say_team as well as say — a menu key typed while
+        // the message box is on the team channel is still a menu key.
+        AddCommandListener("say", OnPlayerSay, HookMode.Pre);
+        AddCommandListener("say_team", OnPlayerSay, HookMode.Pre);
+
+        // A centre menu is navigated with the movement keys: this fires when a button
+        // goes down, so the press edge is free and no per-tick polling is needed.
+        RegisterListener<Listeners.OnPlayerButtonsChanged>(OnPlayerButtonsChanged);
+
         RegisterCommands();
     }
 
@@ -164,7 +175,11 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         LoadScriptsOnce();
         _host?.DrainFrames();
         _host?.AdvanceTimers();
-        _host?.RefreshCenterHud(ResendCenterMessage);
+        _host?.RefreshCenterHud(SendKeptCentreMessage);
+
+        // After the kept messages, so a centre menu is the last thing written to that
+        // slot this frame and wins the flicker against a hud.show for the same player.
+        _host?.RefreshMenus(DrawCentre);
 
         // Last, so that a handler sees the results of whatever this frame already had
         // queued rather than half of it. With no script listening this is a dictionary
@@ -216,13 +231,28 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     }
 
     /// <summary>
-    /// Re-sends one kept centre message, and says whether the player was there for it.
-    ///
-    /// A false answer tells <see cref="CenterHudTable"/> to drop the entry: a player who
-    /// has left has nothing on screen to keep refreshing, and no <c>hud.clear</c> call
-    /// is coming from a script for them.
+    /// Re-sends one kept centre message, unless the player has a centre menu open — that
+    /// owns the slot until it closes, and the message resumes when it does. The entry is
+    /// kept either way; a false answer here is only for a player who is no longer there.
     /// </summary>
-    private static bool ResendCenterMessage(long userId, string text)
+    private bool SendKeptCentreMessage(long userId, string text)
+    {
+        if (_host?.Menus.StyleFor(userId) == MenuStyle.Center)
+        {
+            return true;
+        }
+
+        return DrawCentre(userId, text);
+    }
+
+    /// <summary>
+    /// Writes one line of centre-screen HTML to a player, and says whether they were
+    /// there for it. Shared by kept messages and centre menus — both fade unless resent.
+    ///
+    /// A false answer drops the caller's entry: a player who has left has nothing on
+    /// screen and no script call coming to clear it.
+    /// </summary>
+    private static bool DrawCentre(long userId, string html)
     {
         if (ResolvePlayer(userId) is not { } controller)
         {
@@ -231,7 +261,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
 
         try
         {
-            controller.PrintToCenterHtml(text);
+            controller.PrintToCenterHtml(html);
             return true;
         }
         catch (Exception exception)
@@ -240,8 +270,102 @@ public sealed partial class Cs2TsPlugin : BasePlugin
             // check and here. This runs from the tick listener, outside any boundary, so
             // a throw would land in OnTick rather than being reported and swallowed —
             // drop the entry instead, the same as for a player who has left.
-            Console.WriteLine($"[CS2-TS] dropped a centre message for {userId}: {exception.Message}");
+            Console.WriteLine($"[CS2-TS] dropped centre text for {userId}: {exception.Message}");
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Watches the say commands for a digit typed by a player with a chat menu open, and
+    /// swallows the line when it is one — so "3" picks the third item instead of landing
+    /// in chat. Anything else passes straight through.
+    /// </summary>
+    private HookResult OnPlayerSay(CCSPlayerController? player, CommandInfo info)
+    {
+        if (_host is null || player?.UserId is not { } userId)
+        {
+            return HookResult.Continue;
+        }
+
+        if (_host.Menus.StyleFor(userId) != MenuStyle.Chat)
+        {
+            return HookResult.Continue;
+        }
+
+        var said = info.GetArg(1).Trim();
+        if (said.Length != 1 || said[0] is < '0' or > '9')
+        {
+            // Real chat while a menu is open: let it through, leave the menu up.
+            return HookResult.Continue;
+        }
+
+        var feed = _host.Menus.FeedDigit(userId, said[0] - '0');
+        ApplyMenuFeed(userId, feed);
+        return feed.Handled ? HookResult.Handled : HookResult.Continue;
+    }
+
+    /// <summary>
+    /// Turns a movement-key press into menu navigation for a player with a centre menu
+    /// open: forward and back move the highlight, use picks it. The player still moves —
+    /// the menu does not freeze them.
+    /// </summary>
+    private void OnPlayerButtonsChanged(CCSPlayerController player, PlayerButtons pressed, PlayerButtons released)
+    {
+        if (_host is null || player.UserId is not { } userId)
+        {
+            return;
+        }
+
+        if (_host.Menus.StyleFor(userId) != MenuStyle.Center)
+        {
+            return;
+        }
+
+        if ((pressed & PlayerButtons.Forward) != 0)
+        {
+            ApplyMenuFeed(userId, _host.Menus.FeedNav(userId, MenuNav.Up));
+        }
+
+        if ((pressed & PlayerButtons.Back) != 0)
+        {
+            ApplyMenuFeed(userId, _host.Menus.FeedNav(userId, MenuNav.Down));
+        }
+
+        if ((pressed & PlayerButtons.Use) != 0)
+        {
+            ApplyMenuFeed(userId, _host.Menus.FeedNav(userId, MenuNav.Select));
+        }
+    }
+
+    /// <summary>
+    /// Acts on what a key press did to a menu: dispatch a chosen item's callback inside
+    /// its own plugin's boundary, and re-print a chat menu whose page turned.
+    /// </summary>
+    private void ApplyMenuFeed(long userId, MenuFeed feed)
+    {
+        if (feed.Selection is { Handler: { } handler } selection)
+        {
+            var player = _players?.For(userId);
+            selection.Owner.Run("menu.onSelect", () => handler.InvokeAsFunction(player));
+        }
+
+        if (feed.Redraw && _host?.Menus.ChatLinesFor(userId) is { } lines)
+        {
+            PrintChatMenu(userId, lines);
+        }
+    }
+
+    /// <summary>Prints a chat menu's lines to one player. Used on open and on a page turn.</summary>
+    private static void PrintChatMenu(long userId, IReadOnlyList<string> lines)
+    {
+        if (ResolvePlayer(userId) is not { } controller)
+        {
+            return;
+        }
+
+        foreach (var line in lines)
+        {
+            controller.PrintToChat(line);
         }
     }
 
@@ -257,6 +381,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         engine.AddHostObject("entities", new EntitiesApi(_entities));
         engine.AddHostObject("unsafe", new UnsafeApi(_operations));
         engine.AddHostObject("hud", new HudApi(plugin, _host.CenterHud));
+        engine.AddHostObject("menu", new MenuApi(plugin, _host.Menus, PrintChatMenu));
 
         // Once, for the first engine, and silent when it passes. An operator has no
         // question this answers on a working server — the bootstrap already logged that
@@ -440,6 +565,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
             Console.WriteLine($"[CS2-TS] queued frames: {_host.Frames.Count}, dropped: {_host.Frames.Dropped}");
             Console.WriteLine($"[CS2-TS] pending timers: {_host.Timers.Count}, dropped: {_host.Timers.Dropped}");
             Console.WriteLine($"[CS2-TS] centre messages: {_host.CenterHud.Count}, dropped: {_host.CenterHud.Dropped}");
+            Console.WriteLine($"[CS2-TS] open menus: {_host.Menus.Count}, dropped: {_host.Menus.Dropped}");
             Console.WriteLine($"[CS2-TS] entities handed out: {_entities.Count}");
             Console.WriteLine($"[CS2-TS] watchdog interruptions: {_host.Watchdog.Interruptions}");
 

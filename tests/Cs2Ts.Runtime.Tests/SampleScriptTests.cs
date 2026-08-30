@@ -104,6 +104,43 @@ public sealed class SampleScriptTests : IDisposable
             table.Clear(plugin, player.Id);
     }
 
+    /// <summary>
+    /// The <c>menu</c> global, faked. <see cref="MenuRequest.Parse"/> and
+    /// <see cref="MenuTable"/> are the real ones — the binding's MenuApi is this same
+    /// wrapper over CounterStrikeSharp's player type.
+    /// </summary>
+    [DefaultScriptUsage(ScriptAccess.None)]
+    public sealed class FakeMenu(
+        ScriptPlugin plugin,
+        MenuTable menus,
+        Action<long, IReadOnlyList<string>> printChatMenu)
+    {
+        [ScriptMember("open")]
+        public FakeOpenMenu Open(PlayerFacade<FakeController, FakePawn> player, ScriptObject options)
+        {
+            var request = MenuRequest.Parse(options);
+            var id = menus.Open(
+                plugin, player.Id, request.Model, request.Style, request.CloseOnSelect, request.Handlers);
+
+            if (request.Style == MenuStyle.Chat)
+            {
+                printChatMenu(player.Id, request.Model.RenderChatLines());
+            }
+
+            return new FakeOpenMenu(plugin, menus, player.Id, id);
+        }
+    }
+
+    [DefaultScriptUsage(ScriptAccess.None)]
+    public sealed class FakeOpenMenu(ScriptPlugin plugin, MenuTable menus, long playerId, long menuId)
+    {
+        [ScriptMember("isOpen")]
+        public bool IsOpen => menus.IsOpen(playerId, menuId);
+
+        [ScriptMember("close")]
+        public void Close() => menus.CloseById(plugin, menuId);
+    }
+
     private readonly FakeWorld _world = new();
     private readonly FakeEntityWorld _entities = new();
     private readonly PlayerFacadeTable<FakeController, FakePawn> _table;
@@ -127,7 +164,60 @@ public sealed class SampleScriptTests : IDisposable
             engine.AddHostObject("players", new FakePlayers(_table, _world));
             engine.AddHostObject("entities", new FakeEntities(_entities));
             engine.AddHostObject("hud", new FakeHud(plugin, _host!.CenterHud));
+            engine.AddHostObject("menu", new FakeMenu(plugin, _host!.Menus, PrintChatMenu));
         };
+    }
+
+    /// <summary>Delivers a chat menu's lines to a player, the way the binding's own printer does.</summary>
+    private void PrintChatMenu(long userId, IReadOnlyList<string> lines)
+    {
+        if (_world.Resolve(userId) is not { } controller)
+        {
+            return;
+        }
+
+        foreach (var line in lines)
+        {
+            controller.Chat.Add(line);
+        }
+    }
+
+    /// <summary>Runs the centre-menu re-send, recording each menu's HTML into the player's Center list.</summary>
+    private int RefreshMenus() =>
+        _host.RefreshMenus((id, html) =>
+        {
+            if (_world.Resolve(id) is not { } controller)
+            {
+                return false;
+            }
+
+            controller.Center.Add(html);
+            return true;
+        });
+
+    /// <summary>
+    /// Feeds a chat digit and dispatches whatever it picked, the way the binding's
+    /// say-command listener does.
+    /// </summary>
+    private void PickFromChatMenu(long userId, int digit) =>
+        DispatchMenuFeed(userId, _host.Menus.FeedDigit(userId, digit));
+
+    /// <summary>The same for a centre menu's W/S/E.</summary>
+    private void NavigateMenu(long userId, MenuNav nav) =>
+        DispatchMenuFeed(userId, _host.Menus.FeedNav(userId, nav));
+
+    private void DispatchMenuFeed(long userId, MenuFeed feed)
+    {
+        if (feed.Selection is { Handler: { } handler } selection)
+        {
+            var player = _table.For(userId);
+            selection.Owner.Run("menu.onSelect", () => handler.InvokeAsFunction(player));
+        }
+
+        if (feed.Redraw && _host.Menus.ChatLinesFor(userId) is { } lines)
+        {
+            PrintChatMenu(userId, lines);
+        }
     }
 
     public void Dispose() => _host.Dispose();
@@ -166,6 +256,12 @@ public sealed class SampleScriptTests : IDisposable
     {
         var path = Path.Combine(AppContext.BaseDirectory, "hud.ts");
         return _host.Load("hud", "hud.ts", File.ReadAllText(path));
+    }
+
+    private PluginLoadResult LoadMenuExample()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "menu.ts");
+        return _host.Load("menu", "menu.ts", File.ReadAllText(path));
     }
 
     /// <summary>Moves the clock and runs the tick, the way the game loop would.</summary>
@@ -579,6 +675,91 @@ public sealed class SampleScriptTests : IDisposable
 
         Assert.True(LoadHudExample().Succeeded);
         Assert.Equal(0, _host.CenterHud.Count);
+    }
+
+    /// <summary>
+    /// The menu example, run rather than merely compiled: a chat menu is printed, a
+    /// digit picks a line, and the picked line's callback runs — through the boundary,
+    /// against whatever state the rest of the script left behind.
+    /// </summary>
+    [Fact]
+    public void TheMenuExamplePrintsAChatMenuAndPicksFromIt()
+    {
+        Assert.True(LoadMenuExample().Succeeded);
+        var controller = _world.Add(7, "murqin");
+
+        Assert.Equal(1, _host.DispatchCommand("gun", _table.For(7), []).Taken);
+
+        Assert.Contains("Pick a rifle", controller.Chat);
+        Assert.Contains("1. AK-47", controller.Chat);
+        Assert.Contains("3. AWP (locked)", controller.Chat);
+        Assert.Contains("0. Exit", controller.Chat);
+        Assert.Equal(1, _host.Menus.Count);
+
+        PickFromChatMenu(7, 2);
+
+        Assert.Contains("you took an M4A1-S", controller.Chat);
+        Assert.Equal(0, _host.Menus.Count);   // closeOnSelect defaults to true
+        Assert.Empty(_errors);
+    }
+
+    [Fact]
+    public void TheMenuExampleChatMenuIgnoresItsDisabledLine()
+    {
+        Assert.True(LoadMenuExample().Succeeded);
+        var controller = _world.Add(7, "murqin");
+        _host.DispatchCommand("gun", _table.For(7), []);
+
+        // Item 3 is disabled: the digit is swallowed, nothing is picked, the menu stays.
+        PickFromChatMenu(7, 3);
+
+        Assert.DoesNotContain(controller.Chat, line => line.Contains("you took"));
+        Assert.Equal(1, _host.Menus.Count);
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// The centre menu, run: it is drawn by the tick, a pick leaves it open because the
+    /// example asked for that, and the timer it set closes it later.
+    /// </summary>
+    [Fact]
+    public void TheMenuExampleCentreMenuIsDrawnThenClosedByItsTimer()
+    {
+        Assert.True(LoadMenuExample().Succeeded);
+        var controller = _world.Add(7, "murqin");
+
+        Assert.Equal(1, _host.DispatchCommand("colors", _table.For(7), []).Taken);
+        Assert.Equal(1, _host.Menus.Count);
+
+        RefreshMenus();
+        Assert.Contains(controller.Center, html => html.Contains("Team colour"));
+
+        NavigateMenu(7, MenuNav.Select);
+        Assert.Contains("red it is", controller.Center);
+
+        // closeOnSelect was false, so it is still open.
+        Assert.Equal(1, _host.Menus.Count);
+
+        // The example's timer closes it after thirty seconds.
+        Advance(31);
+        Assert.Equal(0, _host.Menus.Count);
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// Reloading the script closes its menus, the same promise timers and kept centre
+    /// messages make.
+    /// </summary>
+    [Fact]
+    public void ReloadingTheMenuExampleClosesItsMenus()
+    {
+        Assert.True(LoadMenuExample().Succeeded);
+        _world.Add(7, "murqin");
+        _host.DispatchCommand("gun", _table.For(7), []);
+        Assert.Equal(1, _host.Menus.Count);
+
+        Assert.True(LoadMenuExample().Succeeded);
+        Assert.Equal(0, _host.Menus.Count);
     }
 
     [Fact]
