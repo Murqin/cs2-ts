@@ -24,12 +24,9 @@ public sealed class GeneratorTests
     {
         var root = Repository.Root();
 
-        foreach (var surface in AllSurfaces)
-        {
-            var path = Path.Combine(root, "src", "Cs2Ts.Plugin", "Generated", $"{surface.Name}.g.cs");
-            Assert.True(File.Exists(path), $"{path} is missing; run 'dotnet run --project tools/datagen'");
-            Assert.Equal(Emit.CSharp(surface), File.ReadAllText(path));
-        }
+        var surfaces = Path.Combine(root, "src", "Cs2Ts.Plugin", "Generated", "EntitySurfaces.g.cs");
+        Assert.True(File.Exists(surfaces), $"{surfaces} is missing; run 'dotnet run --project tools/datagen'");
+        Assert.Equal(Emit.CSharpFile(AllSurfaces), File.ReadAllText(surfaces));
 
         var events = Path.Combine(root, "src", "Cs2Ts.Plugin", "Generated", "GameEvents.g.cs");
         Assert.True(File.Exists(events), $"{events} is missing; run 'dotnet run --project tools/datagen'");
@@ -77,7 +74,7 @@ public sealed class GeneratorTests
         Assert.Equal("Entity<EntityRaw> | null", field.TypeScriptType);
 
         // Read through the one table, so the same entity reached two ways is one object.
-        Assert.Equal("entities.ForHandle({0}.Raw)", field.ReadFormat);
+        Assert.Equal("_entities.ForHandle({0}.Raw)", field.ReadFormat);
 
         // Read-only, and deliberately: what writing one of these means varies per field,
         // and a wrong one is an entity pointing at the wrong owner rather than a value
@@ -114,7 +111,10 @@ public sealed class GeneratorTests
     [Fact]
     public void AnEnumArrivesAsANumberInBothDirections()
     {
-        var field = Field(Pawn, "moveType");
+        // moveType is CBaseEntity's, so it lands on the root surface now rather than on
+        // the pawn — which is the point of the tree: a field sits on the class that
+        // declares it and every entity inherits it.
+        var field = Field("moveType");
 
         // A host enum crosses into script as an object. What an author wants is the
         // value they can compare and write back, so it is cast on the way out and back
@@ -165,16 +165,90 @@ public sealed class GeneratorTests
     {
         // A CounterStrikeSharp bump that renamed one of these would otherwise show up as
         // a declaration test failing in another repository language, or as a server test
-        // that no longer compiles its script.
+        // that no longer compiles its script. Searched across every surface, because the
+        // tree moved some of them off the pawn onto the class that declares them —
+        // health and lastPlaceName are CBaseEntity's.
         foreach (var name in new[] { "health", "armorValue", "isScoped", "velocityModifier", "lastPlaceName" })
         {
-            Assert.NotNull(Field(Pawn, name));
+            Assert.NotNull(Field(name));
         }
 
         foreach (var name in new[] { "score", "ping", "playerName" })
         {
-            Assert.NotNull(Field(Controller, name));
+            Assert.NotNull(Field(name));
         }
+    }
+
+    [Fact]
+    public void EverySurfaceButTheRootDerivesFromAGeneratedOne()
+    {
+        var root = AllSurfaces.Single(surface => surface.Name == "EntityRaw");
+        Assert.Null(root.BaseName);
+        Assert.Equal("CBaseEntity", root.Entity.Name);
+
+        var names = AllSurfaces.Select(surface => surface.Name).ToHashSet(StringComparer.Ordinal);
+        foreach (var surface in AllSurfaces.Where(surface => surface.BaseName is not null))
+        {
+            // The base is another surface in the set, and it is the surface for this
+            // class's own base class.
+            Assert.Contains(surface.BaseName, names);
+            Assert.Equal(Surfaces.NameFor(surface.Entity.BaseType!), surface.BaseName);
+        }
+    }
+
+    [Fact]
+    public void TheTreeReachesTheRootFromEveryLeaf()
+    {
+        var byName = AllSurfaces.ToDictionary(surface => surface.Name, StringComparer.Ordinal);
+
+        foreach (var surface in AllSurfaces)
+        {
+            var steps = 0;
+            for (var current = surface; current.BaseName is not null; current = byName[current.BaseName])
+            {
+                Assert.True(++steps < 32, $"{surface.Name} does not reach the root");
+            }
+        }
+    }
+
+    [Fact]
+    public void AFieldSitsOnTheClassThatDeclaresItAndIsInheritedElsewhere()
+    {
+        // health is declared on CBaseEntity, so it is a member of the root surface and of
+        // no other — the pawn gets it by inheriting, not by carrying a copy.
+        Assert.Contains(Surface("EntityRaw").Fields, field => field.ScriptName == "health");
+        Assert.DoesNotContain(Surface("PawnRaw").Fields, field => field.ScriptName == "health");
+
+        // armorValue is the pawn's own.
+        Assert.Contains(Surface("PawnRaw").Fields, field => field.ScriptName == "armorValue");
+    }
+
+    [Fact]
+    public void AShadowedFieldGetsTheNewKeyword()
+    {
+        // CBasePropDoor rebinds m_hBlocker on its own class; the base already carries a
+        // blocker, so the generated property needs `new`.
+        var door = Surface("CBasePropDoorRaw");
+        var blocker = door.Fields.Single(field => field.ScriptName == "blocker");
+        Assert.True(blocker.Shadows);
+        Assert.Contains("public new EntityFacade? Blocker", Emit.CSharp(door), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnIncompatibleShadowFlattensOnlyThatInterface()
+    {
+        // CInstancedSceneEntity's m_hTarget is a handle where CBaseEntity's m_target is a
+        // string, and both camelCase to target. TypeScript will not narrow a member to an
+        // unassignable type, so that one interface is written flat — with every inherited
+        // field — while the C# class stays in the tree.
+        var flat = AllSurfaces.Where(surface => surface.Flat).ToList();
+        Assert.NotEmpty(flat);
+        Assert.All(flat, surface => Assert.NotEmpty(surface.AllFields));
+        Assert.Contains(flat, surface => surface.Name == "CInstancedSceneEntityRaw");
+
+        var ts = Emit.TypeScript(Surface("CInstancedSceneEntityRaw"));
+        Assert.DoesNotContain(" extends ", ts, StringComparison.Ordinal);
+        Assert.Contains("target: Entity<EntityRaw> | null", ts, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -320,4 +394,31 @@ public sealed class GeneratorTests
     private static SchemaField Field(SchemaSurface surface, string scriptName) =>
         surface.Fields.SingleOrDefault(field => field.ScriptName == scriptName)
         ?? throw new InvalidOperationException($"{surface.Name} has no '{scriptName}'");
+
+    /// <summary>
+    /// A field by name as a player reaches it — from the pawn or controller surface or
+    /// anywhere they inherit from. A bare name is not unique across all five hundred
+    /// classes, but it is along one chain.
+    /// </summary>
+    private static SchemaField Field(string scriptName)
+    {
+        var byName = AllSurfaces.ToDictionary(surface => surface.Name, StringComparer.Ordinal);
+
+        foreach (var leaf in new[] { "PawnRaw", "ControllerRaw" })
+        {
+            for (var current = byName[leaf]; current is not null; current = current.BaseName is { } b ? byName[b] : null)
+            {
+                if (current.Fields.FirstOrDefault(field => field.ScriptName == scriptName) is { } hit)
+                {
+                    return hit;
+                }
+            }
+        }
+
+        throw new InvalidOperationException($"no field '{scriptName}' on the pawn or controller chain");
+    }
+
+    private static SchemaSurface Surface(string name) =>
+        AllSurfaces.SingleOrDefault(surface => surface.Name == name)
+        ?? throw new InvalidOperationException($"no surface called '{name}'");
 }

@@ -23,9 +23,16 @@ internal static class Emit
         // back on is the whole fix: a nullable player field has to be able to say so.
         "#nullable enable";
 
-    public static string CSharp(SchemaSurface surface)
+    /// <summary>
+    /// Every entity surface in one file: the class the plugin binds for each of
+    /// CounterStrikeSharp's entity classes, in a tree that mirrors the game's own.
+    ///
+    /// One file rather than one per class, for the reason the events are one file — five
+    /// hundred files is five hundred things a reviewer pages past, and none of it is read
+    /// by hand.
+    /// </summary>
+    public static string CSharpFile(IReadOnlyList<SchemaSurface> surfaces)
     {
-        var entity = Surfaces.FullName(surface.Entity);
         var text = new StringBuilder();
 
         text.AppendLine(Warning);
@@ -35,57 +42,120 @@ internal static class Emit
         text.AppendLine("using Microsoft.ClearScript;");
         text.AppendLine();
         text.AppendLine("namespace Cs2Ts.Plugin;");
-        text.AppendLine();
+
+        foreach (var surface in surfaces)
+        {
+            text.AppendLine();
+            text.Append(CSharp(surface));
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>One surface's class, without the file's header — the unit the tests check.</summary>
+    public static string CSharp(SchemaSurface surface)
+    {
+        var entity = Surfaces.FullName(surface.Entity);
+        var root = surface.BaseName is null;
+        var text = new StringBuilder();
+
         text.AppendLine("/// <summary>");
-        text.AppendLine($"/// Every field a {surface.Entity.Name} has, as script reaches it through <c>entity.raw</c>.");
+        text.AppendLine(root
+            ? $"/// Every field a {surface.Entity.Name} has, as script reaches it through <c>entity.raw</c>."
+            : $"/// The fields a {surface.Entity.Name} adds to {surface.Entity.BaseType!.Name}.");
         text.AppendLine("///");
         text.AppendLine("/// One member per schema field, each one named as the schema names it and each one");
-        text.AppendLine("/// going through <paramref name=\"resolve\"/> rather than holding what it returned.");
-        text.AppendLine("/// Writes are replicated: see <see cref=\"SchemaWrite\"/> for the half of a write that");
-        text.AppendLine("/// is invisible when it is missing.");
+        text.AppendLine("/// re-resolving the entity rather than holding it. Writes are replicated: see");
+        text.AppendLine("/// <see cref=\"SchemaWrite\"/> for the half of a write that is invisible when it is missing.");
+        text.AppendLine("///");
+        text.AppendLine("/// The class per entity, deriving the same way the game's classes do, so the whole set");
+        text.AppendLine("/// stays a few thousand members rather than the tens of thousands a flat class each");
+        text.AppendLine("/// would be. An explicit constructor rather than a primary one only because the shared");
+        text.AppendLine("/// state is both kept and handed to the base, which a primary constructor warns on.");
         text.AppendLine("/// </summary>");
-        text.AppendLine("/// <param name=\"resolve\">");
-        text.AppendLine("/// The live entity. Called on every access and never held, and it throws rather than");
-        text.AppendLine("/// returning something stale once the entity is gone.");
-        text.AppendLine("/// </param>");
-        text.AppendLine("/// <param name=\"entities\">");
-        text.AppendLine("/// Turns the entity handles stored in this entity's fields into entities. It is the");
-        text.AppendLine("/// one table for the whole server, so a weapon reached through its owner's field is");
-        text.AppendLine("/// the same object as the same weapon reached through <c>entities.byIndex</c>.");
-        text.AppendLine("/// </param>");
         text.AppendLine("[DefaultScriptUsage(ScriptAccess.None)]");
-        text.AppendLine(
-            $"public sealed class {surface.Name}(Func<{entity}> resolve, CssEntities entities) : ScriptSurface");
+        text.AppendLine($"public class {surface.Name} : {(root ? "ScriptSurface" : surface.BaseName)}");
         text.AppendLine("{");
+
+        var hasResolve = surface.Fields.Count > 0;
+
+        if (hasResolve)
+        {
+            text.AppendLine($"    private readonly Func<{entity}> _resolve;");
+        }
+
+        if (root)
+        {
+            if (hasResolve)
+            {
+                text.AppendLine();
+            }
+
+            text.AppendLine("    /// <summary>");
+            text.AppendLine("    /// The one entity table for the server. A field that holds another entity turns");
+            text.AppendLine("    /// into one through here, so the same entity reached two ways is one object.");
+            text.AppendLine("    /// </summary>");
+            text.AppendLine("    private protected readonly CssEntities _entities;");
+        }
+
+        if (hasResolve || root)
+        {
+            text.AppendLine();
+        }
+
+        text.AppendLine("    /// <param name=\"resolve\">");
+        text.AppendLine("    /// The live entity, re-read on every access and never held. It throws rather than");
+        text.AppendLine("    /// returning something stale once the entity is gone.");
+        text.AppendLine("    /// </param>");
+        text.AppendLine("    /// <param name=\"entities\">The server's one entity table, for fields that hold another entity.</param>");
+
+        if (root)
+        {
+            text.AppendLine($"    public {surface.Name}(Func<{entity}> resolve, CssEntities entities)");
+            text.AppendLine("    {");
+            text.AppendLine("        _resolve = resolve;");
+            text.AppendLine("        _entities = entities;");
+            text.AppendLine("    }");
+        }
+        else if (hasResolve)
+        {
+            text.AppendLine(
+                $"    public {surface.Name}(Func<{entity}> resolve, CssEntities entities) : base(resolve, entities) =>");
+            text.AppendLine("        _resolve = resolve;");
+        }
+        else
+        {
+            text.AppendLine(
+                $"    public {surface.Name}(Func<{entity}> resolve, CssEntities entities) : base(resolve, entities)");
+            text.AppendLine("    {");
+            text.AppendLine("    }");
+        }
 
         foreach (var field in surface.Fields)
         {
-            var read = string.Format(field.ReadFormat, $"resolve().{field.ClrName}");
+            var read = string.Format(field.ReadFormat, $"_resolve().{field.ClrName}");
+            var modifier = field.Shadows ? "new " : "";
 
+            text.AppendLine();
             text.AppendLine($"    /// <summary>{field.ClassName}/{field.FieldName}{Sentence(field.Note)}</summary>");
             text.AppendLine($"    [ScriptMember(\"{field.ScriptName}\")]");
 
             if (field.WriteFormat is null)
             {
-                text.AppendLine($"    public {field.CSharpType} {field.ClrName} => {read};");
+                text.AppendLine($"    public {modifier}{field.CSharpType} {field.ClrName} => {read};");
             }
             else
             {
-                text.AppendLine($"    public {field.CSharpType} {field.ClrName}");
+                text.AppendLine($"    public {modifier}{field.CSharpType} {field.ClrName}");
                 text.AppendLine("    {");
                 text.AppendLine($"        get => {read};");
                 text.AppendLine("        set");
                 text.AppendLine("        {");
-                text.AppendLine("            var entity = resolve();");
+                text.AppendLine("            var entity = _resolve();");
                 text.AppendLine($"            SchemaWrite.Replicate(entity, \"{field.ClassName}\", \"{field.FieldName}\",");
                 text.AppendLine($"                () => entity.{field.ClrName} = {field.WriteFormat});");
                 text.AppendLine("        }");
                 text.AppendLine("    }");
-            }
-
-            if (!ReferenceEquals(field, surface.Fields[^1]))
-            {
-                text.AppendLine();
             }
         }
 
@@ -100,11 +170,18 @@ internal static class Emit
     public static string TypeScript(SchemaSurface surface)
     {
         var text = new StringBuilder();
+        var fields = surface.Flat ? surface.AllFields : surface.Fields;
+        var extends = surface.BaseName is null || surface.Flat ? "" : $" extends {surface.BaseName}";
+        var heading = surface.Flat
+            ? $"Every field a {surface.Entity.Name} has, by name. Flattened: it reuses a base field's name for a different type."
+            : surface.BaseName is null
+                ? $"Every field a {surface.Entity.Name} has, by name."
+                : $"The fields a {surface.Entity.Name} adds to {surface.BaseName}.";
 
-        text.AppendLine($"    /** Every field a {surface.Entity.Name} has, by name. */");
-        text.AppendLine($"    interface {surface.Name} {{");
+        text.AppendLine($"    /** {heading} */");
+        text.AppendLine($"    interface {surface.Name}{extends} {{");
 
-        foreach (var field in surface.Fields)
+        foreach (var field in fields)
         {
             var modifier = field.WriteFormat is null ? "readonly " : "";
             text.AppendLine($"        /** {field.ClassName}/{field.FieldName}{Sentence(field.Note)} */");
