@@ -89,6 +89,9 @@ public sealed class ScriptHost : IDisposable
     /// <summary>Timers every loaded plugin has set.</summary>
     public TimerTable Timers { get; } = new();
 
+    /// <summary>Kept centre-screen messages, one per player, owned by the plugin that set each.</summary>
+    public CenterHudTable CenterHud { get; } = new();
+
     /// <summary>The watchdog, for its interruption count.</summary>
     public ScriptWatchdog Watchdog => _watchdog;
 
@@ -267,6 +270,7 @@ public sealed class ScriptHost : IDisposable
         // drain that will only find a cancelled lifetime and drop it anyway.
         Frames.Discard(plugin);
         Timers.Discard(plugin);
+        CenterHud.Discard(plugin);
         plugin.Dispose();
         return true;
     }
@@ -393,6 +397,16 @@ public sealed class ScriptHost : IDisposable
     /// <summary>Runs every timer that has come due. Call once per tick.</summary>
     public int AdvanceTimers() => Timers.Tick(_clock());
 
+    /// <summary>
+    /// Re-sends the kept centre messages that have come due. Call once per tick.
+    /// </summary>
+    /// <param name="send">
+    /// Delivers one message to one player and answers whether they were there for it;
+    /// see <see cref="CenterHudTable.Tick"/>. It is passed in because the delivery is
+    /// the game's job and this assembly does not know the game.
+    /// </param>
+    public int RefreshCenterHud(Func<long, string, bool> send) => CenterHud.Tick(_clock(), send);
+
     /// <summary>Unloads every plugin, then tears down the runtime they shared.</summary>
     public void Dispose()
     {
@@ -413,6 +427,7 @@ public sealed class ScriptHost : IDisposable
         foreach (var plugin in plugins)
         {
             Timers.Discard(plugin);
+            CenterHud.Discard(plugin);
             plugin.Dispose();
         }
 

@@ -81,6 +81,12 @@ public interface IPlayerOperations<TController, TPawn>
     /// <summary>Writes one line into the player's chat.</summary>
     void SendChat(TController controller, string message);
 
+    /// <summary>
+    /// Writes one line of HTML into the centre of the player's screen. It fades on its
+    /// own after a few seconds; keeping one up is the runtime's job, not this call's.
+    /// </summary>
+    void SendCenter(TController controller, string message);
+
     /// <summary>Whether the pawn is alive, as opposed to a corpse or an observer.</summary>
     bool IsAlive(TPawn pawn);
 

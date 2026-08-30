@@ -333,6 +333,32 @@ command("!hdeath", () => {
         `dmg=${typeof lastDeath.dmgHealth}`);
 });
 
+// Centre-screen text. What reaches the client cannot be read back from RCON, so the
+// assertions are on the kept-message count cs2ts_status reports and on nothing throwing:
+// sendCenter is one-shot, hud.show keeps a line until hud.clear or a reload.
+command("!hcenter", () => {
+    const target = alivePlayer();
+    if (target === undefined) {
+        console.log("HARNESS center nobody-alive");
+        return;
+    }
+
+    target.sendCenter("<font color='#8cf'>harness sendCenter</font>");
+    hud.show(target, "<font color='#f55'>harness hud.show</font>");
+    console.log("HARNESS center shown");
+});
+
+command("!hcenterclear", () => {
+    const target = alivePlayer();
+    if (target === undefined) {
+        console.log("HARNESS center nobody-alive");
+        return;
+    }
+
+    hud.clear(target);
+    console.log("HARNESS center cleared");
+});
+
 // Timers only advance on a tick, so this also proves the server is running rather than
 // hibernating — a distinction that has looked like a broken feature before.
 command("!htimer", () => {

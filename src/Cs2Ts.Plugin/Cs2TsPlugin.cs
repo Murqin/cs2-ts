@@ -33,7 +33,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     /// and not necessarily that. The minor number moves when something is added, the
     /// major when something a script could have used is gone.
     /// </summary>
-    public const string ScriptApiVersion = "0.1";
+    public const string ScriptApiVersion = "0.2";
 
     private ScriptHost? _host;
     private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;
@@ -164,6 +164,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         LoadScriptsOnce();
         _host?.DrainFrames();
         _host?.AdvanceTimers();
+        _host?.RefreshCenterHud(ResendCenterMessage);
 
         // Last, so that a handler sees the results of whatever this frame already had
         // queued rather than half of it. With no script listening this is a dictionary
@@ -215,6 +216,36 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     }
 
     /// <summary>
+    /// Re-sends one kept centre message, and says whether the player was there for it.
+    ///
+    /// A false answer tells <see cref="CenterHudTable"/> to drop the entry: a player who
+    /// has left has nothing on screen to keep refreshing, and no <c>hud.clear</c> call
+    /// is coming from a script for them.
+    /// </summary>
+    private static bool ResendCenterMessage(long userId, string text)
+    {
+        if (ResolvePlayer(userId) is not { } controller)
+        {
+            return false;
+        }
+
+        try
+        {
+            controller.PrintToCenterHtml(text);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            // ResolvePlayer already checked validity, but the pawn can go between that
+            // check and here. This runs from the tick listener, outside any boundary, so
+            // a throw would land in OnTick rather than being reported and swallowed —
+            // drop the entry instead, the same as for a player who has left.
+            Console.WriteLine($"[CS2-TS] dropped a centre message for {userId}: {exception.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Installs the globals a plugin gets. Called for each engine before its code runs,
     /// so a plugin can use these at its top level.
     /// </summary>
@@ -225,6 +256,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
         engine.AddHostObject("players", new PlayersApi(_players!));
         engine.AddHostObject("entities", new EntitiesApi(_entities));
         engine.AddHostObject("unsafe", new UnsafeApi(_operations));
+        engine.AddHostObject("hud", new HudApi(plugin, _host.CenterHud));
 
         // Once, for the first engine, and silent when it passes. An operator has no
         // question this answers on a working server — the bootstrap already logged that
@@ -407,6 +439,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
             Console.WriteLine($"[CS2-TS] script API: {ScriptApiVersion}");
             Console.WriteLine($"[CS2-TS] queued frames: {_host.Frames.Count}, dropped: {_host.Frames.Dropped}");
             Console.WriteLine($"[CS2-TS] pending timers: {_host.Timers.Count}, dropped: {_host.Timers.Dropped}");
+            Console.WriteLine($"[CS2-TS] centre messages: {_host.CenterHud.Count}, dropped: {_host.CenterHud.Dropped}");
             Console.WriteLine($"[CS2-TS] entities handed out: {_entities.Count}");
             Console.WriteLine($"[CS2-TS] watchdog interruptions: {_host.Watchdog.Interruptions}");
 

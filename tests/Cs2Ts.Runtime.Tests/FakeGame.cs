@@ -65,6 +65,9 @@ public sealed class FakeController : IFakeEntity
     public bool IsValid { get; set; } = true;
 
     public List<string> Chat { get; } = [];
+
+    /// <summary>Centre-screen lines this player has been sent, in order.</summary>
+    public List<string> Center { get; } = [];
 }
 
 /// <summary>
@@ -147,6 +150,8 @@ public sealed class FakeOperations(FakeWorld world) : IPlayerOperations<FakeCont
     }
 
     public void SendChat(FakeController controller, string message) => controller.Chat.Add(message);
+
+    public void SendCenter(FakeController controller, string message) => controller.Center.Add(message);
 
     public bool IsAlive(FakePawn pawn) => pawn.Alive;
 

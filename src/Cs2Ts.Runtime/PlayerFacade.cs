@@ -159,6 +159,19 @@ public sealed class PlayerFacade<TController, TPawn>
     }
 
     /// <summary>
+    /// Writes one line into the centre of this player's screen, and nobody else's. HTML
+    /// is allowed — colour, <c>&lt;br&gt;</c>, size. It fades after a few seconds on its
+    /// own; <c>hud.show</c> is the way to keep one there.
+    /// </summary>
+    /// <exception cref="DeadEntityException">The player has left.</exception>
+    [ScriptMember("sendCenter")]
+    public void SendCenter(string message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        _operations.SendCenter(Controller, message);
+    }
+
+    /// <summary>
     /// Moves the player, keeping their view angles and velocity. Coordinates arrive as
     /// JavaScript numbers, which are doubles; the game works in floats, so the
     /// narrowing happens here rather than somewhere it would look like a bug.
