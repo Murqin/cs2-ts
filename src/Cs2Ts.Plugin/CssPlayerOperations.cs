@@ -43,11 +43,11 @@ public sealed class CssPlayerOperations(CssEntities entities)
     /// player's two entities be the same kind of object as a weapon or a door.
     /// </remarks>
     public IEntityAccess AccessController(Func<CCSPlayerController> resolve) =>
-        new CssEntityAccess(resolve, new ControllerRaw(resolve, entities));
+        new CssEntityAccess(resolve, new ControllerRaw(resolve, entities), entities);
 
     /// <inheritdoc />
     public IEntityAccess AccessPawn(Func<CCSPlayerPawn> resolve) =>
-        new CssEntityAccess(resolve, new PawnRaw(resolve, entities));
+        new CssEntityAccess(resolve, new PawnRaw(resolve, entities), entities);
 
     /// <inheritdoc />
     public string GetName(CCSPlayerController controller) => controller.PlayerName;

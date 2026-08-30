@@ -161,6 +161,37 @@ command("!hentunsafe", () => {
         `raw=${entity.raw.health} facade=${target.health}`);
 });
 
+// The typed way past `raw`. `raw` is the CBaseEntity floor; `as("CCSPlayerPawn")` reaches
+// the pawn's own fields — armorValue is one `raw` does not have — and it is the same live
+// surface, read through the same resolver. A name the game does not bind is refused.
+command("!hentas", () => {
+    const target = alivePlayer();
+    if (target === undefined || target.pawn === null) {
+        console.log("HARNESS entas nobody-alive");
+        return;
+    }
+
+    const entity = entities.byIndex(target.pawn.index);
+    if (entity === null) {
+        console.log("HARNESS entas not-found");
+        return;
+    }
+
+    const pawn = entity.as("CCSPlayerPawn");
+    const base = entity.as("CBaseEntity");
+
+    let refused = "no";
+    try {
+        entity.as("CNotARealSchemaClass" as "CBaseEntity");
+    } catch {
+        refused = "yes";
+    }
+
+    console.log(
+        `HARNESS entas armor=${typeof pawn.armorValue} health=${pawn.health} ` +
+        `baseHealth=${base.health} facade=${target.health} refused=${refused}`);
+});
+
 // Making one. Created, written to, spawned, moved, and read back — every step of it a
 // call into the engine.
 let made: Entity<EntityRaw> | null = null;

@@ -19,10 +19,17 @@ namespace Cs2Ts.Plugin;
 /// entity is: a pawn gets every field a CCSPlayerPawn has, anything else gets the ones
 /// every entity has.
 /// </param>
-public sealed class CssEntityAccess(Func<CBaseEntity> resolve, ScriptSurface raw) : IEntityAccess
+/// <param name="entities">
+/// The server's one entity table, forwarded to the surface <c>as</c> builds for a named
+/// schema class.
+/// </param>
+public sealed class CssEntityAccess(Func<CBaseEntity> resolve, ScriptSurface raw, CssEntities entities) : IEntityAccess
 {
     /// <inheritdoc />
     public ScriptSurface Raw { get; } = raw;
+
+    /// <inheritdoc />
+    public ScriptSurface As(string schemaClass) => EntitySurfaces.For(schemaClass, resolve, entities);
 
     /// <inheritdoc />
     /// <remarks>

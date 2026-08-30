@@ -154,7 +154,7 @@ public sealed class CssEntities
         return new EntityFacade(
             "entity",
             description,
-            new CssEntityAccess(Live, new EntityRaw(Live, this)),
+            new CssEntityAccess(Live, new EntityRaw(Live, this), this),
             () => Resolve(raw) is not null);
     }
 

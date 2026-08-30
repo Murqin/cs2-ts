@@ -192,6 +192,103 @@ internal static class Emit
         return text.ToString();
     }
 
+    /// <summary>
+    /// The map from a schema class name to the surface for it, as the class the plugin
+    /// binds behind <c>entity.as</c>.
+    ///
+    /// A dictionary of tiny factories rather than a switch: the switch the events use was
+    /// measured at 890 ms to compile on its first call, and this is twice the size. Each
+    /// factory re-wraps the generic entity resolver as its own type — the surfaces take a
+    /// typed <c>Func</c>, and the one the facade holds is <c>Func&lt;CBaseEntity&gt;</c>.
+    /// </summary>
+    public static string CSharpFactory(IReadOnlyList<SchemaSurface> surfaces)
+    {
+        var baseEntity = Surfaces.FullName(typeof(CounterStrikeSharp.API.Core.CBaseEntity));
+        var text = new StringBuilder();
+
+        text.AppendLine(Warning);
+        text.AppendLine();
+        text.AppendLine("using Cs2Ts.Runtime;");
+        text.AppendLine("using Microsoft.ClearScript;");
+        text.AppendLine();
+        text.AppendLine("namespace Cs2Ts.Plugin;");
+        text.AppendLine();
+        text.AppendLine("/// <summary>");
+        text.AppendLine("/// The wide surface for an entity of a named schema class, behind <c>entity.as</c>.");
+        text.AppendLine("///");
+        text.AppendLine("/// <c>as</c> is an assertion by the script that the entity is of that class, checked no");
+        text.AppendLine("/// more than <c>unsafe</c> checks its class argument and typed where <c>unsafe</c> is");
+        text.AppendLine("/// not. A name the game does not bind is refused; a name it binds for an entity that is");
+        text.AppendLine("/// something else reads the wrong fields' bytes rather than throwing.");
+        text.AppendLine("/// </summary>");
+        text.AppendLine("internal static class EntitySurfaces");
+        text.AppendLine("{");
+        text.AppendLine(
+            $"    private static readonly Dictionary<string, Func<Func<{baseEntity}>, CssEntities, ScriptSurface>> Factories =");
+        text.AppendLine("        new(StringComparer.Ordinal)");
+        text.AppendLine("    {");
+
+        foreach (var surface in surfaces)
+        {
+            var entity = Surfaces.FullName(surface.Entity);
+            var resolver = surface.BaseName is null
+                ? "resolve"
+                : $"() => new {entity}(resolve().Handle)";
+
+            text.AppendLine($"        [\"{surface.Entity.Name}\"] = (resolve, entities) => new {surface.Name}({resolver}, entities),");
+        }
+
+        text.AppendLine("    };");
+        text.AppendLine();
+        text.AppendLine("    /// <summary>The schema class names <c>as</c> accepts, for the error when it is given another.</summary>");
+        text.AppendLine("    public static IReadOnlyCollection<string> Names => Factories.Keys;");
+        text.AppendLine();
+        text.AppendLine("    /// <summary>");
+        text.AppendLine("    /// The surface for one schema class, or a throw naming the mistake.");
+        text.AppendLine("    /// </summary>");
+        text.AppendLine("    /// <param name=\"schemaClass\">The class name, spelled as the schema spells it.</param>");
+        text.AppendLine("    /// <param name=\"resolve\">The generic entity resolver the facade holds.</param>");
+        text.AppendLine("    /// <param name=\"entities\">The server's one entity table.</param>");
+        text.AppendLine($"    public static ScriptSurface For(string schemaClass, Func<{baseEntity}> resolve, CssEntities entities)");
+        text.AppendLine("    {");
+        text.AppendLine("        ArgumentException.ThrowIfNullOrEmpty(schemaClass);");
+        text.AppendLine("        return Factories.TryGetValue(schemaClass, out var make)");
+        text.AppendLine("            ? make(resolve, entities)");
+        text.AppendLine("            : throw new ArgumentException(");
+        text.AppendLine("                $\"there is no entity surface for a schema class called '{schemaClass}'; it has to be \" +");
+        text.AppendLine("                \"one CounterStrikeSharp binds, spelled as the schema spells it — 'CAK47', 'CBaseDoor'\");");
+        text.AppendLine("    }");
+        text.AppendLine();
+        text.AppendLine("    /// <summary>");
+        text.AppendLine("    /// Builds the table now, at plugin load, so that the first <c>as</c> in a script does");
+        text.AppendLine("    /// not pay to compile the initializer against the watchdog's budget — the trap the");
+        text.AppendLine("    /// event switch has.");
+        text.AppendLine("    /// </summary>");
+        text.AppendLine("    public static void Warm() => _ = Factories.Count;");
+        text.AppendLine("}");
+
+        return text.ToString();
+    }
+
+    /// <summary>
+    /// The declarations counterpart of <see cref="CSharpFactory"/>: the map an author's
+    /// editor uses to give <c>entity.as("CAK47")</c> the type <c>CAK47Raw</c>.
+    /// </summary>
+    public static string TypeScriptSchemaClasses(IReadOnlyList<SchemaSurface> surfaces)
+    {
+        var text = new StringBuilder();
+
+        text.AppendLine("    /** Every schema class `entity.as` accepts, and the surface each one gives. */");
+        text.AppendLine("    interface EntitySchemaClasses {");
+
+        foreach (var surface in surfaces)
+        {
+            text.AppendLine($"        \"{surface.Entity.Name}\": {surface.Name};");
+        }
+
+        text.AppendLine("    }");
+        return text.ToString();
+    }
 
     /// <summary>
     /// Every event, as the classes the plugin hands to script and the switch that hooks

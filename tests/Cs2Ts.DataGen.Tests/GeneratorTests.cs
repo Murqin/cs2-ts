@@ -28,6 +28,10 @@ public sealed class GeneratorTests
         Assert.True(File.Exists(surfaces), $"{surfaces} is missing; run 'dotnet run --project tools/datagen'");
         Assert.Equal(Emit.CSharpFile(AllSurfaces), File.ReadAllText(surfaces));
 
+        var factory = Path.Combine(root, "src", "Cs2Ts.Plugin", "Generated", "EntitySurfaces.Factory.g.cs");
+        Assert.True(File.Exists(factory), $"{factory} is missing; run 'dotnet run --project tools/datagen'");
+        Assert.Equal(Emit.CSharpFactory(AllSurfaces), File.ReadAllText(factory));
+
         var events = Path.Combine(root, "src", "Cs2Ts.Plugin", "Generated", "GameEvents.g.cs");
         Assert.True(File.Exists(events), $"{events} is missing; run 'dotnet run --project tools/datagen'");
         Assert.Equal(Emit.CSharpEvents(GameEvents), File.ReadAllText(events));
@@ -39,6 +43,7 @@ public sealed class GeneratorTests
             declarations,
             Region.Replace(declarations, string.Join("\n", [
                 .. AllSurfaces.Select(Emit.TypeScript),
+                Emit.TypeScriptSchemaClasses(AllSurfaces),
                 Emit.TypeScriptEvents(GameEvents),
             ])));
     }
@@ -191,7 +196,7 @@ public sealed class GeneratorTests
         {
             // The base is another surface in the set, and it is the surface for this
             // class's own base class.
-            Assert.Contains(surface.BaseName, names);
+            Assert.Contains(surface.BaseName!, names);
             Assert.Equal(Surfaces.NameFor(surface.Entity.BaseType!), surface.BaseName);
         }
     }
@@ -232,6 +237,28 @@ public sealed class GeneratorTests
         var blocker = door.Fields.Single(field => field.ScriptName == "blocker");
         Assert.True(blocker.Shadows);
         Assert.Contains("public new EntityFacade? Blocker", Emit.CSharp(door), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheFactoryAndTheDeclarationMapCoverEverySurfaceUnderItsSchemaName()
+    {
+        var csharp = Emit.CSharpFactory(AllSurfaces);
+        var declarations = Emit.TypeScriptSchemaClasses(AllSurfaces);
+
+        foreach (var surface in AllSurfaces)
+        {
+            // Keyed by the schema class name — what a script types — not the surface name.
+            Assert.Contains($"[\"{surface.Entity.Name}\"] = ", csharp, StringComparison.Ordinal);
+            Assert.Contains($"\"{surface.Entity.Name}\": {surface.Name};", declarations, StringComparison.Ordinal);
+        }
+
+        // The root goes straight through; every other surface re-wraps the generic
+        // resolver as its own type before constructing.
+        Assert.Contains("[\"CBaseEntity\"] = (resolve, entities) => new EntityRaw(resolve, entities),",
+            csharp, StringComparison.Ordinal);
+        Assert.Contains(
+            "[\"CAK47\"] = (resolve, entities) => new CAK47Raw(() => new global::CounterStrikeSharp.API.Core.CAK47(resolve().Handle), entities),",
+            csharp, StringComparison.Ordinal);
     }
 
     [Fact]

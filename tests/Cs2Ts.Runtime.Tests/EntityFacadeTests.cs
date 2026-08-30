@@ -219,7 +219,7 @@ public sealed class EntityFacadeTests : IDisposable
         // GetType is ClearScript's and cannot be hidden; AllowReflection staying false is
         // what makes it harmless.
         Assert.Equal(
-            "GetType,designerName,index,input,isValid,kind,position,raw,remove,resolve,spawn,teleport,toString",
+            "GetType,as,designerName,index,input,isValid,kind,position,raw,remove,resolve,spawn,teleport,toString",
             _engine.Evaluate("Object.keys(player.pawn).sort().join(',')"));
 
         // And the wide surface is the fields and nothing else. Two things are being
