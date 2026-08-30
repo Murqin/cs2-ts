@@ -285,6 +285,34 @@ test("the entity sample compiles against the shipped tsconfig", () => {
     assert.equal(check(example), "");
 });
 
+test("the hud sample compiles against the shipped tsconfig", () => {
+    const example = readFileSync(join(fixtures, "hud.ts"), "utf8");
+    assert.equal(check(example), "");
+});
+
+test("sendCenter takes a string, like sendChat", () => {
+    assert.equal(check('on("tick", () => { players.all()[0]!.sendCenter("<b>go</b>"); });\n'), "");
+
+    // A number where a string belongs is the shape of bug the declarations refuse.
+    assert.match(check('on("tick", () => { players.all()[0]!.sendCenter(42); });\n'), /TS2345|TS2769/);
+
+    // It needs its one argument, as sendChat does.
+    assert.match(check('on("tick", () => { players.all()[0]!.sendCenter(); });\n'), /TS2554/);
+});
+
+test("hud.show and hud.clear take a player, and show takes text with it", () => {
+    assert.equal(
+        check('command("!x", (p: Player | null) => { if (p) { hud.show(p, "<b>x</b>"); hud.clear(p); } });\n'),
+        "");
+
+    // show without text, and clear with text it does not take.
+    assert.match(check('command("!x", (p: Player | null) => { if (p) { hud.show(p); } });\n'), /TS2554/);
+    assert.match(check('command("!x", (p: Player | null) => { if (p) { hud.clear(p, "x"); } });\n'), /TS2554/);
+
+    // A player who might be null is the case a script has to deal with first.
+    assert.match(check('command("!x", (p: Player | null) => { hud.show(p, "x"); });\n'), /TS2345|TS2769/);
+});
+
 test("a slot may be empty, and the compiler says so", () => {
     // byIndex and first are lookups that can fail. Reaching through one without saying
     // what happens then is the mistake the null exists to catch.

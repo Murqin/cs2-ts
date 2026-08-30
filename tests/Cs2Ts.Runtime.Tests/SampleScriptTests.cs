@@ -87,6 +87,23 @@ public sealed class SampleScriptTests : IDisposable
         public EntityFacade Create(string designerName) => world.Make(designerName);
     }
 
+    /// <summary>
+    /// The <c>hud</c> global, faked. It is the real <see cref="CenterHudTable"/> behind a
+    /// shape generic over the fake player types — the binding's own HudApi is the same
+    /// two lines over CounterStrikeSharp's.
+    /// </summary>
+    [DefaultScriptUsage(ScriptAccess.None)]
+    public sealed class FakeHud(ScriptPlugin plugin, CenterHudTable table)
+    {
+        [ScriptMember("show")]
+        public void Show(PlayerFacade<FakeController, FakePawn> player, string text) =>
+            table.Show(plugin, player.Id, text);
+
+        [ScriptMember("clear")]
+        public void Clear(PlayerFacade<FakeController, FakePawn> player) =>
+            table.Clear(plugin, player.Id);
+    }
+
     private readonly FakeWorld _world = new();
     private readonly FakeEntityWorld _entities = new();
     private readonly PlayerFacadeTable<FakeController, FakePawn> _table;
@@ -109,6 +126,7 @@ public sealed class SampleScriptTests : IDisposable
             engine.AddHostObject("server", _server);
             engine.AddHostObject("players", new FakePlayers(_table, _world));
             engine.AddHostObject("entities", new FakeEntities(_entities));
+            engine.AddHostObject("hud", new FakeHud(plugin, _host!.CenterHud));
         };
     }
 
@@ -144,12 +162,34 @@ public sealed class SampleScriptTests : IDisposable
         return _host.Load("entities", "entities.ts", File.ReadAllText(path));
     }
 
+    private PluginLoadResult LoadHudExample()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "hud.ts");
+        return _host.Load("hud", "hud.ts", File.ReadAllText(path));
+    }
+
     /// <summary>Moves the clock and runs the tick, the way the game loop would.</summary>
     private int Advance(double seconds)
     {
         _now += seconds;
         return _host.AdvanceTimers();
     }
+
+    /// <summary>
+    /// Runs the centre-message re-send the way the game loop would, delivering each one
+    /// into the player's own <see cref="FakeController.Center"/> list.
+    /// </summary>
+    private int RefreshHud() =>
+        _host.RefreshCenterHud((id, text) =>
+        {
+            if (_world.Resolve(id) is not { } controller)
+            {
+                return false;
+            }
+
+            controller.Center.Add(text);
+            return true;
+        });
 
     [Fact]
     public void TheSampleScriptLoadsAndHandlesEvents()
@@ -353,6 +393,10 @@ public sealed class SampleScriptTests : IDisposable
         Assert.Equal(1, _host.DispatchCommand("whereami", _table.For(7), []).Taken);
         Assert.Equal(["1, 2, 3 on de_dust2"], controller.Chat);
 
+        // The same command also flashes a line in the centre of the screen, straight
+        // through to the game rather than kept — sendCenter is sendChat's counterpart.
+        Assert.Equal(["<font color='#8cf'>de_dust2</font>"], controller.Center);
+
         // From the server console there is no player, and the example says so rather
         // than throwing — which is the case the null in the signature exists for.
         Assert.Equal(1, _host.DispatchCommand("whereami", null, ["x"]).Taken);
@@ -485,6 +529,56 @@ public sealed class SampleScriptTests : IDisposable
         Assert.Equal(1, _host.Dispatch("round_start", new FakeRoundStartEvent(115)));
         Assert.Contains("jetpacks refuelled", _console.Lines);
         Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// The centre-text example, run rather than merely compiled: player_spawn flashes a
+    /// line straight to the game, and !hud keeps one that a tick re-sends until it is
+    /// cleared.
+    /// </summary>
+    [Fact]
+    public void TheHudExampleFlashesOneLineAndKeepsAnother()
+    {
+        Assert.True(LoadHudExample().Succeeded);
+        var controller = _world.Add(7, "murqin");
+
+        Assert.Equal(1, _host.Dispatch("player_spawn", new FakePlayerEvent(_table.For(7))));
+        Assert.Equal(["<font color='#8cf'>good luck, murqin</font>"], controller.Center);
+
+        // A kept line does nothing until a tick re-sends it, and then keeps doing so.
+        controller.Center.Clear();
+        Assert.Equal(1, _host.DispatchCommand("hud", _table.For(7), []).Taken);
+        Assert.Equal(1, _host.CenterHud.Count);
+        Assert.Empty(controller.Center);
+
+        RefreshHud();
+        Assert.Equal(["<font color='#f55'>BOMB DOWN</font>"], controller.Center);
+
+        // Cleared on command, and it stays cleared.
+        Assert.Equal(1, _host.DispatchCommand("clearhud", _table.For(7), []).Taken);
+        Assert.Equal(0, _host.CenterHud.Count);
+
+        controller.Center.Clear();
+        RefreshHud();
+        Assert.Empty(controller.Center);
+        Assert.Empty(_errors);
+    }
+
+    /// <summary>
+    /// Reloading the script takes its kept centre messages with it, the same promise the
+    /// timer example makes about its interval.
+    /// </summary>
+    [Fact]
+    public void ReloadingTheHudExampleClearsItsKeptMessages()
+    {
+        Assert.True(LoadHudExample().Succeeded);
+        _world.Add(7, "murqin");
+
+        Assert.Equal(1, _host.DispatchCommand("hud", _table.For(7), []).Taken);
+        Assert.Equal(1, _host.CenterHud.Count);
+
+        Assert.True(LoadHudExample().Succeeded);
+        Assert.Equal(0, _host.CenterHud.Count);
     }
 
     [Fact]

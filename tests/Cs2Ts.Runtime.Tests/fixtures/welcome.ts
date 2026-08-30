@@ -101,4 +101,8 @@ command("!whereami", (player: Player | null, args: string[]): void => {
 
     const { x, y, z } = player.position;
     player.sendChat(`${x.toFixed(0)}, ${y.toFixed(0)}, ${z.toFixed(0)} on ${server.mapName}`);
+
+    // The same line in the centre of the screen. It is HTML and it fades on its own
+    // after a few seconds; hud.show is the way to keep one up.
+    player.sendCenter(`<font color='#8cf'>${server.mapName}</font>`);
 });

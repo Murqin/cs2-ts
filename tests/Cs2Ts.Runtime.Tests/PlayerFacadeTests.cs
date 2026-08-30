@@ -131,6 +131,7 @@ public sealed class PlayerFacadeTests : IDisposable
         Assert.Throws<DeadEntityException>(() => player.Health);
         Assert.Throws<DeadEntityException>(() => player.Health = 1);
         Assert.Throws<DeadEntityException>(() => player.SendChat("hi"));
+        Assert.Throws<DeadEntityException>(() => player.SendCenter("hi"));
     }
 
     [Fact]
@@ -265,6 +266,18 @@ public sealed class PlayerFacadeTests : IDisposable
         var player = _players.For(7);
 
         Assert.Throws<ArgumentNullException>(() => player.SendChat(null!));
+    }
+
+    [Fact]
+    public void SendCenterReachesTheGameAndRefusesNothing()
+    {
+        var controller = _world.Add(7);
+        var player = _players.For(7);
+
+        player.SendCenter("<font color='#f55'>go</font>");
+        Assert.Equal(["<font color='#f55'>go</font>"], controller.Center);
+
+        Assert.Throws<ArgumentNullException>(() => player.SendCenter(null!));
     }
 
     // ---- what this looks like from script ----
@@ -442,7 +455,7 @@ public sealed class PlayerFacadeTests : IDisposable
         // ClearScript's protocol. What keeps it harmless is AllowReflection staying
         // false, which EntityHandleTests pins directly.
         Assert.Equal(
-            "GetType,armor,controller,health,id,isAlive,isBot,isValid,kind,money,name,pawn,position,resolve,sendChat,steamId,team,teleport,toString",
+            "GetType,armor,controller,health,id,isAlive,isBot,isValid,kind,money,name,pawn,position,resolve,sendCenter,sendChat,steamId,team,teleport,toString",
             _engine.Evaluate("Object.keys(player).sort().join(',')"));
     }
 

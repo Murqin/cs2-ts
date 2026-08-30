@@ -114,6 +114,55 @@ public sealed class BindingTests(ServerFixture fixture)
             line => line.Contains("this tick handler always throws", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// A kept centre message is a real re-send loop on the game thread: the runtime
+    /// sends it again every tick until it is cleared. What the client shows cannot be
+    /// read back from here, so the check is on the count the status command reports —
+    /// and on the whole path running without a boundary error, which a fake cannot prove
+    /// because PrintToCenterHtml is CounterStrikeSharp's.
+    /// </summary>
+    [Fact]
+    public async Task AKeptCentreMessageIsCountedAndThenCleared()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        try
+        {
+            server.ClearTranscript();
+            server.Command("css_hcenter");
+            await server.WaitForAsync(
+                l => l.Contains("HARNESS center shown", StringComparison.Ordinal), Answer);
+
+            server.ClearTranscript();
+            server.Command("cs2ts_status");
+            var shown = await server.WaitForAsync(
+                l => l.Contains("[CS2-TS] centre messages:", StringComparison.Ordinal), Answer);
+            Assert.Contains("centre messages: 1", shown, StringComparison.Ordinal);
+
+            server.ClearTranscript();
+            server.Command("css_hcenterclear");
+            await server.WaitForAsync(
+                l => l.Contains("HARNESS center cleared", StringComparison.Ordinal), Answer);
+
+            server.ClearTranscript();
+            server.Command("cs2ts_status");
+            var cleared = await server.WaitForAsync(
+                l => l.Contains("[CS2-TS] centre messages:", StringComparison.Ordinal), Answer);
+            Assert.Contains("centre messages: 0", cleared, StringComparison.Ordinal);
+
+            // The re-send ran every tick in between and nothing was reported against the
+            // script — a throw in ResendCenterMessage would be here.
+            Assert.DoesNotContain(server.Transcript,
+                line => line.Contains("[CS2-TS]", StringComparison.Ordinal)
+                    && line.Contains("hcenter", StringComparison.Ordinal)
+                    && line.Contains("Error", StringComparison.Ordinal));
+        }
+        finally
+        {
+            server.Command("css_hcenterclear");
+        }
+    }
+
     private static async Task<int> TickCountAsync(DedicatedServer server)
     {
         server.ClearTranscript();

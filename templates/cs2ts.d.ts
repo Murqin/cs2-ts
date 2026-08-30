@@ -11700,6 +11700,13 @@ declare global {
         sendChat(message: string): void;
 
         /**
+         * Writes one line into the centre of this player's screen, and nobody else's.
+         * HTML is allowed — colour, `<br>`, size. It fades after a few seconds on its
+         * own; `hud.show` is the way to keep one there.
+         */
+        sendCenter(message: string): void;
+
+        /**
          * Moves the player, keeping their view angles and velocity. Throws unless the
          * player is in the world.
          */
@@ -11885,6 +11892,26 @@ declare global {
 
         /** Everyone currently connected. */
         all(): Player[];
+    };
+
+    /**
+     * Centre-screen text that stays.
+     *
+     * `player.sendCenter` sends one line the game fades after a few seconds. This keeps
+     * one there: the runtime sends it again before each fade until `hud.clear` is
+     * called, the player leaves, or this script is unloaded — a reload takes the
+     * previous version's message with it, the way it does a timer.
+     *
+     * There is one centre slot per player. If two scripts show a message to the same
+     * player the last write holds it, and `hud.clear` only clears what this script put
+     * there.
+     */
+    const hud: {
+        /** Shows a line of centre-screen HTML and keeps it up. */
+        show(player: Player, text: string): void;
+
+        /** Clears this script's centre message for a player, if it is the one showing. */
+        clear(player: Player): void;
     };
 
     /**

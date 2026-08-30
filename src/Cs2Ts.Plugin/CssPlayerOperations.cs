@@ -86,6 +86,14 @@ public sealed class CssPlayerOperations(CssEntities entities)
         controller.PrintToChat(message);
 
     /// <inheritdoc />
+    public void SendCenter(CCSPlayerController controller, string message) =>
+        // The HTML overload, not PrintToCenter: the plain one is the old radio-message
+        // style with no formatting, and one curated line of centre text is worth more
+        // able to colour and break itself. It fades on its own after a few seconds —
+        // hud.show is what keeps one up, by sending it again before it does.
+        controller.PrintToCenterHtml(message);
+
+    /// <inheritdoc />
     public bool IsAlive(CCSPlayerPawn pawn) => pawn.LifeState == (byte)LifeState_t.LIFE_ALIVE;
 
     /// <inheritdoc />
