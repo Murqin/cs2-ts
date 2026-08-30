@@ -92,6 +92,9 @@ public sealed class ScriptHost : IDisposable
     /// <summary>Kept centre-screen messages, one per player, owned by the plugin that set each.</summary>
     public CenterHudTable CenterHud { get; } = new();
 
+    /// <summary>The menu each player has open, owned by the plugin that opened it.</summary>
+    public MenuTable Menus { get; } = new();
+
     /// <summary>The watchdog, for its interruption count.</summary>
     public ScriptWatchdog Watchdog => _watchdog;
 
@@ -271,6 +274,7 @@ public sealed class ScriptHost : IDisposable
         Frames.Discard(plugin);
         Timers.Discard(plugin);
         CenterHud.Discard(plugin);
+        Menus.Discard(plugin);
         plugin.Dispose();
         return true;
     }
@@ -407,6 +411,13 @@ public sealed class ScriptHost : IDisposable
     /// </param>
     public int RefreshCenterHud(Func<long, string, bool> send) => CenterHud.Tick(_clock(), send);
 
+    /// <summary>
+    /// Re-sends the centre menus that have come due. Call once per tick. Chat menus are
+    /// not touched — the binding prints those when they open and when a page turns.
+    /// </summary>
+    /// <param name="render">Draws one menu for one player; see <see cref="MenuTable.Tick"/>.</param>
+    public int RefreshMenus(Func<long, string, bool> render) => Menus.Tick(_clock(), render);
+
     /// <summary>Unloads every plugin, then tears down the runtime they shared.</summary>
     public void Dispose()
     {
@@ -428,6 +439,7 @@ public sealed class ScriptHost : IDisposable
         {
             Timers.Discard(plugin);
             CenterHud.Discard(plugin);
+            Menus.Discard(plugin);
             plugin.Dispose();
         }
 

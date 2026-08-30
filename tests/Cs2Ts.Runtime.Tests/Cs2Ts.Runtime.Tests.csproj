@@ -33,6 +33,7 @@
     <None Include="fixtures/timers.ts" Link="timers.ts" CopyToOutputDirectory="PreserveNewest" />
     <None Include="fixtures/entities.ts" Link="entities.ts" CopyToOutputDirectory="PreserveNewest" />
     <None Include="fixtures/hud.ts" Link="hud.ts" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="fixtures/menu.ts" Link="menu.ts" CopyToOutputDirectory="PreserveNewest" />
 
     <!-- A plugin that is a folder, copied as one: the suite loads it through discovery,
          so the folder has to be a folder on disk rather than two flattened files. -->

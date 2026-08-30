@@ -300,6 +300,48 @@ test("sendCenter takes a string, like sendChat", () => {
     assert.match(check('on("tick", () => { players.all()[0]!.sendCenter(); });\n'), /TS2554/);
 });
 
+test("the menu sample compiles against the shipped tsconfig", () => {
+    const example = readFileSync(join(fixtures, "menu.ts"), "utf8");
+    assert.equal(check(example), "");
+});
+
+test("menu.open needs a title and items, and the item shape is checked", () => {
+    assert.equal(
+        check('command("!m", (p: Player | null) => { if (p) menu.open(p, { title: "T", items: [{ text: "a" }] }); });\n'),
+        "");
+
+    // A missing title, and an item without text.
+    assert.match(
+        check('command("!m", (p: Player | null) => { if (p) menu.open(p, { items: [{ text: "a" }] }); });\n'),
+        /TS2345|TS2769|TS2739|TS2741/);
+    assert.match(
+        check('command("!m", (p: Player | null) => { if (p) menu.open(p, { title: "T", items: [{}] }); });\n'),
+        /TS2345|TS2769|TS2739|TS2741/);
+
+    // style is a fixed set.
+    assert.match(
+        check('command("!m", (p: Player | null) => { if (p) menu.open(p, { title: "T", style: "big", items: [{ text: "a" }] }); });\n'),
+        /TS2322|TS2345|TS2769/);
+});
+
+test("a menu item's onSelect gets a Player, and the handle exposes isOpen and close", () => {
+    assert.equal(
+        check([
+            'command("!m", (p: Player | null): void => {',
+            "    if (p === null) return;",
+            '    const h = menu.open(p, { title: "T", items: [{ text: "a", onSelect: (who) => who.sendChat(who.name) }] });',
+            "    if (h.isOpen) h.close();",
+            "});",
+            "",
+        ].join("\n")),
+        "");
+
+    // onSelect's argument is a Player, not something to be narrowed.
+    assert.match(
+        check('command("!m", (p: Player | null) => { if (p) menu.open(p, { title: "T", items: [{ text: "a", onSelect: (who) => who.resolve().Health }] }); });\n'),
+        /TS2339|TS2571|TS18046/);
+});
+
 test("hud.show and hud.clear take a player, and show takes text with it", () => {
     assert.equal(
         check('command("!x", (p: Player | null) => { if (p) { hud.show(p, "<b>x</b>"); hud.clear(p); } });\n'),

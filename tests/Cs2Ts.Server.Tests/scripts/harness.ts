@@ -359,6 +359,41 @@ command("!hcenterclear", () => {
     console.log("HARNESS center cleared");
 });
 
+// A menu. Selection and navigation need a client typing or pressing keys, which RCON
+// cannot do, so the check is the same as for kept centre text: the open-menu count, the
+// re-send running every tick, and nothing thrown. A chat menu opened from the console
+// has no player to print to, so this one is centre style, aimed at an alive bot.
+let harnessMenu: OpenMenu | null = null;
+
+command("!hmenu", () => {
+    const target = alivePlayer();
+    if (target === undefined) {
+        console.log("HARNESS menu nobody-alive");
+        return;
+    }
+
+    harnessMenu = menu.open(target, {
+        title: "harness",
+        style: "center",
+        items: [
+            { text: "one", onSelect: (p) => p.sendChat("picked one") },
+            { text: "two", disabled: true },
+            { text: "three", onSelect: (p) => p.sendChat("picked three") },
+        ],
+    });
+    console.log(`HARNESS menu opened isOpen=${harnessMenu.isOpen}`);
+});
+
+command("!hmenuclose", () => {
+    if (harnessMenu === null) {
+        console.log("HARNESS menu none");
+        return;
+    }
+
+    harnessMenu.close();
+    console.log(`HARNESS menu closed isOpen=${harnessMenu.isOpen}`);
+});
+
 // Timers only advance on a tick, so this also proves the server is running rather than
 // hibernating — a distinction that has looked like a broken feature before.
 command("!htimer", () => {
