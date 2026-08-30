@@ -13,6 +13,12 @@ namespace Cs2Ts.DataGen;
 /// <param name="ReadFormat">How to turn the CounterStrikeSharp read into that type; {0} is the read.</param>
 /// <param name="WriteFormat">How to turn <c>value</c> back, or null for a field this surface will not write.</param>
 /// <param name="Note">A sentence for the declarations, when the field needs one.</param>
+/// <param name="Shadows">
+/// Whether a surface higher in the chain already carries a field under this script name.
+/// CounterStrikeSharp redeclares a handful of properties on a derived class to bind them
+/// to that class's own schema field, and the generated property then needs <c>new</c> so
+/// the compiler knows the shadow is meant.
+/// </param>
 internal sealed record SchemaField(
     string ScriptName,
     string ClrName,
@@ -22,55 +28,146 @@ internal sealed record SchemaField(
     string TypeScriptType,
     string ReadFormat,
     string? WriteFormat,
-    string? Note);
+    string? Note,
+    bool Shadows = false);
 
-/// <summary>An entity's whole surface, plus what was left out of it.</summary>
+/// <summary>An entity's own surface, plus what was left out of it.</summary>
+/// <param name="Name">The generated type's name.</param>
+/// <param name="Entity">The CounterStrikeSharp class it is read from.</param>
+/// <param name="BaseName">
+/// The generated type this one derives from, or null for the root. Every entity class in
+/// CounterStrikeSharp derives from another one down to <c>CBaseEntity</c>, so the surfaces
+/// form the same tree — a surface carries only the fields its class declares, and inherits
+/// the rest, which is what keeps the whole set to a few thousand members instead of the
+/// forty-five thousand a flattened surface per class would be.
+/// </param>
 internal sealed record SchemaSurface(
     string Name,
     Type Entity,
+    string? BaseName,
     IReadOnlyList<SchemaField> Fields,
-    IReadOnlyDictionary<string, int> Skipped);
+    IReadOnlyDictionary<string, int> Skipped)
+{
+    /// <summary>
+    /// Whether the TypeScript interface has to be written flat rather than with
+    /// <c>extends</c>. A handful of entity classes reuse a base class's friendly name for
+    /// a field of a different shape — <c>m_target</c> is a string on <c>CBaseEntity</c>
+    /// and <c>m_hTarget</c> a handle on <c>CInstancedSceneEntity</c>, and both camelCase
+    /// to <c>target</c>. TypeScript rejects a subinterface whose member is not assignable
+    /// to the base's, so those interfaces list every field instead. The C# class stays in
+    /// the tree, with <c>new</c> on the shadowing member.
+    /// </summary>
+    public bool Flat { get; init; }
+
+    /// <summary>
+    /// Every field including inherited ones, for a <see cref="Flat"/> interface. Empty
+    /// otherwise — a normal interface lists only its own and inherits the rest.
+    /// </summary>
+    public IReadOnlyList<SchemaField> AllFields { get; init; } = [];
+}
 
 internal static class Surfaces
 {
     /// <summary>
-    /// The entities the generator writes a surface for.
-    ///
-    /// One list, here rather than in the tool, because the staleness test has to
-    /// generate exactly what the tool generates. Two lists would agree until somebody
-    /// added a surface to one of them, and the test whose whole job is to notice drift
-    /// would be the thing that drifted.
+    /// The three surfaces that keep a hand-picked name rather than the class's own. The
+    /// player facade and the entity floor were written against these before the generator
+    /// covered every class, and the names read better on those paths than
+    /// <c>CCSPlayerPawnRaw</c> would.
     /// </summary>
-    public static IReadOnlyList<SchemaSurface> All() =>
-    [
-        Read("PawnRaw", typeof(CCSPlayerPawn)),
-        Read("ControllerRaw", typeof(CCSPlayerController)),
+    private static readonly Dictionary<string, string> Named = new(StringComparer.Ordinal)
+    {
+        ["CBaseEntity"] = "EntityRaw",
+        ["CCSPlayerPawn"] = "PawnRaw",
+        ["CCSPlayerController"] = "ControllerRaw",
+    };
 
-        // The floor under every entity in the world: the fields a weapon, a door and a
-        // prop all have rather than the ones any of them has of its own. It is what
-        // makes one surface serve all of them until the generator is opened to the
-        // other five hundred classes.
-        Read("EntityRaw", typeof(CBaseEntity)),
-    ];
+    /// <summary>The generated surface name for an entity class.</summary>
+    public static string NameFor(Type entity) => Named.GetValueOrDefault(entity.Name, $"{entity.Name}Raw");
 
     /// <summary>
-    /// Reads an entity's fields out of CounterStrikeSharp's own classes.
+    /// Every entity class CounterStrikeSharp binds, as a surface that carries its own
+    /// fields and names the surface it inherits the rest from.
+    ///
+    /// One list, built from the assembly rather than written out, because the staleness
+    /// test has to generate exactly what the tool generates: a hand-kept list would agree
+    /// with the tool until somebody added a class to one of them, and the test whose whole
+    /// job is to notice drift would be the thing that drifted.
+    ///
+    /// Ordered base-before-derived so the generated file reads down the tree, and by name
+    /// within a depth so the order is stable across runs.
+    /// </summary>
+    public static IReadOnlyList<SchemaSurface> All()
+    {
+        var entities = typeof(CBaseEntity).Assembly.GetTypes()
+            .Where(type => type.IsClass && IsEntity(type))
+            .OrderBy(Depth)
+            .ThenBy(type => type.Name, StringComparer.Ordinal)
+            .ToList();
+
+        var surfaces = new List<SchemaSurface>(entities.Count);
+
+        // The effective field under each script name a surface carries, its own and
+        // everything above it, own winning. A derived surface reads this to tell when one
+        // of its fields shadows an inherited one, and whether the shadow changes the type.
+        var carried = new Dictionary<string, Dictionary<string, SchemaField>>(StringComparer.Ordinal);
+
+        foreach (var entity in entities)
+        {
+            var baseName = entity == typeof(CBaseEntity) ? null : NameFor(entity.BaseType!);
+            var inherited = baseName is null
+                ? new Dictionary<string, SchemaField>(StringComparer.Ordinal)
+                : carried[baseName];
+
+            var surface = Read(entity, baseName, inherited.Keys.ToHashSet(StringComparer.Ordinal));
+
+            // An own field that shadows an inherited one with a different TypeScript type
+            // is what forces a flat interface.
+            var flat = surface.Fields.Any(field =>
+                inherited.TryGetValue(field.ScriptName, out var parent) &&
+                parent.TypeScriptType != field.TypeScriptType);
+
+            var merged = new Dictionary<string, SchemaField>(inherited, StringComparer.Ordinal);
+            foreach (var field in surface.Fields)
+            {
+                merged[field.ScriptName] = field;
+            }
+
+            carried[surface.Name] = merged;
+
+            surfaces.Add(surface with
+            {
+                Flat = flat,
+                AllFields = flat
+                    ? merged.Values.OrderBy(field => field.ScriptName, StringComparer.Ordinal).ToList()
+                    : [],
+            });
+        }
+
+        return surfaces;
+    }
+
+    /// <summary>
+    /// Reads one class's fields out of CounterStrikeSharp's own classes.
     ///
     /// The names are not ours and are not guessed. Every schema field CounterStrikeSharp
     /// binds carries a <c>SchemaMemberAttribute</c> naming the class that declares it and
     /// the field within it — the same pair a write has to hand back to the engine, and
     /// the pair that is silently catastrophic to get wrong. Taking both from the
     /// attribute means a generated member cannot disagree with the property it reads.
+    ///
+    /// Declared members only, except for the root: nothing above <c>CBaseEntity</c> is a
+    /// class the tree names, so <c>CEntityInstance</c>'s schema fields are folded into the
+    /// root surface rather than left with nowhere to sit.
     /// </summary>
-    public static SchemaSurface Read(string name, Type entity)
+    public static SchemaSurface Read(Type entity, string? baseName, IReadOnlySet<string> inherited)
     {
         var fields = new List<SchemaField>();
         var byScriptName = new Dictionary<string, string>(StringComparer.Ordinal);
         var skipped = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        // Derived first. A property redeclared further down the chain is the one that
-        // wins, which is the same rule C# itself applies to the call we generate.
-        foreach (var type in Chain(entity))
+        var types = baseName is null ? Chain(entity) : [entity];
+
+        foreach (var type in types)
         {
             foreach (var property in type.GetProperties(
                          BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
@@ -83,8 +180,10 @@ internal static class Surfaces
                 var scriptName = Camel(property.Name);
                 if (byScriptName.TryGetValue(scriptName, out var owner))
                 {
-                    // Not tolerated rather than resolved: two fields under one name means
-                    // an author reaches one of them and cannot say which.
+                    // Not tolerated rather than resolved: two fields under one name on one
+                    // surface means an author reaches one of them and cannot say which.
+                    // A name shadowed from a base is fine — C# and the schema both let the
+                    // derived one win — and is handled below.
                     throw new InvalidOperationException(
                         $"{entity.Name}: '{scriptName}' would be both {owner} and {type.Name}.{property.Name}");
                 }
@@ -103,15 +202,46 @@ internal static class Surfaces
                     ClrName = property.Name,
                     ClassName = names.Class,
                     FieldName = names.Field,
+                    Shadows = inherited.Contains(scriptName),
                 });
             }
         }
 
         return new SchemaSurface(
-            name,
+            NameFor(entity),
             entity,
+            baseName,
             fields.OrderBy(field => field.ScriptName, StringComparer.Ordinal).ToList(),
             skipped);
+    }
+
+    /// <summary>Whether a class is one of the game's entities: it descends from CBaseEntity.</summary>
+    private static bool IsEntity(Type type)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            if (current == typeof(CBaseEntity))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// How far below <c>CBaseEntity</c> a class sits, for ordering the file. The root is
+    /// zero; a class whose base is <c>CBaseEntity</c> is one.
+    /// </summary>
+    private static int Depth(Type type)
+    {
+        var depth = 0;
+        for (var current = type; current is not null && current != typeof(CBaseEntity); current = current.BaseType)
+        {
+            depth++;
+        }
+
+        return depth;
     }
 
     /// <summary>
@@ -173,7 +303,7 @@ internal static class Surfaces
             {
                 CSharpType = "EntityFacade?",
                 TypeScriptType = "Entity<EntityRaw> | null",
-                ReadFormat = "entities.ForHandle({0}.Raw)",
+                ReadFormat = "_entities.ForHandle({0}.Raw)",
                 WriteFormat = null,
                 Note = "Another entity, or null when it points at nothing. Read-only.",
             };

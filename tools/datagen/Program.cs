@@ -15,10 +15,7 @@ var events = Events.Read(typeof(CCSPlayerPawn).Assembly);
 
 var files = new Dictionary<string, string>(StringComparer.Ordinal);
 
-foreach (var surface in surfaces)
-{
-    files[Path.Combine("src", "Cs2Ts.Plugin", "Generated", $"{surface.Name}.g.cs")] = Emit.CSharp(surface);
-}
+files[Path.Combine("src", "Cs2Ts.Plugin", "Generated", "EntitySurfaces.g.cs")] = Emit.CSharpFile(surfaces);
 
 files[Path.Combine("src", "Cs2Ts.Plugin", "Generated", "GameEvents.g.cs")] = Emit.CSharpEvents(events);
 
@@ -48,14 +45,14 @@ foreach (var (relative, content) in files)
     }
 }
 
-foreach (var surface in surfaces)
-{
-    var left = surface.Skipped.OrderByDescending(kind => kind.Value)
-        .Select(kind => $"{kind.Value} {kind.Key}");
+var carried = surfaces.Sum(surface => surface.Fields.Count);
+var skippedByKind = surfaces.SelectMany(surface => surface.Skipped)
+    .GroupBy(kind => kind.Key, StringComparer.Ordinal)
+    .OrderByDescending(group => group.Sum(entry => entry.Value))
+    .Select(group => $"{group.Sum(entry => entry.Value)} {group.Key}");
 
-    Console.WriteLine(
-        $"{surface.Name}: {surface.Fields.Count} fields, not yet carried: {string.Join(", ", left)}");
-}
+Console.WriteLine(
+    $"entities: {surfaces.Count} surfaces, {carried} fields carried, not yet carried: {string.Join(", ", skippedByKind)}");
 
 var eventFields = events.Sum(surface => surface.Fields.Count);
 var eventSkipped = events.SelectMany(surface => surface.Skipped)
