@@ -108,6 +108,28 @@ public sealed class EntityFacade
     public ScriptSurface Raw => _access.Raw;
 
     /// <summary>
+    /// The wide surface for a named schema class: <c>entity.as("CAK47").clip1</c> reaches
+    /// the weapon's own fields, where <see cref="Raw"/> is the floor every entity shares.
+    ///
+    /// An assertion, not a cast that is checked. The caller is saying the entity is of
+    /// that class, and that is checked exactly as far as <c>unsafe</c> checks its class
+    /// argument: the name has to be one the game binds, and a name that fits an entity of
+    /// a different class reads that class's bytes at the same offsets rather than
+    /// throwing. <see cref="Raw"/> stays the safe default; this is the typed way past it,
+    /// and it replaces reaching a field through <c>unsafe</c> by name.
+    ///
+    /// Nothing is resolved here, so this does not throw for a dead entity — a read on the
+    /// surface it returns does. A name the game does not bind throws instead.
+    ///
+    /// <see cref="ScriptMemberFlags.ExposeRuntimeType"/> for the reason given on
+    /// <see cref="Raw"/>: the declared type is <see cref="ScriptSurface"/>, and binding
+    /// against it would hand script an object with none of the fields on it.
+    /// </summary>
+    /// <exception cref="ArgumentException">No schema class of that name is bound.</exception>
+    [ScriptMember("as", ScriptMemberFlags.ExposeRuntimeType)]
+    public ScriptSurface As(string schemaClass) => _access.As(schemaClass);
+
+    /// <summary>
     /// Where the entity is, copied out at the moment of the read: changing what comes
     /// back moves nothing.
     ///

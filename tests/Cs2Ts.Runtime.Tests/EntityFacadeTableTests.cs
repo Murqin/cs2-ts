@@ -193,7 +193,7 @@ public sealed class EntityFacadeTableTests : IDisposable
         // GetType is ClearScript's and cannot be hidden; AllowReflection staying false is
         // what makes it harmless. Everything else here is deliberate.
         Assert.Equal(
-            "GetType,designerName,index,input,isValid,kind,position,raw,remove,resolve,spawn,teleport,toString",
+            "GetType,as,designerName,index,input,isValid,kind,position,raw,remove,resolve,spawn,teleport,toString",
             _engine.Evaluate("Object.keys(entity).sort().join(',')"));
     }
 
@@ -214,6 +214,42 @@ public sealed class EntityFacadeTableTests : IDisposable
         Assert.Equal(2, entity.TeamNum);
         Assert.Equal(new List<string> { "teleport=10,20,30", "input:TurnOn=" }, entity.Verbs);
         Assert.Equal(10, _engine.Evaluate("entity.position.x"));
+    }
+
+    [Fact]
+    public void AsGivesTheSurfaceForANamedSchemaClass()
+    {
+        var entity = _world.Spawn(42);
+        var facade = _world.For(entity)!;
+
+        var raw = facade.As("FakeEntity");
+        Assert.IsType<FakeEntityRaw>(raw);
+
+        // It reads through the same resolver the facade holds — a real live surface, not
+        // a snapshot.
+        entity.TeamNum = 7;
+        Assert.Equal(7, ((FakeEntityRaw)raw).TeamNum);
+    }
+
+    [Fact]
+    public void AsRefusesANameTheGameDoesNotBind()
+    {
+        var facade = _world.For(_world.Spawn(42))!;
+
+        // The one check it makes: the same one unsafe makes on its class argument.
+        Assert.Throws<ArgumentException>(() => facade.As("CNotAThing"));
+    }
+
+    [Fact]
+    public void AsResolvesNothingUntilTheSurfaceIsRead()
+    {
+        var facade = _world.For(_world.Spawn(42))!;
+        var raw = facade.As("FakeEntity");
+
+        _world.Destroy(42);
+
+        // The call did not touch the entity, so it did not throw. The read does.
+        Assert.Throws<DeadEntityException>(() => ((FakeEntityRaw)raw).TeamNum);
     }
 
     [Fact]

@@ -342,6 +342,36 @@ public sealed class BindingTests(ServerFixture fixture)
     }
 
     [Fact]
+    public async Task AsReachesAClassSOwnFieldsAndRefusesANameTheGameDoesNotBind()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        server.Command("css_hentas");
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS entas ", StringComparison.Ordinal), Answer);
+
+        var fields = line[(line.IndexOf("entas ", StringComparison.Ordinal) + 6)..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(field => field.Split('=', 2))
+            .ToDictionary(field => field[0], field => field[1], StringComparer.Ordinal);
+
+        // armorValue is CCSPlayerPawn's own — raw, the CBaseEntity floor, does not have
+        // it. as("CCSPlayerPawn") does, and it comes back a number rather than the empty
+        // object a schema field is through resolve().
+        Assert.Equal("number", fields["armor"]);
+
+        // health is CBaseEntity's, so as("CCSPlayerPawn") reaches it by inheriting and
+        // as("CBaseEntity") directly. Both, and the curated facade, read one field.
+        Assert.Equal(fields["facade"], fields["health"]);
+        Assert.Equal(fields["facade"], fields["baseHealth"]);
+
+        // The one check as makes: the same one unsafe makes on its class argument. A
+        // name the game does not bind has no factory, so it is refused here rather than
+        // reading another class's bytes at the same offsets.
+        Assert.Equal("yes", fields["refused"]);
+    }
+
+    [Fact]
     public async Task AnEntityCanBeMadeAndPutSomewhere()
     {
         var server = fixture.Require();

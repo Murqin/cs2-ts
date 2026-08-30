@@ -280,9 +280,14 @@ public sealed class FakePlayerDeathEvent(
 public sealed class FakeEntityAccess(
     ScriptSurface raw,
     Func<IFakeEntity> resolve,
-    Action<IFakeEntity>? remove = null) : IEntityAccess
+    Action<IFakeEntity>? remove = null,
+    Func<string, ScriptSurface>? asSurface = null) : IEntityAccess
 {
     public ScriptSurface Raw { get; } = raw;
+
+    public ScriptSurface As(string schemaClass) =>
+        asSurface?.Invoke(schemaClass)
+        ?? throw new ArgumentException($"the fake game has no surface for a schema class called '{schemaClass}'");
 
     public int Index => resolve().Index;
 
@@ -424,10 +429,16 @@ public sealed class FakeEntityWorld
 
         FakeEntity Live() => Resolve(handle) ?? throw new DeadEntityException("entity", handle & 0x7FFF);
 
+        // Stands in for the generated factory: one name the fake game "binds", everything
+        // else refused the way a real unknown schema class is.
+        ScriptSurface As(string schemaClass) => schemaClass == "FakeEntity"
+            ? new FakeEntityRaw(Live)
+            : throw new ArgumentException($"nothing bound as '{schemaClass}'");
+
         return new EntityFacade(
             "entity",
             $"{entity.DesignerName}:{entity.Index}",
-            new FakeEntityAccess(new FakeEntityRaw(Live), Live, gone => Destroy(gone.Index)),
+            new FakeEntityAccess(new FakeEntityRaw(Live), Live, gone => Destroy(gone.Index), As),
             () => Resolve(handle) is not null);
     }
 }

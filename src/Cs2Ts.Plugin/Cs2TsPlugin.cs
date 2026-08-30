@@ -127,6 +127,10 @@ public sealed partial class Cs2TsPlugin : BasePlugin
 
         WarmUpEventSwitch();
 
+        // Same trap, other table: the first entity.as call in a script would otherwise
+        // pay to compile a five-hundred-entry initializer against the watchdog's budget.
+        EntitySurfaces.Warm();
+
         // Background work comes back here, on the game thread, once a tick.
         RegisterListener<Listeners.OnTick>(OnTick);
 

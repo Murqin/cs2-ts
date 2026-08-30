@@ -24,6 +24,15 @@ public interface IEntityAccess
     ScriptSurface Raw { get; }
 
     /// <summary>
+    /// The wide surface for a named schema class: the fields that class adds, where
+    /// <see cref="Raw"/> is only the ones every entity shares. It is an assertion by the
+    /// caller that the entity is of that class — nothing here confirms it, the same
+    /// bargain the by-name escape hatch makes — and it throws only when the name is not
+    /// one the game binds.
+    /// </summary>
+    ScriptSurface As(string schemaClass);
+
+    /// <summary>
     /// The entity's index: its slot in the game's entity list, and the number the
     /// server console means by "entity 42".
     /// </summary>

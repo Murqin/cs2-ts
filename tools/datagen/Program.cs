@@ -17,12 +17,18 @@ var files = new Dictionary<string, string>(StringComparer.Ordinal);
 
 files[Path.Combine("src", "Cs2Ts.Plugin", "Generated", "EntitySurfaces.g.cs")] = Emit.CSharpFile(surfaces);
 
+files[Path.Combine("src", "Cs2Ts.Plugin", "Generated", "EntitySurfaces.Factory.g.cs")] = Emit.CSharpFactory(surfaces);
+
 files[Path.Combine("src", "Cs2Ts.Plugin", "Generated", "GameEvents.g.cs")] = Emit.CSharpEvents(events);
 
 var declarations = Path.Combine("templates", "cs2ts.d.ts");
 files[declarations] = Region.Replace(
     File.ReadAllText(Path.Combine(root, declarations)),
-    string.Join("\n", [.. surfaces.Select(Emit.TypeScript), Emit.TypeScriptEvents(events)]));
+    string.Join("\n", [
+        .. surfaces.Select(Emit.TypeScript),
+        Emit.TypeScriptSchemaClasses(surfaces),
+        Emit.TypeScriptEvents(events),
+    ]));
 
 var stale = new List<string>();
 
