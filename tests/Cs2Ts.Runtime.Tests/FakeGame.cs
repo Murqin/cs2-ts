@@ -91,9 +91,10 @@ public sealed class FakeWorld
     public IEnumerable<long> Connected =>
         _players.Where(entry => entry.Value.IsValid).Select(entry => entry.Key).Order();
 
-    public FakeController Add(long userId, string name = "player", ulong steamId = 76561198000000000UL)
+    public FakeController Add(
+        long userId, string name = "player", ulong steamId = 76561198000000000UL, bool isBot = false)
     {
-        var controller = new FakeController { Name = name, SteamId = steamId };
+        var controller = new FakeController { Name = name, SteamId = steamId, IsBot = isBot };
         _players[userId] = controller;
         return controller;
     }

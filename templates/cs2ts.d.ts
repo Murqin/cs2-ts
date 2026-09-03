@@ -11892,6 +11892,38 @@ declare global {
 
         /** Everyone currently connected. */
         all(): Player[];
+
+        /**
+         * The connected players a target specifier picks out — the vocabulary a player
+         * already knows from other servers:
+         *
+         * | specifier | who |
+         * | --- | --- |
+         * | `@all` | everyone connected |
+         * | `@ct` `@t` `@spec` | one team |
+         * | `@me` | `caller`; nobody when `caller` is `null` |
+         * | `@!me` | everyone but `caller`; everyone when `caller` is `null` |
+         * | `@bots` `@humans` | |
+         * | `@alive` `@dead` | in the world, or not — a spectator counts as `@dead` |
+         * | `#<userid>` | one exact userid |
+         * | anything else | a case-insensitive part of a name, matching none, one, or several |
+         *
+         * ```ts
+         * command("!slap", (player, args) => {
+         *     for (const target of players.select(args[0] ?? "@me", player)) {
+         *         target.health -= 20;
+         *     }
+         * });
+         * ```
+         *
+         * Pass the command handler's own `player` as `caller` so `@me` and `@!me` mean
+         * something; `null` is fine and is what the console gets.
+         *
+         * An unknown `@keyword` throws — the set is small and closed, so a misspelling
+         * is a mistake to surface rather than a name to go looking for. A `#userid` or a
+         * name that matches nobody is an empty array, not an error.
+         */
+        select(specifier: string, caller?: Player | null): Player[];
     };
 
     /**

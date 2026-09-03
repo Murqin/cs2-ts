@@ -90,6 +90,24 @@ public sealed class PlayersApi(PlayerFacadeTable<CCSPlayerController, CCSPlayerP
             .Where(p => p is { IsValid: true, UserId: not null })
             .Select(p => table.For(p.UserId!.Value))
             .ToArray();
+
+    /// <summary>
+    /// The connected players a target specifier picks out: <c>@all</c>, <c>@ct</c>,
+    /// <c>@t</c>, <c>@spec</c>, <c>@me</c>, <c>@!me</c>, <c>@bots</c>, <c>@humans</c>,
+    /// <c>@alive</c>, <c>@dead</c>, <c>#&lt;userid&gt;</c>, or part of a name.
+    ///
+    /// <paramref name="caller"/> is what makes <c>@me</c> and <c>@!me</c> mean anything:
+    /// pass the command handler's first argument straight through, and <c>null</c> from
+    /// the console is handled the way the specifiers expect. An unknown <c>@</c> keyword
+    /// throws — the parse lives in <see cref="TargetQuery"/>, which is where the reason
+    /// is written down.
+    /// </summary>
+    [ScriptMember("select")]
+    public PlayerFacade<CCSPlayerController, CCSPlayerPawn>[] Select(string spec, object? caller = null) =>
+        TargetQuery.Parse(spec).Filter(All(), CallerId(caller));
+
+    private static long? CallerId(object? caller) =>
+        caller is PlayerFacade<CCSPlayerController, CCSPlayerPawn> player ? player.Id : null;
 }
 
 /// <summary>

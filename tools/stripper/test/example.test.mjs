@@ -305,6 +305,26 @@ test("the menu sample compiles against the shipped tsconfig", () => {
     assert.equal(check(example), "");
 });
 
+test("the targeting sample compiles against the shipped tsconfig", () => {
+    const example = readFileSync(join(fixtures, "targets.ts"), "utf8");
+    assert.equal(check(example), "");
+});
+
+test("players.select takes a specifier string and an optional caller, and returns Player[]", () => {
+    assert.equal(
+        check('command("!s", (p: Player | null) => { players.select("@ct", p).forEach((t) => t.sendChat("x")); });\n'),
+        "");
+
+    // The caller is optional.
+    assert.equal(check('on("tick", () => { players.select("@all"); });\n'), "");
+
+    // A number where the specifier belongs is the shape of bug the declarations refuse.
+    assert.match(check('on("tick", () => { players.select(42); });\n'), /TS2345|TS2769/);
+
+    // It needs the specifier.
+    assert.match(check('on("tick", () => { players.select(); });\n'), /TS2554/);
+});
+
 test("menu.open needs a title and items, and the item shape is checked", () => {
     assert.equal(
         check('command("!m", (p: Player | null) => { if (p) menu.open(p, { title: "T", items: [{ text: "a" }] }); });\n'),

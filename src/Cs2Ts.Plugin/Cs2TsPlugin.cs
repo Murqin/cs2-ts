@@ -33,7 +33,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     /// and not necessarily that. The minor number moves when something is added, the
     /// major when something a script could have used is gone.
     /// </summary>
-    public const string ScriptApiVersion = "0.3";
+    public const string ScriptApiVersion = "0.4";
 
     private ScriptHost? _host;
     private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;

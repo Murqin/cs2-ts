@@ -62,6 +62,11 @@ public sealed class SampleScriptTests : IDisposable
         [ScriptMember("all")]
         public PlayerFacade<FakeController, FakePawn>[] All() =>
             world.Connected.Select(table.For).ToArray();
+
+        [ScriptMember("select")]
+        public PlayerFacade<FakeController, FakePawn>[] Select(string spec, object? caller = null) =>
+            TargetQuery.Parse(spec).Filter(
+                All(), caller is PlayerFacade<FakeController, FakePawn> player ? player.Id : null);
     }
 
     /// <summary>
@@ -262,6 +267,12 @@ public sealed class SampleScriptTests : IDisposable
     {
         var path = Path.Combine(AppContext.BaseDirectory, "menu.ts");
         return _host.Load("menu", "menu.ts", File.ReadAllText(path));
+    }
+
+    private PluginLoadResult LoadTargetsExample()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "targets.ts");
+        return _host.Load("targets", "targets.ts", File.ReadAllText(path));
     }
 
     /// <summary>Moves the clock and runs the tick, the way the game loop would.</summary>
@@ -772,5 +783,53 @@ public sealed class SampleScriptTests : IDisposable
 
         Assert.Equal(1, _host.DrainFrames());
         Assert.Contains("murqin (76561198123456789) is still here on the next frame", _console.Lines);
+    }
+
+    /// <summary>
+    /// The targeting example, run: <c>players.select</c> resolves a specifier to real
+    /// facades, the command acts on each, and <c>@me</c> picks out the caller.
+    /// </summary>
+    [Fact]
+    public void TheTargetsExampleSlapsWhoATargetSpecifierPicksOut()
+    {
+        Assert.True(LoadTargetsExample().Succeeded);
+        var ct1 = _world.Add(1, "ct-one");
+        ct1.Team = 3;
+        ct1.Pawn!.Health = 100;
+        var ct2 = _world.Add(2, "ct-two");
+        ct2.Team = 3;
+        ct2.Pawn!.Health = 100;
+        var t1 = _world.Add(3, "t-one");
+        t1.Team = 2;
+        t1.Pawn!.Health = 100;
+
+        Assert.Equal(1, _host.DispatchCommand("slap", _table.For(1), ["@ct"]).Taken);
+
+        Assert.Equal(80, ct1.Pawn.Health);
+        Assert.Equal(80, ct2.Pawn.Health);
+        Assert.Equal(100, t1.Pawn.Health);
+        Assert.Contains("slapped 2 players for \"@ct\"", ct1.Chat);
+        Assert.Empty(_errors);
+    }
+
+    [Fact]
+    public void TheTargetsExampleFallsBackToAtMeAndReportsAMisspeltKeyword()
+    {
+        Assert.True(LoadTargetsExample().Succeeded);
+        var me = _world.Add(7, "murqin");
+        me.Pawn!.Health = 100;
+
+        // No argument: the script defaults to @me, which is the caller.
+        Assert.Equal(1, _host.DispatchCommand("slap", _table.For(7), []).Taken);
+        Assert.Equal(80, me.Pawn.Health);
+
+        // A misspelt keyword throws in players.select; the boundary catches it and
+        // attributes it, rather than the command quietly hitting nobody.
+        var outcome = _host.DispatchCommand("who", _table.For(7), ["@ctt"]);
+        Assert.Equal(1, outcome.Taken);
+        Assert.Equal(1, outcome.Failed);
+        var error = Assert.Single(_errors);
+        Assert.Contains("@ctt", error.Message);
+        Assert.Equal("targets.ts", error.FileName);
     }
 }
