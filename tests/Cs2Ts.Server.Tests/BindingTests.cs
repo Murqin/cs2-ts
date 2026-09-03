@@ -22,14 +22,20 @@ public sealed class BindingTests(ServerFixture fixture)
     {
         var server = fixture.Require();
 
+        // Asked of cs2ts_status rather than of the "loaded" line printed once at boot:
+        // that line is gone from the transcript as soon as any earlier test clears it,
+        // and which test runs first is not fixed. The status listing carries the same
+        // fact and can be asked for again.
+        server.ClearTranscript();
+        server.Command("cs2ts_status");
+        var listed = await server.WaitForAsync(
+            line => line.Contains("[CS2-TS]", StringComparison.Ordinal)
+                && line.Contains("script(s):", StringComparison.Ordinal), Answer);
+
         // The point of CS2TS_SCRIPTS: whatever an operator left in the plugin's own
         // scripts folder must not be able to decide whether these tests pass.
-        var loaded = await server.WaitForAsync(
-            line => line.Contains("[CS2-TS] loaded harness.ts", StringComparison.Ordinal), Answer);
-
-        Assert.Contains("harness.ts", loaded, StringComparison.Ordinal);
-        Assert.DoesNotContain(server.Transcript,
-            line => line.Contains("[CS2-TS] loaded welcome.ts", StringComparison.Ordinal));
+        Assert.Contains("harness", listed, StringComparison.Ordinal);
+        Assert.DoesNotContain("welcome", listed, StringComparison.Ordinal);
     }
 
     [Fact]
