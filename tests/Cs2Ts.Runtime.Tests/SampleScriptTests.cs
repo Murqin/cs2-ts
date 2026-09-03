@@ -832,4 +832,27 @@ public sealed class SampleScriptTests : IDisposable
         Assert.Contains("@ctt", error.Message);
         Assert.Equal("targets.ts", error.FileName);
     }
+
+    /// <summary>
+    /// The gated command in the targeting example: its flag reaches the host for the
+    /// binding to enforce, and the handler itself still runs when dispatched — the gate
+    /// is the binding's job, not the runtime's.
+    /// </summary>
+    [Fact]
+    public void TheTargetsExampleGatesSlayallBehindAnAdminFlag()
+    {
+        Assert.True(LoadTargetsExample().Succeeded);
+        var a = _world.Add(1, "a");
+        a.Pawn!.Health = 100;
+        var b = _world.Add(2, "b");
+        b.Pawn!.Health = 100;
+
+        Assert.Equal("@css/slay", _host.PermissionFor("slayall"));
+
+        Assert.Equal(1, _host.DispatchCommand("slayall", null, []).Taken);
+        Assert.Equal(0, a.Pawn.Health);
+        Assert.Equal(0, b.Pawn.Health);
+        Assert.Contains("slew 2", _console.Lines);
+        Assert.Empty(_errors);
+    }
 }

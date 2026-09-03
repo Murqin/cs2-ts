@@ -17,6 +17,30 @@ command("!hplayers", () => {
     console.log(`HARNESS players=${everyone.length} alive=${everyone.filter((p) => p.isAlive).length}`);
 });
 
+// Target specifiers, resolved on a real roster. The names come back rather than a count
+// so a wrong set is visible; @all and @bots differ only on a server with bots in.
+command("!hselect", () => {
+    const all = players.select("@all").length;
+    const bots = players.select("@bots").length;
+    const ct = players.select("@ct").length;
+
+    let refused = "no";
+    try {
+        players.select("@nonsense");
+    } catch {
+        refused = "yes";
+    }
+
+    console.log(`HARNESS select all=${all} bots=${bots} ct=${ct} refused=${refused}`);
+});
+
+// A gated command. The suite drives it from the console, which is root, so this proves
+// the gate is wired without the flag blocking the one caller a test can be. A player
+// without @css/generic being refused needs a client and is checked by hand.
+command("!hgated", { permission: "@css/generic" }, () => {
+    console.log("HARNESS gated ran");
+});
+
 // The escape hatch, which until now had no test that was not a person typing into a
 // console: write a schema field through unsafe, then read it back through the facade,
 // which reaches the same field by an entirely different route.

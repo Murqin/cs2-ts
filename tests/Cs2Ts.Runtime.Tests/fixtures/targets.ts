@@ -38,3 +38,21 @@ command("!who", (player: Player | null, args: string[]): void => {
         player.sendChat(line);
     }
 });
+
+// !slayall — kill everyone in the world at once. Gated: only a player holding the
+// @css/slay flag may run it, and the console always may. The check is the binding's;
+// the handler only runs once it has passed.
+command("!slayall", { permission: "@css/slay" }, (player: Player | null): void => {
+    let killed = 0;
+    for (const target of players.select("@alive")) {
+        target.health = 0;
+        killed += 1;
+    }
+
+    const said = `slew ${killed}`;
+    if (player === null) {
+        console.log(said);
+    } else {
+        player.sendChat(said);
+    }
+});

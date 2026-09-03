@@ -325,6 +325,23 @@ test("players.select takes a specifier string and an optional caller, and return
     assert.match(check('on("tick", () => { players.select(); });\n'), /TS2554/);
 });
 
+test("command takes an optional options object with a permission between name and handler", () => {
+    assert.equal(
+        check('command("!slay", { permission: "@css/slay" }, (p: Player | null): void => { void p; });\n'),
+        "");
+
+    // The plain two-argument form still type-checks.
+    assert.equal(check('command("!heal", (p: Player | null): void => { void p; });\n'), "");
+
+    // permission is a string, and an unknown option key is refused.
+    assert.match(
+        check('command("!slay", { permission: 42 }, (p: Player | null): void => { void p; });\n'),
+        /TS2322|TS2345|TS2769/);
+    assert.match(
+        check('command("!slay", { nope: true }, (p: Player | null): void => { void p; });\n'),
+        /TS2345|TS2769|TS2353/);
+});
+
 test("menu.open needs a title and items, and the item shape is checked", () => {
     assert.equal(
         check('command("!m", (p: Player | null) => { if (p) menu.open(p, { title: "T", items: [{ text: "a" }] }); });\n'),

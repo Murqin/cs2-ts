@@ -47,6 +47,16 @@ public sealed class ScriptHost : IDisposable
     private readonly Dictionary<string, ScriptPlugin> _plugins = [];
     private readonly HashSet<string> _knownCommands = new(StringComparer.Ordinal);
 
+    // The admin flag each command name is gated behind, with the plugin that last set
+    // it. A name is registered with the server once for the life of the process, but its
+    // gate is read on every dispatch, so a plugin reloading with a changed permission
+    // takes effect where re-registering the command would not. A different plugin may
+    // not replace a gate with nothing — one script must not be able to open another's —
+    // and two plugins asking for different flags on one name is a clash worth surfacing.
+    private readonly Dictionary<string, (string? Flag, string Owner)> _commandPermissions =
+        new(StringComparer.Ordinal);
+    private readonly HashSet<string> _commandPermissionClashes = new(StringComparer.Ordinal);
+
     // Names already reported to the host. A game event is hooked with the server once
     // for the life of the process, so a reload that re-registers the same handler must
     // not hook it a second time — that would deliver every firing twice.
@@ -155,6 +165,48 @@ public sealed class ScriptHost : IDisposable
             lock (_gate)
             {
                 return _knownCommands.ToArray();
+            }
+        }
+    }
+
+    /// <summary>
+    /// The admin flag <paramref name="name"/> is gated behind, or <c>null</c> if anyone
+    /// may run it. Read on every dispatch by the binding, which is the only thing that
+    /// can tell an admin from a bot.
+    /// </summary>
+    public string? PermissionFor(string name)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+
+        lock (_gate)
+        {
+            return _commandPermissions.GetValueOrDefault(name).Flag;
+        }
+    }
+
+    /// <summary>How many command names are gated behind an admin flag. Diagnostics only.</summary>
+    public int GatedCommandCount
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _commandPermissions.Values.Count(entry => entry.Flag is not null);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Command names two scripts asked to gate behind different flags. The last one
+    /// loaded wins; this is so an operator can see why.
+    /// </summary>
+    public IReadOnlyCollection<string> CommandPermissionClashes
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _commandPermissionClashes.ToArray();
             }
         }
     }
@@ -382,17 +434,60 @@ public sealed class ScriptHost : IDisposable
         EventRegistered?.Invoke(name);
     }
 
-    private void OnCommandRegistered(string name)
+    private void OnCommandRegistered(string pluginName, string name, string? permission)
     {
+        bool firstTime;
         lock (_gate)
         {
-            if (!_knownCommands.Add(name))
-            {
-                return;
-            }
+            firstTime = _knownCommands.Add(name);
+            RecordPermission(pluginName, name, permission);
         }
 
-        CommandRegistered?.Invoke(name);
+        // Once per name for the life of the host, whatever its permission does later:
+        // the server-side registration cannot be repeated, and the gate is read fresh
+        // on every dispatch anyway.
+        if (firstTime)
+        {
+            CommandRegistered?.Invoke(name);
+        }
+    }
+
+    /// <summary>
+    /// Files a command's requested permission. Under <see cref="_gate"/>.
+    ///
+    /// The plugin that set the current gate is kept, so this plugin reloading is a plain
+    /// overwrite — a reload changing its own mind is not a clash. A <em>different</em>
+    /// plugin naming no flag cannot clear one that is set; naming a different flag is a
+    /// clash, with the later load winning so an operator can still change things and the
+    /// name remembered so the choice is visible rather than silent.
+    /// </summary>
+    private void RecordPermission(string pluginName, string name, string? permission)
+    {
+        if (!_commandPermissions.TryGetValue(name, out var current) || current.Owner == pluginName)
+        {
+            _commandPermissions[name] = (permission, pluginName);
+            return;
+        }
+
+        if (permission is null)
+        {
+            if (current.Flag is not null)
+            {
+                _commandPermissionClashes.Add(name);
+            }
+
+            return;
+        }
+
+        if (current.Flag != permission)
+        {
+            if (current.Flag is not null)
+            {
+                _commandPermissionClashes.Add(name);
+            }
+
+            _commandPermissions[name] = (permission, pluginName);
+        }
     }
 
     /// <summary>Runs whatever background work has come back. Call once per tick.</summary>

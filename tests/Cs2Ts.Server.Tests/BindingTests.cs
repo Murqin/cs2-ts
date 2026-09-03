@@ -60,6 +60,48 @@ public sealed class BindingTests(ServerFixture fixture)
         await server.WaitForAsync(line => line.Contains("HARNESS pong", StringComparison.Ordinal), Answer);
     }
 
+    /// <summary>
+    /// <c>players.select</c> against a real roster: the specifier resolves to facades,
+    /// a bad keyword is refused. The set sizes are loose on purpose — the suite's bot
+    /// count moves — so the assertions are that it ran, returned something for
+    /// <c>@all</c>, and threw for nonsense.
+    /// </summary>
+    [Fact]
+    public async Task TargetSpecifiersResolveAgainstARealRoster()
+    {
+        var server = await fixture.RequireWithPlayersAsync();
+
+        server.ClearTranscript();
+        server.Command("css_hselect");
+        var line = await server.WaitForAsync(
+            l => l.Contains("HARNESS select ", StringComparison.Ordinal), Answer);
+
+        Assert.Matches(@"all=[1-9]\d*", line);
+        Assert.Contains("refused=yes", line, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A command gated behind an admin flag still runs from the console, which holds
+    /// every permission, and <c>cs2ts_status</c> counts it. A player without the flag
+    /// being turned away needs a client and is checked by hand.
+    /// </summary>
+    [Fact]
+    public async Task AGatedCommandRunsFromTheConsoleAndIsCounted()
+    {
+        var server = fixture.Require();
+
+        server.ClearTranscript();
+        server.Command("css_hgated");
+        await server.WaitForAsync(
+            line => line.Contains("HARNESS gated ran", StringComparison.Ordinal), Answer);
+
+        server.ClearTranscript();
+        server.Command("cs2ts_status");
+        var status = await server.WaitForAsync(
+            line => line.Contains("[CS2-TS] permission-gated commands:", StringComparison.Ordinal), Answer);
+        Assert.Contains("permission-gated commands: 1", status, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task ATimerFiresOnARealTick()
     {

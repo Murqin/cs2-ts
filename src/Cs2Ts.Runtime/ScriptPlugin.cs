@@ -24,7 +24,7 @@ public sealed class ScriptPlugin : IDisposable
     private readonly ScriptWatchdog? _watchdog;
     private readonly Dictionary<string, List<Registration>> _handlers = [];
     private readonly HashSet<string> _commands = new(StringComparer.Ordinal);
-    private Action<string>? _commandRegistered;
+    private Action<string, string, string?>? _commandRegistered;
     private Action<string>? _eventRegistered;
     private TimerTable? _timers;
     private Func<double>? _clock;
@@ -102,7 +102,7 @@ public sealed class ScriptPlugin : IDisposable
         BoundaryPolicy? policy,
         ScriptWatchdog? watchdog,
         Action<ScriptPlugin, V8ScriptEngine>? configure,
-        Action<string>? commandRegistered = null,
+        Action<string, string, string?>? commandRegistered = null,
         Action<string>? eventRegistered = null,
         TimerTable? timers = null,
         Func<double>? clock = null,
@@ -137,7 +137,7 @@ public sealed class ScriptPlugin : IDisposable
             // class is not visible from it. A delegate sidesteps that and keeps the
             // bridge to exactly one callable.
             engine.Script.__cs2ts_register = new Action<string, ScriptObject>(plugin.AddEvent);
-            engine.Script.__cs2ts_command = new Action<string, ScriptObject>(plugin.AddCommand);
+            engine.Script.__cs2ts_command = new Action<string, string?, ScriptObject>(plugin.AddCommand);
 
             // Ids cross as doubles, not as the longs they are. ClearScript marshals an
             // Int64 to script as a host object rather than a number, and a timer id that
@@ -188,14 +188,34 @@ public sealed class ScriptPlugin : IDisposable
             __cs2ts_register(eventName, handler);
         };
 
-        globalThis.command = function command(name, handler) {
+        globalThis.command = function command(name, optionsOrHandler, maybeHandler) {
             if (typeof name !== "string" || name.length === 0) {
                 throw new TypeError("command(): the name must be a non-empty string");
             }
+
+            // command(name, handler) and command(name, options, handler) are both
+            // allowed; a third argument is what tells them apart.
+            let handler = optionsOrHandler;
+            let permission = null;
+            if (maybeHandler !== undefined) {
+                handler = maybeHandler;
+                const options = optionsOrHandler;
+                if (typeof options !== "object" || options === null) {
+                    throw new TypeError(
+                        "command(): the second argument must be an options object when a handler follows it");
+                }
+                if (options.permission !== undefined && options.permission !== null) {
+                    if (typeof options.permission !== "string" || options.permission.length === 0) {
+                        throw new TypeError("command(): permission must be a non-empty string");
+                    }
+                    permission = options.permission;
+                }
+            }
+
             if (typeof handler !== "function") {
                 throw new TypeError("command(): the handler must be a function");
             }
-            __cs2ts_command(name, handler);
+            __cs2ts_command(name, permission, handler);
         };
 
         function __cs2ts_delay(who, delay) {
@@ -380,7 +400,14 @@ public sealed class ScriptPlugin : IDisposable
     /// throws while the plugin is still loading — which stops the plugin rather than
     /// leaving a command that quietly never fires.
     /// </summary>
-    private void AddCommand(string name, ScriptObject handler)
+    /// <param name="name">What a player types, before normalization.</param>
+    /// <param name="permission">
+    /// An admin flag the caller must hold, or <c>null</c> for a command anyone may run.
+    /// Not enforced here — this assembly does not know an admin from a bot — but carried
+    /// to the host so the binding can gate the call before it is dispatched.
+    /// </param>
+    /// <param name="handler">The script function to run.</param>
+    private void AddCommand(string name, string? permission, ScriptObject handler)
     {
         var normalized = CommandName.Normalize(name);
 
@@ -393,8 +420,10 @@ public sealed class ScriptPlugin : IDisposable
 
         // After the handler is in place: the host reacts by registering the command
         // with the server, and a command that exists before its handler does is a
-        // command that can be run before it works.
-        _commandRegistered?.Invoke(normalized);
+        // command that can be run before it works. The plugin name goes with it so the
+        // host can tell this plugin reloading with a changed permission apart from a
+        // second plugin disagreeing about one.
+        _commandRegistered?.Invoke(Name, normalized, permission);
     }
 
     /// <summary>

@@ -11805,11 +11805,40 @@ declare global {
      *
      * A bad name throws while the script is loading, so the script does not load. That
      * is deliberate: the alternative is a command that exists and never fires.
+     *
+     * Pass an options object between the name and the handler to gate the command:
+     *
+     * ```ts
+     * command("!slay", { permission: "@css/slay" }, (player) => {
+     *     if (player !== null) player.health = 0;
+     * });
+     * ```
      */
     function command(
         name: string,
         handler: (player: Player | null, args: string[]) => void,
     ): void;
+    function command(
+        name: string,
+        options: CommandOptions,
+        handler: (player: Player | null, args: string[]) => void,
+    ): void;
+
+    interface CommandOptions {
+        /**
+         * A CounterStrikeSharp admin flag — `"@css/slay"`, `"@css/ban"`, a custom
+         * `"@domain/flag"`. Only a player who holds it may run the command; everyone
+         * else gets a one-line refusal and the handler does not run. The server console
+         * and RCON always may, so a gated command is still scriptable from there.
+         *
+         * The flags come from the server's own `admins.json` / `admin_groups.json` —
+         * this does not set up an admin system, it reads the one the operator already
+         * runs. Changing, adding or removing a command's flag takes effect on the next
+         * reload. If two scripts answer one command and ask for different flags, the
+         * last one loaded wins and `cs2ts_status` names the clash.
+         */
+        permission?: string;
+    }
 
     /**
      * Runs `handler` once, after at least `delay` milliseconds. Returns an id for

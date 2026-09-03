@@ -263,4 +263,140 @@ public sealed class ScriptCommandTests(CommandHostFixture fixture) : IDisposable
         Assert.Equal(["listing_a", "listing_b"], plugin.Commands.Order().ToList());
         Assert.Contains("listing_a", Host.KnownCommands);
     }
+
+    [Fact]
+    public void ACommandCanRequireAPermissionAndTheHostRemembersIt()
+    {
+        Assert.True(Load(
+            "gated",
+            """command("!gate_a", { permission: "@css/slay" }, (): void => sink.record(1));""").Succeeded);
+
+        // The gate is the binding's to enforce; the runtime still dispatches, because a
+        // handler switched off by a permission it does not know about is a worse failure
+        // than one the binding declined out loud.
+        Assert.Equal("@css/slay", Host.PermissionFor("gate_a"));
+        Assert.Equal(1, Host.DispatchCommand("gate_a", null, []).Taken);
+    }
+
+    [Fact]
+    public void TheTwoArgumentFormLeavesACommandOpen()
+    {
+        Assert.True(Load("open", """command("!open_a", (): void => sink.record(1));""").Succeeded);
+
+        Assert.Null(Host.PermissionFor("open_a"));
+    }
+
+    [Fact]
+    public void OneScriptMayMixGatedAndOpenCommands()
+    {
+        Assert.True(Load(
+            "mixed",
+            """
+            command("!mixed_open", (): void => {});
+            command("!mixed_gated", { permission: "@css/generic" }, (): void => {});
+            """).Succeeded);
+
+        Assert.Null(Host.PermissionFor("mixed_open"));
+        Assert.Equal("@css/generic", Host.PermissionFor("mixed_gated"));
+    }
+
+    [Fact]
+    public void AnOptionsObjectWithNoHandlerAfterItIsRejected()
+    {
+        var result = Load("nohandler", """command("!nohandler_a", { permission: "@css/slay" });""");
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("must be a function", string.Join(" ", result.Report()));
+    }
+
+    [Fact]
+    public void ANonStringPermissionIsRejectedWhileLoading()
+    {
+        var result = Load(
+            "badperm",
+            """command("!badperm_a", { permission: 42 as unknown as string }, (): void => {});""");
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("permission must be a non-empty string", string.Join(" ", result.Report()));
+        Assert.Empty(Host.Loaded);
+    }
+
+    [Fact]
+    public void ASecondArgumentThatIsNotAnObjectIsRejectedWhenAHandlerFollows()
+    {
+        var result = Load(
+            "badopts",
+            """command("!badopts_a", "nope" as unknown as object, (): void => {});""");
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("options object", string.Join(" ", result.Report()));
+    }
+
+    [Fact]
+    public void AGateSurvivesASecondScriptRegisteringTheSameCommandWithoutOne()
+    {
+        Assert.True(Load(
+            "guard",
+            """command("!shared_gate", { permission: "@css/slay" }, (): void => {});""").Succeeded);
+        Assert.True(Load(
+            "tagalong",
+            """command("!shared_gate", (): void => {});""").Succeeded);
+
+        // The tagalong script must not be able to open a command the first one gated.
+        Assert.Equal("@css/slay", Host.PermissionFor("shared_gate"));
+        Assert.Contains("shared_gate", Host.CommandPermissionClashes);
+    }
+
+    [Fact]
+    public void TwoScriptsGatingOneCommandDifferentlyClashAndTheLaterLoadWins()
+    {
+        Assert.True(Load(
+            "gate_one",
+            """command("!two_gates", { permission: "@css/one" }, (): void => {});""").Succeeded);
+        Assert.True(Load(
+            "gate_two",
+            """command("!two_gates", { permission: "@css/two" }, (): void => {});""").Succeeded);
+
+        Assert.Equal("@css/two", Host.PermissionFor("two_gates"));
+        Assert.Contains("two_gates", Host.CommandPermissionClashes);
+    }
+
+    [Fact]
+    public void GatedCommandCountReportsHowManyNamesAreBehindAFlag()
+    {
+        // Its own host: the count is over every command any plugin ever registered, so
+        // it only means anything against a host that has just been built.
+        var host = new ScriptHost(_ => { });
+        try
+        {
+            Assert.True(host.Load(
+                "count",
+                "count.ts",
+                """
+                command("!c_open", (): void => {});
+                command("!c_gated_one", { permission: "@css/a" }, (): void => {});
+                command("!c_gated_two", { permission: "@css/b" }, (): void => {});
+                """).Succeeded);
+
+            Assert.Equal(2, host.GatedCommandCount);
+        }
+        finally
+        {
+            host.Dispose();
+        }
+    }
+
+    [Fact]
+    public void OneScriptReloadingWithADifferentPermissionIsNotAClash()
+    {
+        Assert.True(Load(
+            "rethink",
+            """command("!rethink_a", { permission: "@css/one" }, (): void => {});""").Succeeded);
+        Assert.True(Load(
+            "rethink",
+            """command("!rethink_a", { permission: "@css/two" }, (): void => {});""").Succeeded);
+
+        Assert.Equal("@css/two", Host.PermissionFor("rethink_a"));
+        Assert.DoesNotContain("rethink_a", Host.CommandPermissionClashes);
+    }
 }

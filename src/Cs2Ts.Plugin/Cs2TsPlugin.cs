@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using Cs2Ts.Runtime;
 
@@ -33,7 +34,7 @@ public sealed partial class Cs2TsPlugin : BasePlugin
     /// and not necessarily that. The minor number moves when something is added, the
     /// major when something a script could have used is gone.
     /// </summary>
-    public const string ScriptApiVersion = "0.4";
+    public const string ScriptApiVersion = "0.5";
 
     private ScriptHost? _host;
     private PlayerFacadeTable<CCSPlayerController, CCSPlayerPawn>? _players;
@@ -488,6 +489,18 @@ public sealed partial class Cs2TsPlugin : BasePlugin
                 return;
             }
 
+            // The permission is read here rather than captured above, because a reload
+            // can change it and this registration cannot be repeated. The console has
+            // no controller and passes every gate — the same rule CounterStrikeSharp's
+            // own commands follow.
+            if (controller is not null
+                && _host.PermissionFor(name) is { } flag
+                && !AdminManager.PlayerHasPermissions(controller, flag))
+            {
+                command.ReplyToCommand($"You do not have access to '{name}'.");
+                return;
+            }
+
             // Argument 0 is the command itself; a script asked for what came after it.
             var args = new string[Math.Max(0, command.ArgCount - 1)];
             for (var i = 0; i < args.Length; i++)
@@ -566,6 +579,13 @@ public sealed partial class Cs2TsPlugin : BasePlugin
             Console.WriteLine($"[CS2-TS] pending timers: {_host.Timers.Count}, dropped: {_host.Timers.Dropped}");
             Console.WriteLine($"[CS2-TS] centre messages: {_host.CenterHud.Count}, dropped: {_host.CenterHud.Dropped}");
             Console.WriteLine($"[CS2-TS] open menus: {_host.Menus.Count}, dropped: {_host.Menus.Dropped}");
+            Console.WriteLine($"[CS2-TS] permission-gated commands: {_host.GatedCommandCount}");
+            if (_host.CommandPermissionClashes is { Count: > 0 } clashes)
+            {
+                Console.WriteLine(
+                    $"[CS2-TS] commands two scripts gate differently (last load wins): {string.Join(", ", clashes)}");
+            }
+
             Console.WriteLine($"[CS2-TS] entities handed out: {_entities.Count}");
             Console.WriteLine($"[CS2-TS] watchdog interruptions: {_host.Watchdog.Interruptions}");
 
