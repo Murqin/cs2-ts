@@ -1,5 +1,9 @@
 # CS2-TS
 
+> **Note:** This project was written largely with AI coding agents to solve my own problems.
+> It is shared as-is, without warranty, and is not reviewed to production standards.
+> Use at your own risk; read the code before running it.
+
 An embedded TypeScript scripting layer for Counter-Strike 2, built on top of
 [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp).
 
@@ -10,7 +14,20 @@ and exposes a flat, typed scripting API on top of it, so that simple CS2
 plugins can be written as plain `.ts` files without a `.csproj`, a build step,
 or a DLL deployment.
 
-## Status: gate passed, early
+> **Archived experimental prototype.** CS2-TS was developed largely with AI coding agents
+> between August and October 2026, against CounterStrikeSharp v1.0.373, ClearScript/V8,
+> .NET 10 on linux-x64, and the CS2 dedicated-server builds of that period (exact CS2
+> build not recorded). It is not maintained and will likely break on newer CS2 or
+> CounterStrikeSharp updates. It was only ever run for minutes at a time with a handful
+> of bots. If the ideas, measurements, tests or generated bindings are useful to you,
+> take them and build on them (MIT).
+>
+> Never built: the `@cs2-ts/api` npm package, HTTP/`fetch`, database access, Discord
+> integration, configuration, and everything in phases 3–4 below. Unmerged work
+> (player targeting, command permissions, a centre-text flicker fix) lives on the
+> `phase-2-targeting`, `phase-2-command-permission` and `wip/centre-text-flicker` branches.
+
+## Status at archive time: gate passed, early
 
 **Phase 0 was a gate, not a step: if the boundary cost had missed its targets,
 the project would have stopped there. It did not.** The riskiest assumptions are
@@ -24,6 +41,9 @@ bots:
 | Dispatch, each further crossing in that tick | < 3 µs | 1.14 (p50) |
 | Handle resolution | < 2 µs | 0.40 (p50) |
 | Frametime against a no-V8 baseline | no difference | −0.14 ms (inside noise) |
+
+These are historical observations from single runs; the raw data was not kept, so treat
+them as indicative, not as a benchmark you can reproduce exactly.
 
 Coexistence is not free: the CS2 server keeps Valve's own V8 11.9 in the global
 symbol lookup scope, and ClearScript's V8 14.7 routes its own calls through the
@@ -87,8 +107,9 @@ ranks, VIP, shops, Discord integration, database-backed stats — for people who
 would rather write it in TypeScript than in C#. The audience it expects is not
 "web developers" (see the bare-V8 section below for why that promise would not
 survive contact); it is people who already learned `cs_script` and want the
-same language on the operator's side of the server. `@cs2-ts/api` should
-deliberately imitate `point_script.d.ts`'s naming and shape for that reason.
+same language on the operator's side of the server. The planned `@cs2-ts/api` type
+package (never published) was meant to imitate `point_script.d.ts`'s naming and shape
+for that reason.
 
 ## Architecture
 
@@ -112,16 +133,18 @@ Four decisions carry the design:
   JavaScript. `player.health = 100` replaces a deep traversal, and hides steps
   that fail silently when forgotten (such as `SetStateChanged`).
 - **Inline execution on the game thread.** V8 engines under ClearScript have no
-  thread affinity, so scripts run synchronously where the events fire. A
-  one-way dispatcher returns background work (HTTP, database) to the game
-  thread via `Server.NextFrame`.
+  thread affinity, so scripts run synchronously where the events fire. Work a
+  script queues for later runs on the game thread through the runtime's frame
+  queue, drained once per tick (`OnTick`). Background work (HTTP, database) was
+  planned but never built.
 - **Handle safety.** Script objects hold durable identities, never raw
   pointers. Every access re-resolves the entity and validates it, so touching a
   dead entity raises a catchable JavaScript error instead of crashing the
   server.
-- **Typed developer experience.** An `@cs2-ts/api` type package provides IDE
-  autocomplete and type checking on the developer's machine; the server only
-  strips types and runs the result.
+- **Typed developer experience.** A `cs2ts.d.ts` declaration file, written into the
+  plugin's `scripts/` folder (source in `templates/`), provides IDE autocomplete and
+  type checking on the developer's machine; the server only strips types and runs
+  the result. A separate `@cs2-ts/api` package was planned but never published.
 
 ## The runtime is bare V8, not Node.js
 
@@ -183,8 +206,8 @@ the server, with JSDoc types wherever they are wanted.
 | 0 | Measurement spike: dispatch overhead, handle resolution cost | **passed** |
 | 1 | Type stripping, handle resolution, exception boundary, hot reload, watchdog | **runs on a server** |
 | 2 | Player and entity APIs, commands, timers, escape hatch | facade, commands, timers, entities, plugin folders and the escape hatch |
-| 3 | `@cs2-ts/api`, editor support, documentation | |
-| 4 | Permissions, plugin distribution, packages | |
+| 3 | `@cs2-ts/api`, editor support, documentation | not started |
+| 4 | Permissions, plugin distribution, packages | not started |
 
 ## Building
 
@@ -196,6 +219,7 @@ step needs Node; the rest does not.
 cd tools/stripper && npm ci && npm run build   # writes Resources/stripper.js.gz
 cd ../.. && dotnet build Cs2Ts.slnx
 dotnet test tests/Cs2Ts.Runtime.Tests          # host side, against a fake game
+dotnet test tests/Cs2Ts.DataGen.Tests          # binding generator
 cd tools/stripper && npm test                  # tsconfig, declarations, the samples
 ```
 
@@ -205,7 +229,9 @@ The third suite needs a real server, so it is not in that list:
 dotnet test tests/Cs2Ts.Server.Tests           # boots a dedicated server and asks it
 ```
 
-It starts its own server on a free port bound to loopback, loads only its own
+It expects a CS2 dedicated server with CounterStrikeSharp installed at
+`$CS2TS_SERVER_ROOT/server/game/cs2.sh` (the fallback is the author's old path,
+`/mnt/depot/CS2-SERVER`, which will not exist on your machine). It starts its own server on a free port bound to loopback, loads only its own
 scripts, and stops what it started — it will not touch a server you are already
 running. It refuses to run against an installed plugin older than the build in
 your tree, because a green run on yesterday's binary is not a weaker signal, it
@@ -222,6 +248,11 @@ measure.
 events into dispatches, and drains queued work once a tick.
 
 ## Writing a script
+
+> **Trust model:** scripts are trusted code. The folder/import boundary between plugins
+> is a convenience, not a sandbox, and the escape hatches (`unsafe`, `entity.as()`)
+> can corrupt game memory or crash the server if misused. If you use JavaScript
+> instead of TypeScript, copy `templates/jsconfig.json` into `scripts/` yourself.
 
 Drop a `.ts` or `.js` file in the plugin's `scripts/` directory. When one file stops
 being enough, make it a folder instead:

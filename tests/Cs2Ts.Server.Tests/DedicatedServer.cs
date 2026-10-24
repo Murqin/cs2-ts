@@ -11,8 +11,7 @@ namespace Cs2Ts.Server.Tests;
 /// Cs2Ts.Runtime is tested against a fake game, and that fake is written to the same
 /// contract the real binding claims to implement — so when the binding is wrong, every
 /// test still passes. It has happened: isValid reported true for a player who had left,
-/// the fake resolver did the right thing, and only a server disagreed. The escape hatch
-/// has never had a test that was not a person typing into a console.
+/// the fake resolver did the right thing, and only a server disagreed.
 ///
 /// The cost turned out to be smaller than the design assumed, and it is worth writing
 /// down because it decides how this suite gets used: the whole thing runs in about
@@ -23,11 +22,13 @@ namespace Cs2Ts.Server.Tests;
 internal sealed class DedicatedServer : IAsyncDisposable
 {
     /// <summary>
-    /// Where the server lives. Not discovered and not configurable: a test that goes
-    /// looking for a game install could find the wrong one, and the failure would be a
-    /// suite that quietly tests somebody else's build.
+    /// Where the server lives: <c>CS2TS_SERVER_ROOT</c>, expected to contain
+    /// <c>server/game/cs2.sh</c>. Never discovered by searching: a test that goes looking
+    /// for a game install could find the wrong one, and the failure would be a suite that
+    /// quietly tests somebody else's build. The fallback is the author's machine at the time.
     /// </summary>
-    public const string Root = "/mnt/depot/CS2-SERVER";
+    public static readonly string Root =
+        Environment.GetEnvironmentVariable("CS2TS_SERVER_ROOT") ?? "/mnt/depot/CS2-SERVER";
 
     private const string Password = "cs2ts-harness";
 
