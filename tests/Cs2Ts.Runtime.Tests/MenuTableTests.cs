@@ -210,7 +210,7 @@ public sealed class MenuTableTests : IDisposable
     }
 
     [Fact]
-    public void ACentreMenuIsReDrawnOnTheTickAndAgainAfterItMoves()
+    public void ACentreMenuIsReDrawnEveryTickAndFollowsTheHighlight()
     {
         OpenCenter(_a, items: 3);
 
@@ -218,12 +218,15 @@ public sealed class MenuTableTests : IDisposable
         Assert.Single(_rendered);
         Assert.Contains("&#9656; item 0", _rendered[^1].Html);
 
-        // Nothing again until the refresh interval passes.
-        Assert.Equal(0, Tick(0.5));
+        // Every tick, not once a second: CS2 replays the centre-HTML fade on each send,
+        // so a slower cadence pulses rather than holds.
+        Assert.Equal(1, Tick(0.016));
+        Assert.Equal(1, Tick(0.016));
+        Assert.Equal(3, _rendered.Count);
 
-        // A move forces an immediate redraw on the next tick.
+        // And each redraw reflects the current cursor.
         Table.FeedNav(Player, MenuNav.Down);
-        Assert.Equal(1, Tick(0.1));
+        Assert.Equal(1, Tick(0.016));
         Assert.Contains("&#9656; item 1", _rendered[^1].Html);
     }
 

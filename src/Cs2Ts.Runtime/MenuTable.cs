@@ -55,8 +55,13 @@ public readonly record struct MenuFeed(
 /// </summary>
 public sealed class MenuTable
 {
-    // A centre menu is re-sent this often, and immediately after the highlight moves.
-    private const double RefreshSeconds = 1.0;
+    // A centre menu is re-sent every tick while it is open. CS2's centre-HTML message
+    // plays its fade-in from the start on every send, so a slower cadence — the one
+    // second a kept hud.show message uses — shows as a pulse once a second rather than a
+    // steady panel, and at worst never resolves past the fade-in. Every working CS2
+    // centre-HTML menu re-sends per tick for this reason. It only costs a usermessage
+    // per tick per player with a menu open, which is rare and brief.
+    private const double RefreshSeconds = 0.0;
 
     private readonly Lock _gate = new();
     private readonly Dictionary<long, Entry> _live = [];

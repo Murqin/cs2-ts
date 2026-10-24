@@ -16,9 +16,12 @@ namespace Cs2Ts.Runtime;
 /// </summary>
 public sealed class CenterHudTable
 {
-    // Re-sent this often. Comfortably inside the few seconds the client keeps the text,
-    // and far short of a rate that would cost anything against a 64 tick loop.
-    private const double RefreshSeconds = 1.0;
+    // Re-sent every tick while it is up. CS2 replays the centre-HTML fade-in on every
+    // send, so a slower cadence pulses once a period rather than holding a steady panel.
+    // The binding blanks the slot when the last entry goes, because a panel that has
+    // been re-sent every tick does not fade on its own the way a one-off send does.
+    // It costs one usermessage per tick per player with a kept message, which is rare.
+    private const double RefreshSeconds = 0.0;
 
     private readonly Lock _gate = new();
     private readonly Dictionary<long, Entry> _live = [];

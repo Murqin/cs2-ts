@@ -58,20 +58,17 @@ public sealed class CenterHudTableTests : IDisposable
     }
 
     [Fact]
-    public void ShowSendsOnceOnTheNextTickAndThenRefreshes()
+    public void ShowSendsEveryTickWhileItIsUp()
     {
         Table.Show(_a, 7, "hello");
         Assert.Equal(1, Table.Count);
 
+        // Every tick, not once a period: CS2 replays the centre-HTML fade on each send,
+        // so a slower cadence shows as a pulse rather than a steady panel.
         Assert.Equal(1, Tick(0));
-        Assert.Equal([(7L, "hello")], _sent);
-
-        // Nothing again until the refresh interval has passed.
-        Assert.Equal(0, Tick(0.5));
-        Assert.Single(_sent);
-
-        Assert.Equal(1, Tick(0.6));
-        Assert.Equal([(7L, "hello"), (7L, "hello")], _sent);
+        Assert.Equal(1, Tick(0.016));
+        Assert.Equal(1, Tick(0.016));
+        Assert.Equal([(7L, "hello"), (7L, "hello"), (7L, "hello")], _sent);
     }
 
     [Fact]
